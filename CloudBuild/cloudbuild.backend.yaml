@@ -11,13 +11,14 @@ steps:
   # Deploy ke Cloud Run (sudah otomatis public dengan --allow-unauthenticated)
   - name: "gcr.io/cloud-builders/gcloud"
     entrypoint: gcloud
-    args:
-      [
+    args: [
         "run",
         "deploy",
         "api-hut-kai-80",
         "--image",
         "gcr.io/$PROJECT_ID/api-hut-kai-80",
+        "--add-cloudsql-instances", # <--- TAMBAHKAN FLAG INI
+        "hut-kai-80:asia-southeast2:hut-kai-80", # <--- GANTI DENGAN CONNECTION NAME ANDA
         "--timeout",
         "1000s",
         "--port",
