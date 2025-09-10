@@ -7,7 +7,7 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   // SET TIME HERE
   // target: 12 September 2025 jam 09:00 WIB
-  const targetTime = new Date(2025, 8, 12, 9, 0, 0);
+  const targetTime = new Date(2025, 8, 11, 4, 30, 0);
   // bulan 8 = September (karena index mulai dari 0)
 
   useEffect(() => {
