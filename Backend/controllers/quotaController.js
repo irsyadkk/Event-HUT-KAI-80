@@ -35,8 +35,6 @@ export const addQuota = async (req, res) => {
     }
 
     let quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    let updatedQuota = quota.quota + add;
-    let updatedTotal = quota.total_quota + add;
     if (!quota) {
       quota = await Quota.create(
         {
@@ -47,6 +45,8 @@ export const addQuota = async (req, res) => {
         { transaction: t }
       );
     } else {
+      let updatedQuota = quota.quota + add;
+      let updatedTotal = quota.total_quota + add;
       await Quota.update(
         { quota: updatedQuota, total_quota: updatedTotal },
         { where: { id: 1 }, transaction: t }
@@ -56,8 +56,7 @@ export const addQuota = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Quota Added By ${add} ! Current Quota ${updatedQuota}`,
-      data: { updatedQuota, updatedTotal },
+      message: `Quota Added By ${add} !`,
     });
   } catch (error) {
     if (!t.finished) {
@@ -102,8 +101,7 @@ export const subQuota = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: "Quota Subtracted",
-      data: { updatedQuota, updatedTotal },
+      message: `Quota Subtracted by ${sub}`,
     });
   } catch (error) {
     await t.rollback();

@@ -13,9 +13,11 @@ const AdminDesktopPage = () => {
   const [token, setToken] = useState("");
   const [expire, setExpire] = useState("");
   const [orderList, setOrderList] = useState("");
-  const [addQuotaValue, setAddQuotaValue] = useState("");
-  const [quota, setQuota] = useState("");
-  const [quotaGlobal, setQuotaGlobal] = useState("");
+  let [quotaValue, setQuotaValue] = useState("");
+  let [quota, setQuota] = useState("");
+  let [quotaTotal, setQuotaTotal] = useState("");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isSubOpen, setIsSubOpen] = useState(false);
 
   const axiosJWT = axios.create();
 
@@ -100,8 +102,13 @@ const AdminDesktopPage = () => {
       const response = await axiosJWT.get(`${BASE_URL}/quota`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!response) {
+        setQuota(0);
+        setQuotaTotal(0);
+      }
       const quotaData = response.data.data;
-      setQuota(quota || 0);
+      setQuota(quotaData.quota);
+      setQuotaTotal(quotaData.total_quota);
     } catch (error) {
       console.error("Gagal mengambil data quota :", error);
       setMessage({
@@ -111,22 +118,63 @@ const AdminDesktopPage = () => {
     }
   };
 
-  const addQuota = async () => {
+  const handleAddQuota = async () => {
     try {
       const response = await axiosJWT.patch(
         `${BASE_URL}/addquota`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          add: Number(quotaValue),
         },
         {
-          add: addQuotaValue,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+      if (!response) {
+        throw console.error();
+      }
       getQuota();
+      setIsAddOpen(false);
+      setQuotaValue = 0;
+      alert(`Kuota sebanyak ${quotaValue} berhasil ditambahkan !`);
+      console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
     } catch (error) {
-      console.error("Gagal menambahkan data quota :", error);
+      setQuotaValue = 0;
+      console.error("Gagal menambahkan quota :", error);
       setMessage({
-        text: "Gagal menambahkan data quota !",
+        text: `Gagal menambahkan kuota sebanyak ${quotaValue} !`,
+        type: "error",
+      });
+    }
+  };
+
+  const handleSubQuota = async () => {
+    try {
+      const response = await axiosJWT.patch(
+        `${BASE_URL}/subquota`,
+        {
+          sub: Number(quotaValue),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response) {
+        throw console.error();
+      }
+      getQuota();
+      setIsSubOpen(false);
+      setQuotaValue = 0;
+      alert(`Kuota sebanyak ${quotaValue} berhasil dikurangi !`);
+      console.log(`Berhasil mengurangi ${quotaValue} kuota !`);
+    } catch (error) {
+      setQuotaValue = 0;
+      console.error("Gagal mengurangi quota :", error);
+      setMessage({
+        text: `Gagal mengurangi kuota sebanyak ${quotaValue} !`,
         type: "error",
       });
     }
@@ -184,7 +232,7 @@ const AdminDesktopPage = () => {
         qr: orderData.qr, // dari tabel orders
       });
 
-      setMessage({ text: "Data ditemukan!", type: "success" });
+      setMessage({ text: "Data ditemukan !", type: "success" });
     } catch (error) {
       console.error("Gagal mengambil data:", error);
       setMessage({
@@ -210,6 +258,7 @@ const AdminDesktopPage = () => {
   useEffect(() => {
     refreshToken();
     getAllOrders();
+    getQuota();
   }, []);
 
   return (
@@ -217,54 +266,136 @@ const AdminDesktopPage = () => {
       className="min-h-screen flex items-center justify-center px-4 py-8"
       style={{ backgroundColor: "#406017" }}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl w-full space-y-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-20 w-auto" />
+            <img
+              src={LogoKAI}
+              alt="Logo HUT KAI 80"
+              className="h-24 w-auto drop-shadow-lg"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-white">Pencarian Data Registrasi Gathering</p>
+          {/* <p className="text-white">Pencarian Data Registrasi Gathering</p> */}
         </div>
 
-        <div className="table">
-          <table className="table-auto">
+        {/* Quota Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center justify-between">
+          <div>
+            <p className="text-lg font-semibold text-gray-700">
+              Sisa Kuota: <span className="text-green-700">{quota}</span>
+            </p>
+            <p className="text-sm text-gray-500">
+              Total Kuota: {quotaTotal} | Terdaftar: {quotaTotal - quota}
+            </p>
+          </div>
+          <div className="space-x-2">
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow"
+            >
+              Tambah Kuota
+            </button>
+            <button
+              onClick={() => setIsSubOpen(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow"
+            >
+              Kurangi Kuota
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Tambah Kuota */}
+        {isAddOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-lg w-96 p-6">
+              <h2 className="text-lg font-semibold mb-4">Tambah Kuota</h2>
+              <input
+                type="number"
+                onChange={(e) => setQuotaValue(e.target.value)}
+                placeholder="Masukkan jumlah kuota"
+                className="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsAddOpen(false)}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleAddQuota}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Kurangi Kuota */}
+        {isSubOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-lg w-96 p-6">
+              <h2 className="text-lg font-semibold mb-4">Kurangi Kuota</h2>
+              <input
+                type="number"
+                onChange={(e) => setQuotaValue(e.target.value)}
+                placeholder="Masukkan jumlah kuota"
+                className="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-500"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsSubOpen(false)}
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSubQuota}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Table Orders */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr>
-                <th>NIPP</th>
-                <th>Nama</th>
-                <th>Action</th>
+              <tr className="bg-gray-100 text-gray-700">
+                <th className="px-4 py-2 text-left">NIPP</th>
+                <th className="px-4 py-2 text-left">Nama</th>
+                <th className="px-4 py-2 text-left">Action</th>
               </tr>
             </thead>
             <tbody>
               {orderList.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="has-text-centered has-text-grey">
+                  <td colSpan="6" className="text-center text-gray-500 py-4">
                     Tidak ada data order !
                   </td>
                 </tr>
               ) : (
                 orderList.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.nipp}</td>
-                    <td className="space-y-1">
+                  <tr key={order.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{order.nipp}</td>
+                    <td className="px-4 py-2 space-y-1">
                       {order.nama.map((n, index) => (
                         <div key={index}>{n}</div>
                       ))}
                     </td>
-
-                    <td>
+                    <td className="px-4 py-2">
                       <button
                         onClick={() => {}}
-                        className="button is-warning is-small"
+                        className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {}}
-                        className="button is-danger is-small"
-                      >
-                        Delete
+                        Detail
                       </button>
                     </td>
                   </tr>
@@ -275,7 +406,7 @@ const AdminDesktopPage = () => {
         </div>
 
         {/* Search Form */}
-        {/* <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex space-x-4">
             <input
               type="text"
@@ -302,10 +433,10 @@ const AdminDesktopPage = () => {
               {message.text}
             </p>
           )}
-        </div> */}
+        </div>
 
         {/* Result */}
-        {/* {searchResult && (
+        {searchResult && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Detail Registrasi
@@ -349,7 +480,7 @@ const AdminDesktopPage = () => {
               </button>
             </div>
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );
