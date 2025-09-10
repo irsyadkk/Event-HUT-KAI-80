@@ -6,12 +6,8 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
 
-  function getWIBDate(year, month, day, hour, minute = 0, second = 0) {
-    // WIB = UTC+7
-    return new Date(Date.UTC(year, month - 1, day, hour - 7, minute, second));
-  }
+  const targetTime = new Date("2025-09-11T05:00:00+07:00");
 
-  const targetTime = getWIBDate(2025, 9, 11, 5, 15, 0);
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -50,6 +46,12 @@ function LandingPage() {
           "linear-gradient(135deg, #2d5016 0%, #406017 50%, #5a7c2a 100%)",
       }}
     >
+      <div className="fixed bottom-2 left-2 bg-white p-2 text-black z-50">
+        <p>Target: {targetTime.toString()}</p>
+        <p>Sekarang: {new Date().toString()}</p>
+        <p>Time left: {timeLeft}</p>
+      </div>
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-yellow-300/10 rounded-full animate-pulse"></div>
@@ -61,11 +63,6 @@ function LandingPage() {
           className="absolute top-1/4 right-1/4 w-32 h-32 bg-green-300/10 rounded-full animate-ping"
           style={{ animationDuration: "2s" }}
         ></div>
-      </div>
-      <div className="fixed bottom-2 left-2 bg-white p-2 text-black z-50">
-        <p>Target: {targetTime.toString()}</p>
-        <p>Sekarang: {new Date().toString()}</p>
-        <p>Time left: {timeLeft}</p>
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
@@ -102,7 +99,7 @@ function LandingPage() {
                     {formatTime(timeLeft)}
                   </div>
                   <p className="text-sm text-gray-500">
-                    11 September 2025 - 05:00 WIB
+                    12 September 2025 - 09:00 WIB
                   </p>
                 </div>
               </div>
@@ -154,7 +151,7 @@ function LandingPage() {
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
                       <span className="font-medium">Tahap 1</span>
                       <span className="text-blue-600 font-bold">
-                        11 Sep • 05:00 WIB
+                        12 Sep • 09:00 WIB
                       </span>
                     </div>
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
