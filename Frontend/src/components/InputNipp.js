@@ -93,7 +93,7 @@ const InputNipp = () => {
             {/* Input Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nomor Induk Pegawai (NIPP)
+                NIPP / NIPKWT
               </label>
               <div className="relative">
                 <input

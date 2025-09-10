@@ -1,5 +1,5 @@
 runtime: nodejs20
-service: default
+service: frontend-event-hut-kai-80
 instance_class: F1
 
 handlers:
