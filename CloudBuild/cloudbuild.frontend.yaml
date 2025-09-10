@@ -6,11 +6,11 @@ steps:
       - |
         if [ ! -d "node_modules" ]; then
           echo "Menginstal Dependencies...."
-          npm ci
+          npm install
         else
           echo "node_modules sudah ada !"
         fi
-    dir: "frontend"
+    dir: "Frontend"
     volumes:
       - name: "npm-cache"
         path: /root/.npm
@@ -22,7 +22,9 @@ steps:
       - |
         chmod +x node_modules/.bin/*
         npm run build
-    dir: "frontend"
+    dir: "Frontend"
+    env:
+      - REACT_APP_ADMIN_NIPP=${_REACT_APP_ADMIN_NIPP} # inject dari trigger
     volumes:
       - name: "npm-cache"
         path: /root/.npm
@@ -30,7 +32,10 @@ steps:
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args: ["app", "deploy", "--quiet"]
-    dir: "frontend"
+    dir: "Frontend"
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REACT_APP_ADMIN_NIPP: "" # default kosong, isi di trigger
