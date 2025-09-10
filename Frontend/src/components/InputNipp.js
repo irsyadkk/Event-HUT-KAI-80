@@ -9,8 +9,9 @@ const InputNipp = () => {
   const [nipp, setNipp] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const targetTime = new Date("2025-09-12T04:00:00");
   const [allowed, setAllowed] = useState(false);
+
+  const targetTime = new Date("2025-09-11T06:00:00+07:00");
 
   useEffect(() => {
     const now = new Date();
