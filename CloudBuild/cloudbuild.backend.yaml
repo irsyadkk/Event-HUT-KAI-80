@@ -20,7 +20,7 @@ steps:
         "--port",
         "5000",
         "--region",
-        "asia-south1",
+        "asia-south2",
         "--allow-unauthenticated",
         "--set-env-vars",
         "ACCESS_TOKEN_SECRET=${_ACCESS_TOKEN_SECRET},REFRESH_TOKEN_SECRET=${_REFRESH_TOKEN_SECRET},DB_HOST=${_DB_HOST},DB_NAME=${_DB_NAME},DB_PASSWORD=${_DB_PASSWORD},DB_USERNAME=${_DB_USERNAME},ALLOWED_ORIGINS=${_ALLOWED_ORIGINS},DB_PORT=${_DB_PORT}",
@@ -35,7 +35,7 @@ steps:
         "api-hut-kai-80",
         "--member=allUsers",
         "--role=roles/run.invoker",
-        "--region=asia-south1",
+        "--region=asia-south2",
       ]
 
 options:
