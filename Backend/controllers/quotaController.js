@@ -34,9 +34,9 @@ export const addQuota = async (req, res) => {
       throw makeError("Add Field Cannot be Empty !", 400);
     }
 
-    const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    const updatedQuota = quota.quota + add;
-    const updatedTotal = quota.total_quota + add;
+    let quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
+    let updatedQuota = quota.quota + add;
+    let updatedTotal = quota.total_quota + add;
     if (!quota) {
       quota = await Quota.create(
         {
@@ -60,7 +60,10 @@ export const addQuota = async (req, res) => {
       data: { updatedQuota, updatedTotal },
     });
   } catch (error) {
-    await t.rollback();
+    if (!t.finished) {
+      await t.rollback();
+    }
+
     res.status(error.statusCode || 500).json({
       status: "Error",
       message: error.message,

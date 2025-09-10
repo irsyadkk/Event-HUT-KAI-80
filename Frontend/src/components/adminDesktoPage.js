@@ -12,6 +12,10 @@ const AdminDesktopPage = () => {
   const [message, setMessage] = useState("");
   const [token, setToken] = useState("");
   const [expire, setExpire] = useState("");
+  const [orderList, setOrderList] = useState("");
+  const [addQuotaValue, setAddQuotaValue] = useState("");
+  const [quota, setQuota] = useState("");
+  const [quotaGlobal, setQuotaGlobal] = useState("");
 
   const axiosJWT = axios.create();
 
@@ -70,6 +74,61 @@ const AdminDesktopPage = () => {
         type: "error",
       });
       setSearchResult(null);
+    }
+  };
+
+  // GET ALL ORDERS
+  const getAllOrders = async () => {
+    try {
+      const response = await axiosJWT.get(`${BASE_URL}/order`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const ordersData = response.data.data;
+      setOrderList(ordersData || []);
+    } catch (error) {
+      console.error("Gagal mengambil data order :", error);
+      setMessage({
+        text: "Data tidak ditemukan !",
+        type: "error",
+      });
+    }
+  };
+
+  // GET QUOTA
+  const getQuota = async () => {
+    try {
+      const response = await axiosJWT.get(`${BASE_URL}/quota`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const quotaData = response.data.data;
+      setQuota(quota || 0);
+    } catch (error) {
+      console.error("Gagal mengambil data quota :", error);
+      setMessage({
+        text: "Gagal mendapatkan data quota !",
+        type: "error",
+      });
+    }
+  };
+
+  const addQuota = async () => {
+    try {
+      const response = await axiosJWT.patch(
+        `${BASE_URL}/addquota`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+        {
+          add: addQuotaValue,
+        }
+      );
+      getQuota();
+    } catch (error) {
+      console.error("Gagal menambahkan data quota :", error);
+      setMessage({
+        text: "Gagal menambahkan data quota !",
+        type: "error",
+      });
     }
   };
 
@@ -150,6 +209,7 @@ const AdminDesktopPage = () => {
 
   useEffect(() => {
     refreshToken();
+    getAllOrders();
   }, []);
 
   return (
@@ -167,8 +227,55 @@ const AdminDesktopPage = () => {
           <p className="text-white">Pencarian Data Registrasi Gathering</p>
         </div>
 
+        <div className="table">
+          <table className="table-auto">
+            <thead>
+              <tr>
+                <th>NIPP</th>
+                <th>Nama</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderList.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="has-text-centered has-text-grey">
+                    Tidak ada data order !
+                  </td>
+                </tr>
+              ) : (
+                orderList.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.nipp}</td>
+                    <td className="space-y-1">
+                      {order.nama.map((n, index) => (
+                        <div key={index}>{n}</div>
+                      ))}
+                    </td>
+
+                    <td>
+                      <button
+                        onClick={() => {}}
+                        className="button is-warning is-small"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {}}
+                        className="button is-danger is-small"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
         {/* Search Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        {/* <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex space-x-4">
             <input
               type="text"
@@ -195,10 +302,10 @@ const AdminDesktopPage = () => {
               {message.text}
             </p>
           )}
-        </div>
+        </div> */}
 
         {/* Result */}
-        {searchResult && (
+        {/* {searchResult && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Detail Registrasi
@@ -242,7 +349,7 @@ const AdminDesktopPage = () => {
               </button>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
