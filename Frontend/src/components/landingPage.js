@@ -7,19 +7,11 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
 
   function getWIBDate(year, month, day, hour, minute = 0, second = 0) {
-    // month = 1-12
-    const monthStr = month.toString().padStart(2, "0");
-    const dayStr = day.toString().padStart(2, "0");
-    const hourStr = hour.toString().padStart(2, "0");
-    const minuteStr = minute.toString().padStart(2, "0");
-    const secondStr = second.toString().padStart(2, "0");
-
-    const isoString = `${year}-${monthStr}-${dayStr}T${hourStr}:${minuteStr}:${secondStr}+07:00`;
-    return new Date(isoString);
+    // WIB = UTC+7
+    return new Date(Date.UTC(year, month - 1, day, hour - 7, minute, second));
   }
 
-  const targetTime = getWIBDate(2025, 9, 11, 5, 10, 0);
-
+  const targetTime = getWIBDate(2025, 9, 11, 5, 15, 0);
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -69,6 +61,11 @@ function LandingPage() {
           className="absolute top-1/4 right-1/4 w-32 h-32 bg-green-300/10 rounded-full animate-ping"
           style={{ animationDuration: "2s" }}
         ></div>
+      </div>
+      <div className="fixed bottom-2 left-2 bg-white p-2 text-black z-50">
+        <p>Target: {targetTime.toString()}</p>
+        <p>Sekarang: {new Date().toString()}</p>
+        <p>Time left: {timeLeft}</p>
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
