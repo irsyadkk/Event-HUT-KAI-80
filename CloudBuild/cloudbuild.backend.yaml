@@ -8,7 +8,8 @@ steps:
 
   - name: "gcr.io/cloud-builders/gcloud"
     entrypoint: gcloud
-    args: [
+    args:
+      [
         "run",
         "deploy",
         "api-hut-kai-80",
@@ -22,9 +23,7 @@ steps:
         "asia-south1",
         "--allow-unauthenticated",
         "--set-env-vars",
-        "ACCESS_TOKEN_SECRET=${_ACCESS_TOKEN_SECRET},REFRESH_TOKEN_SECRET=${_REFRESH_TOKEN_SECRET},DB_HOST=${_DB_HOST},DB_NAME=${_DB_NAME},DB_PASSWORD=${_DB_PASSWORD},DB_USERNAME=${_DB_USERNAME},ALLOWED_ORIGINS=${_ALLOWED_ORIGINS}",
-        # "--set-secrets",
-        # "fcm-service-account=fcm-service-account:latest",
+        "ACCESS_TOKEN_SECRET=${_ACCESS_TOKEN_SECRET},REFRESH_TOKEN_SECRET=${_REFRESH_TOKEN_SECRET},DB_HOST=${_DB_HOST},DB_NAME=${_DB_NAME},DB_PASSWORD=${_DB_PASSWORD},DB_USERNAME=${_DB_USERNAME},ALLOWED_ORIGINS=${_ALLOWED_ORIGINS},DB_PORT=${_DB_PORT}",
       ]
 
   - name: "gcr.io/cloud-builders/gcloud"
