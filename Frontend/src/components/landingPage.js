@@ -6,27 +6,14 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   // SET TIME HERE
-  const targetTime = new Date("2025-09-11T03:30:00");
+  const targetTime = new Date("2025-09-11T03:35:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
-      useEffect(() => {
-        const timer = setInterval(() => {
-          const now = new Date();
-          const diff = Math.floor((targetTime - now) / 1000);
-          console.log(
-            "Sekarang:",
-            now,
-            "Target:",
-            targetTime,
-            "Selisih:",
-            diff
-          );
-          setTimeLeft(diff > 0 ? diff : 0);
-        }, 1000);
-
-        return () => clearInterval(timer);
-      }, [targetTime]);
+      const now = new Date();
+      const diff = Math.floor((targetTime - now) / 1000);
+      console.log("Sekarang:", now, "Target:", targetTime, "Selisih:", diff);
+      setTimeLeft(diff > 0 ? diff : 0);
     }, 1000);
 
     return () => clearInterval(timer);
