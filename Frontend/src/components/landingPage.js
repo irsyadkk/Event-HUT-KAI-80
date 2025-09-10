@@ -6,12 +6,17 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   // SET TIME HERE
-  const targetTime = new Date("2025-09-12T04:20:00+07:00");
+  // target: 12 September 2025 jam 09:00 WIB
+  const targetTime = new Date(2025, 8, 12, 9, 0, 0);
+  // bulan 8 = September (karena index mulai dari 0)
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
       const diff = Math.floor((targetTime - now) / 1000);
+      console.log("Sekarang:", now.toString());
+      console.log("Target:", targetTime.toString());
+      console.log("Selisih (detik):", diff);
       setTimeLeft(diff > 0 ? diff : 0);
     }, 1000);
 
