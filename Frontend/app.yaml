@@ -3,12 +3,14 @@ service: frontend-event-hut-kai-80
 instance_class: F1
 
 handlers:
-  - url: /
+  # Layani file statis (JS, CSS, gambar, fonts, dll)
+  - url: /(.*\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))
+    static_files: build/\1
+    upload: build/(.*\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))
+
+  # Semua route lainnya diarahkan ke index.html (biar React Router handle)
+  - url: /.*
     static_files: build/index.html
     upload: build/index.html
-
-  - url: /(.*)
-    static_files: build/\1
-    upload: build/(.*)
 
 default_expiration: "1h"
