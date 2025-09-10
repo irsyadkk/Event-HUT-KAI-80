@@ -3,15 +3,18 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { BASE_URL } from "../utils";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ADMIN_NIPP } from "../utils";
 
 const DetailRegisterPage = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const nipp = location.state?.nipp;
   const [token, setToken] = useState("");
   const [expire, setExpire] = useState("");
   const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
+  const [allowed, setAllowed] = useState(false);
 
   // axios instance
   const axiosJWT = axios.create();
@@ -80,7 +83,6 @@ const DetailRegisterPage = () => {
       }
     };
     initData();
-    getOrderByNipp();
   }, [nipp]);
 
   useEffect(() => {
@@ -88,6 +90,26 @@ const DetailRegisterPage = () => {
       getOrderByNipp();
     }
   }, [token]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    if (nipp !== ADMIN_NIPP) {
+      navigate("/");
+    }
+    if (nipp === ADMIN_NIPP && !location.state?.nipp) {
+      navigate("/admindesk");
+    } else {
+      setAllowed(true);
+    }
+  }, [navigate]);
+
+  if (!allowed) return null;
 
   return (
     <div
@@ -193,65 +215,6 @@ const DetailRegisterPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-              {/* Instructions */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start space-x-3">
-                  <svg
-                    className="h-6 w-6 text-blue-600 mt-0.5 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <div className="text-left">
-                    <h4 className="font-medium text-blue-900 mb-2">
-                      Langkah Selanjutnya:
-                    </h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>
-                        • Silakan Screenshot Halaman Ini dan download QR Code di
-                        atas untuk keperluan daftar ulang
-                      </li>
-                      <li>
-                        • Tunjukkan QR Code ini saat registrasi ulang di lokasi
-                        acara
-                      </li>
-                      <li>• QR Code akan ditukarkan dengan gelang peserta</li>
-                      <li>• Simpan QR Code dengan baik sampai hari acara</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              {/* Additional Actions */}
-              <div className="flex space-x-4">
-                <button
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200"
-                  onClick={() => (window.location.href = "/")}
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                      />
-                    </svg>
-                    <span>Beranda</span>
-                  </div>
-                </button>
               </div>
             </div>
           ) : (

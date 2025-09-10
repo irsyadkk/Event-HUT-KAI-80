@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils";
 import { jwtDecode } from "jwt-decode";
+import { ADMIN_NIPP } from "../utils";
 
 const AdminDesktopPage = () => {
   const [searchNipp, setSearchNipp] = useState("");
@@ -18,6 +19,7 @@ const AdminDesktopPage = () => {
   let [quotaTotal, setQuotaTotal] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
+  const [allowed, setAllowed] = useState(false);
 
   const axiosJWT = axios.create();
   const navigate = useNavigate();
@@ -80,6 +82,20 @@ const AdminDesktopPage = () => {
     }
   };
 
+  const logout = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/logout`, {
+        withCredentials: true,
+      });
+    } catch (error) {
+      console.error("Gagal logout:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("nipp");
+      navigate("/");
+    }
+  };
+
   // GET ALL ORDERS
   const getAllOrders = async () => {
     try {
@@ -137,7 +153,7 @@ const AdminDesktopPage = () => {
       }
       getQuota();
       setIsAddOpen(false);
-      setQuotaValue = 0;
+      setQuotaValue(0);
       alert(`Kuota sebanyak ${quotaValue} berhasil ditambahkan !`);
       console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
     } catch (error) {
@@ -262,6 +278,23 @@ const AdminDesktopPage = () => {
     getQuota();
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    if (nipp !== ADMIN_NIPP) {
+      navigate("/");
+    } else {
+      setAllowed(true);
+    }
+  }, [navigate]);
+
+  if (!allowed) return null;
+
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8"
@@ -277,6 +310,12 @@ const AdminDesktopPage = () => {
               className="h-24 w-auto drop-shadow-lg"
             />
           </div>
+          <button
+            onClick={logout}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow"
+          >
+            Logout
+          </button>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
           <p className="text-white mt-2">Pencarian & Manajemen Kuota Peserta</p>
         </div>
@@ -471,7 +510,9 @@ const AdminDesktopPage = () => {
                     <td className="px-4 py-2">
                       <button
                         onClick={() => {
-                          navigate("/detailregister", { state: order.nipp });
+                          navigate("/detailregister", {
+                            state: { nipp: order.nipp },
+                          });
                         }}
                         className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
                       >

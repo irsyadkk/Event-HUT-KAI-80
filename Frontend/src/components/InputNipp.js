@@ -21,7 +21,7 @@ const InputNipp = () => {
     }
   }, [navigate]);
 
-  if (!allowed) return null; // jangan render apapun sampai dicek
+  if (!allowed) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // penting supaya form tidak reload page
@@ -44,6 +44,8 @@ const InputNipp = () => {
       const response = await axios.post(`${BASE_URL}/login`, { nipp });
       console.log("Login success:", response.data);
       localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("nipp", response.data.user.nipp);
+      localStorage.setItem("nama", response.data.user.nama);
 
       setMessage({ text: "Selamat Datang", type: "success" });
       if (response.data.user.nipp === ADMIN_NIPP) {
