@@ -6,14 +6,19 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // ✅ Target waktu: 11 September 2025, 05:00 WIB (UTC+7)
-  const targetTime = new Date(Date.UTC(2025, 8, 10, 22, 0, 0));
-  // Penjelasan:
-  // - Date.UTC pakai UTC (GMT+0)
-  // - 2025 = tahun
-  // - 8 = September (karena bulan dimulai dari 0)
-  // - 10 = tanggal 10 UTC → sama dengan 11 September jam 05:00 WIB
-  // - 22:00 UTC = 05:00 WIB
+  function getWIBDate(year, month, day, hour, minute = 0, second = 0) {
+    // month = 1-12
+    const monthStr = month.toString().padStart(2, "0");
+    const dayStr = day.toString().padStart(2, "0");
+    const hourStr = hour.toString().padStart(2, "0");
+    const minuteStr = minute.toString().padStart(2, "0");
+    const secondStr = second.toString().padStart(2, "0");
+
+    const isoString = `${year}-${monthStr}-${dayStr}T${hourStr}:${minuteStr}:${secondStr}+07:00`;
+    return new Date(isoString);
+  }
+
+  const targetTime = getWIBDate(2025, 9, 11, 5, 10, 0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -26,7 +31,7 @@ function LandingPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetTime]);
+  }, []);
 
   const formatTime = (seconds) => {
     const days = Math.floor(seconds / (24 * 60 * 60));
