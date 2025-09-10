@@ -6,7 +6,7 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
   // SET TIME HERE
-  const targetTime = new Date("2025-09-11T03:50:00");
+  const targetTime = new Date("2025-09-12T04:00:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
