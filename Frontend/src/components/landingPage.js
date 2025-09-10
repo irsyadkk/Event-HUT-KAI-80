@@ -5,7 +5,8 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
-  const targetTime = new Date("2025-09-12T09:00:00");
+  // SET TIME HERE
+  const targetTime = new Date("2025-09-11T02:00:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
