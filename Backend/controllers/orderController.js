@@ -14,12 +14,13 @@ const makeError = (msg, code = 400) => {
 export const addOrder = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { nipp, nama } = req.body;
+    const { nipp, nama, status } = req.body;
 
     // INPUT VALIDATION
     if (
       !nipp ||
       !nama ||
+      !status ||
       !Array.isArray(nama) ||
       nama.some((n) => typeof n !== "string" || !n.trim())
     ) {
@@ -27,11 +28,15 @@ export const addOrder = async (req, res) => {
         ? "NIPP field cannot be empty !"
         : !nama
         ? "Nama field cannot be empty !"
+        : !status
+        ? "Status field cannot be empty !"
         : !Array.isArray(nama)
         ? "Nama must be an array !"
         : "Each Element in Nama Must be String & Cannot be Empty !";
       throw makeError(msg, 400);
     }
+
+    // BARU BIKIN "STATUS", KONDISI, VALIDASI, DLL BLM !
 
     const jumlahPeserta = nama.length;
 

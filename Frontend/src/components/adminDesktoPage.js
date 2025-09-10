@@ -277,7 +277,7 @@ const AdminDesktopPage = () => {
             />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          {/* <p className="text-white">Pencarian Data Registrasi Gathering</p> */}
+          <p className="text-white mt-2">Pencarian & Manajemen Kuota Peserta</p>
         </div>
 
         {/* Quota Section */}
