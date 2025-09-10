@@ -36,20 +36,11 @@ export const addOrder = async (req, res) => {
       throw makeError(msg, 400);
     }
 
-    // BARU BIKIN "STATUS", KONDISI, VALIDASI, DLL BLM !
-
     const jumlahPeserta = nama.length;
 
     // USER CHECK
-    const user = await User.findOne({
-      where: {
-        nipp: nipp,
-      },
-      transaction: t,
-    });
-    if (!user) {
-      throw makeError("User Tidak Ditemukan !", 404);
-    }
+    const user = await User.findOne({ where: { nipp }, transaction: t });
+    if (!user) throw makeError("User Tidak Ditemukan !", 404);
 
     const currentPenetapan = user.penetapan;
 
@@ -57,85 +48,65 @@ export const addOrder = async (req, res) => {
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
     const currentQuota = quota.quota;
 
-    // VALIDATION
-    if (currentPenetapan <= 0) {
-      throw makeError("Jatah Kamu Sudah Habis !", 400);
+    // HITUNG PENGURANGAN SESUAI STATUS
+    let penguranganPenetapan;
+    let penguranganQuota;
+
+    if (status.toLowerCase() === "tidak hadir") {
+      penguranganPenetapan = jumlahPeserta + 1;
+      penguranganQuota = jumlahPeserta;
+    } else if (status.toLowerCase() === "hadir") {
+      penguranganPenetapan = jumlahPeserta;
+      penguranganQuota = jumlahPeserta;
+    } else {
+      throw makeError("Status tidak valid (gunakan 'hadir' atau 'tidak hadir')", 400);
     }
 
-    if (currentPenetapan < jumlahPeserta) {
+    // VALIDASI
+    if (currentPenetapan < penguranganPenetapan) {
       throw makeError(
         `Jatah Kamu Tidak Mencukupi. Jatah Tersisa ${currentPenetapan} !`,
         400
       );
     }
-
-    if (currentQuota <= 0) {
-      throw makeError("Quota Sudah Habis !", 400);
-    }
-
-    if (currentQuota < jumlahPeserta) {
+    if (currentQuota < penguranganQuota) {
       throw makeError(
         `Quota Tidak Mencukupi. Quota Tersisa ${currentQuota} !`,
         400
       );
     }
 
-    // CHECK IF ORDER EXIST
-    const existingOrder = await Order.findOne({
-      where: { nipp },
-      transaction: t,
-    });
+    // CEK ORDER EXIST
+    const existingOrder = await Order.findOne({ where: { nipp }, transaction: t });
 
-    // IF EXIST
+    // UPDATE / CREATE ORDER
     if (existingOrder) {
       const updatedNama = [...existingOrder.nama, ...nama];
-      const qrData = JSON.stringify({ nipp, nama: updatedNama });
+      const qrData = JSON.stringify({ nipp, nama: updatedNama, status });
       const qrCode = await QRCode.toDataURL(qrData);
 
-      await existingOrder.update(
-        {
-          nama: updatedNama,
-          qr: qrCode,
-        },
-        { transaction: t }
-      );
-    }
-    // IF DOESN'T
-    else {
-      const qrData = JSON.stringify({ nipp, nama });
+      await existingOrder.update({ nama: updatedNama, qr: qrCode, status }, { transaction: t });
+    } else {
+      const qrData = JSON.stringify({ nipp, nama, status });
       const qrCode = await QRCode.toDataURL(qrData);
 
-      await Order.create({ nipp, nama, qr: qrCode }, { transaction: t });
+      await Order.create({ nipp, nama, status, qr: qrCode }, { transaction: t });
     }
 
-    // SUBTRACT PENETAPAN/JATAH
-    const updatedPenetapan = currentPenetapan - jumlahPeserta;
-    await User.update(
-      { penetapan: updatedPenetapan },
-      { where: { nipp: nipp }, transaction: t }
-    );
+    // UPDATE PENETAPAN & QUOTA
+    const updatedPenetapan = currentPenetapan - penguranganPenetapan;
+    const updatedQuota = currentQuota - penguranganQuota;
 
-    // SUBTRACT QUOTA
-    const updatedQuota = currentQuota - jumlahPeserta;
-    await Quota.update(
-      { quota: updatedQuota },
-      { where: { id: 1 }, transaction: t }
-    );
+    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
+    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
 
-    // COMMIT IF SUCCEED
     await t.commit();
     res.status(201).json({
       status: "Success",
       message: "Order Created",
-      data: {
-        nipp,
-        nama,
-        updatedPenetapan,
-        updatedQuota,
-      },
+      data: { nipp, nama, status, updatedPenetapan, updatedQuota },
     });
   } catch (error) {
-    // ROLLBACK IF FAILED
     await t.rollback();
     res.status(error.statusCode || 500).json({
       status: "Error...",
@@ -183,21 +154,24 @@ export const getOrderByNIPP = async (req, res) => {
   }
 };
 
-// EDIT ORDER (REPLACE / REMOVE / ADD NAMA) + SESUAIKAN PENETAPAN & QUOTA
+// EDIT ORDER
 export const editOrder = async (req, res) => {
   const t = await db.transaction();
   try {
     const nipp = req.params.nipp;
-    const { nama } = req.body;
+    const { nama, status } = req.body;
 
     // VALIDASI INPUT
     if (
       !nama ||
+      !status ||
       !Array.isArray(nama) ||
       nama.some((n) => typeof n !== "string" || !n.trim())
     ) {
       const msg = !nama
         ? "Nama field cannot be empty !"
+        : !status
+        ? "Status field cannot be empty !"
         : !Array.isArray(nama)
         ? "Nama must be an array !"
         : "Each Element in Nama Must be String & Cannot be Empty !";
@@ -205,70 +179,58 @@ export const editOrder = async (req, res) => {
     }
 
     const order = await Order.findOne({ where: { nipp }, transaction: t });
-    if (!order) {
-      throw makeError("Order Not Found !", 404);
-    }
+    if (!order) throw makeError("Order Not Found !", 404);
 
     const oldCount = order.nama.length;
     const newCount = nama.length;
     const diff = newCount - oldCount;
 
     const user = await User.findOne({ where: { nipp }, transaction: t });
-    if (!user) {
-      throw makeError("User Not Found !", 404);
-    }
-
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    if (!quota) {
-      throw makeError("Quota Not Found !", 404);
-    }
 
-    // VALIDASI PENAMBAHAN
-    if (diff > 0) {
-      if (user.penetapan < diff) {
-        throw makeError(
-          `Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`,
-          400
-        );
+    let penguranganPenetapan = 0;
+    let penguranganQuota = 0;
+
+    if (status.toLowerCase() === "tidak hadir") {
+      if (diff > 0) {
+        penguranganPenetapan = diff + 1;
+        penguranganQuota = diff;
+      } else if (diff < 0) {
+        penguranganPenetapan = diff - 1; // balikkan (hapus peserta + bonus 1)
+        penguranganQuota = diff;
       }
-      if (quota.quota < diff) {
-        throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
-      }
+    } else if (status.toLowerCase() === "hadir") {
+      penguranganPenetapan = diff;
+      penguranganQuota = diff;
+    } else {
+      throw makeError("Status tidak valid (gunakan 'hadir' atau 'tidak hadir')", 400);
     }
 
-    // UPDATE PENETAPAN & QUOTA
-    let updatedPenetapan = user.penetapan;
-    let updatedQuota = quota.quota;
-
-    if (diff > 0) {
-      updatedPenetapan -= diff;
-      updatedQuota -= diff;
-    } else if (diff < 0) {
-      updatedPenetapan += Math.abs(diff);
-      updatedQuota += Math.abs(diff);
+    // VALIDASI
+    if (user.penetapan < penguranganPenetapan) {
+      throw makeError(`Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`, 400);
+    }
+    if (quota.quota < penguranganQuota) {
+      throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
     }
 
-    await User.update(
-      { penetapan: updatedPenetapan },
-      { where: { nipp }, transaction: t }
-    );
+    // UPDATE DB
+    const updatedPenetapan = user.penetapan - penguranganPenetapan;
+    const updatedQuota = quota.quota - penguranganQuota;
 
-    await Quota.update(
-      { quota: updatedQuota },
-      { where: { id: 1 }, transaction: t }
-    );
+    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
+    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
 
-    // UPDATE ORDER
-    const qrData = JSON.stringify({ nipp, nama });
+    const qrData = JSON.stringify({ nipp, nama, status });
     const qrCode = await QRCode.toDataURL(qrData);
 
-    await order.update({ nama, qr: qrCode }, { transaction: t });
+    await order.update({ nama, status, qr: qrCode }, { transaction: t });
 
     await t.commit();
     res.status(200).json({
       status: "Success",
       message: `Order ${nipp} Updated`,
-      data: { nipp, nama, updatedPenetapan, updatedQuota },
+      data: { nipp, nama, status, updatedPenetapan, updatedQuota },
     });
   } catch (error) {
     await t.rollback();
@@ -283,44 +245,34 @@ export const editOrder = async (req, res) => {
 export const deleteOrder = async (req, res) => {
   const t = await db.transaction();
   try {
-    // CHECK IF ORDER EXIST
     const nipp = req.params.nipp;
-    const ifOrderExist = await Order.findOne({
-      where: { nipp: nipp },
-      transaction: t,
-    });
-    if (!ifOrderExist) {
-      throw makeError("Order not found !", 404);
-    }
+    const order = await Order.findOne({ where: { nipp }, transaction: t });
+    if (!order) throw makeError("Order not found !", 404);
 
-    // GET JUMLAHPESERTA
-    const jumlahPeserta = ifOrderExist.nama.length;
+    const jumlahPeserta = order.nama.length;
+    const status = order.status;
 
-    // GET USER FROM USERS
-    const user = await User.findOne({ where: { nipp: nipp }, transaction: t });
-    if (!user) {
-      throw makeError("User Not Found !", 404);
-    }
-
-    // ADD USER PENETAPAN/JATAH
-    const updatedPenetapan = user.penetapan + jumlahPeserta;
-    await User.update(
-      { penetapan: updatedPenetapan },
-      { where: { nipp }, transaction: t }
-    );
-
-    // ADD QUOTA
+    const user = await User.findOne({ where: { nipp }, transaction: t });
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    const updatedQuota = quota.quota + jumlahPeserta;
-    await Quota.update(
-      { quota: updatedQuota },
-      { where: { id: 1 }, transaction: t }
-    );
 
-    // DELETE ORDER
-    await Order.destroy({ where: { nipp: nipp }, transaction: t });
+    let pengembalianPenetapan;
+    let pengembalianQuota;
 
-    // COMMIT IF SUCCEED
+    if (status.toLowerCase() === "tidak hadir") {
+      pengembalianPenetapan = jumlahPeserta + 1;
+      pengembalianQuota = jumlahPeserta;
+    } else {
+      pengembalianPenetapan = jumlahPeserta;
+      pengembalianQuota = jumlahPeserta;
+    }
+
+    const updatedPenetapan = user.penetapan + pengembalianPenetapan;
+    const updatedQuota = quota.quota + pengembalianQuota;
+
+    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
+    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
+    await Order.destroy({ where: { nipp }, transaction: t });
+
     await t.commit();
     res.status(200).json({
       status: "Success",
@@ -328,7 +280,6 @@ export const deleteOrder = async (req, res) => {
       data: { nipp, updatedPenetapan, updatedQuota },
     });
   } catch (error) {
-    // ROLLBACK IF FAILED
     await t.rollback();
     res.status(error.statusCode || 500).json({
       status: "Error",
@@ -336,3 +287,4 @@ export const deleteOrder = async (req, res) => {
     });
   }
 };
+
