@@ -364,47 +364,6 @@ const AdminDesktopPage = () => {
           </div>
         )}
 
-        {/* Table Orders */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-gray-700">
-                <th className="px-4 py-2 text-left">NIPP</th>
-                <th className="px-4 py-2 text-left">Nama</th>
-                <th className="px-4 py-2 text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderList.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center text-gray-500 py-4">
-                    Tidak ada data order !
-                  </td>
-                </tr>
-              ) : (
-                orderList.map((order) => (
-                  <tr key={order.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2">{order.nipp}</td>
-                    <td className="px-4 py-2 space-y-1">
-                      {order.nama.map((n, index) => (
-                        <div key={index}>{n}</div>
-                      ))}
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => {}}
-                        className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
-                      >
-                        Detail
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
         {/* Search Form */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex space-x-4">
@@ -481,6 +440,47 @@ const AdminDesktopPage = () => {
             </div>
           </div>
         )}
+
+        {/* Table Orders */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-gray-100 text-gray-700">
+                <th className="px-4 py-2 text-left">NIPP</th>
+                <th className="px-4 py-2 text-left">Nama</th>
+                <th className="px-4 py-2 text-left">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderList.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center text-gray-500 py-4">
+                    Tidak ada data order !
+                  </td>
+                </tr>
+              ) : (
+                orderList.map((order) => (
+                  <tr key={order.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-2">{order.nipp}</td>
+                    <td className="px-4 py-2 space-y-1">
+                      {order.nama.map((n, index) => (
+                        <div key={index}>{n}</div>
+                      ))}
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => {}}
+                        className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
+                      >
+                        Detail
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
