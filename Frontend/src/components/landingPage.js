@@ -105,7 +105,7 @@ function LandingPage() {
             {/* Action Button */}
             <button
               onClick={() => navigate("/inputnipp")}
-              disabled={timeLeft > 0}
+              //disabled={timeLeft > 0}
               className={`w-full py-4 px-8 rounded-2xl font-bold text-lg shadow-2xl transition-all duration-300 transform ${
                 timeLeft > 0
                   ? "bg-gray-400 text-gray-600 cursor-not-allowed"
