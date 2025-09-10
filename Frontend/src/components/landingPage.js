@@ -5,8 +5,15 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
-  // SET TIME HERE
-  const targetTime = new Date("2025-09-11T05:00:00+07:00");
+
+  // ✅ Target waktu: 11 September 2025, 05:00 WIB (UTC+7)
+  const targetTime = new Date(Date.UTC(2025, 8, 10, 22, 0, 0));
+  // Penjelasan:
+  // - Date.UTC pakai UTC (GMT+0)
+  // - 2025 = tahun
+  // - 8 = September (karena bulan dimulai dari 0)
+  // - 10 = tanggal 10 UTC → sama dengan 11 September jam 05:00 WIB
+  // - 22:00 UTC = 05:00 WIB
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -93,7 +100,7 @@ function LandingPage() {
                     {formatTime(timeLeft)}
                   </div>
                   <p className="text-sm text-gray-500">
-                    12 September 2025 - 09:00 WIB
+                    11 September 2025 - 05:00 WIB
                   </p>
                 </div>
               </div>
@@ -122,7 +129,6 @@ function LandingPage() {
           </div>
 
           {/* Right Column - Info Cards */}
-
           <div className="space-y-4">
             {/* Card SELAMAT DATANG */}
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-2xl p-6 text-white text-center">
@@ -146,7 +152,7 @@ function LandingPage() {
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
                       <span className="font-medium">Tahap 1</span>
                       <span className="text-blue-600 font-bold">
-                        12 Sep • 09:00 WIB
+                        11 Sep • 05:00 WIB
                       </span>
                     </div>
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
