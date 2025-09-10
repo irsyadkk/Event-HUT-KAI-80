@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL, ADMIN_NIPP } from "../utils";
@@ -9,6 +9,19 @@ const InputNipp = () => {
   const [nipp, setNipp] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const targetTime = new Date("2025-09-12T09:00:00");
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const now = new Date();
+    if (now < targetTime) {
+      navigate("/");
+    } else {
+      setAllowed(true);
+    }
+  }, [navigate]);
+
+  if (!allowed) return null; // jangan render apapun sampai dicek
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // penting supaya form tidak reload page
@@ -33,15 +46,11 @@ const InputNipp = () => {
       localStorage.setItem("token", response.data.accessToken);
 
       setMessage({ text: "Selamat Datang", type: "success" });
-      if(response.data.user.nipp === ADMIN_NIPP){
-        navigate("/admindesk")
-      }
-      else{
+      if (response.data.user.nipp === ADMIN_NIPP) {
+        navigate("/admindesk");
+      } else {
         navigate("/addmembers", { state: { nipp } });
-        
-
       }
-      
     } catch (error) {
       console.error("Login failed:", error);
       let errorMessage = "Login gagal. Periksa NIPP anda";

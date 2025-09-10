@@ -1,20 +1,22 @@
-import{BrowserRouter, Routes, Route} from 'react-router-dom';
-import AddMemberPage from './components/addMemberPage';
-import InputNipp from './components/InputNipp';
-import QRResultPage from './components/qrResutPage';
-import AdminDesktopPage from './components/adminDesktoPage';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AddMemberPage from "./components/addMemberPage";
+import InputNipp from "./components/InputNipp";
+import QRResultPage from "./components/qrResutPage";
+import AdminDesktopPage from "./components/adminDesktoPage";
+import DetailRegisterPage from "./components/detailRegisterPage";
+import LandingPage from "./components/landingPage";
 
 function App() {
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<InputNipp/>}/>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/inputnipp" element={<InputNipp />} />
         <Route path="/addmembers" element={<AddMemberPage />} />
         <Route path="/qrresult" element={<QRResultPage />} />
         <Route path="/admindesk" element={<AdminDesktopPage />} />
-
-      </Routes> 
+        <Route path="/detailregister" element={<DetailRegisterPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }

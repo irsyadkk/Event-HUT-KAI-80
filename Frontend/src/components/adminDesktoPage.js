@@ -20,6 +20,7 @@ const AdminDesktopPage = () => {
   const [isSubOpen, setIsSubOpen] = useState(false);
 
   const axiosJWT = axios.create();
+  const navigate = useNavigate();
 
   axiosJWT.interceptors.request.use(
     async (config) => {
@@ -469,7 +470,9 @@ const AdminDesktopPage = () => {
                     </td>
                     <td className="px-4 py-2">
                       <button
-                        onClick={() => {}}
+                        onClick={() => {
+                          navigate("/detailregister", { state: order.nipp });
+                        }}
                         className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
                       >
                         Detail
