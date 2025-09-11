@@ -13,8 +13,6 @@ const AddMemberPage = () => {
   const [members, setMembers] = useState([]);
   const [userFromUsers, setUserFromUsers] = useState(null);
   const [maxMembers, setMaxMembers] = useState(0);
-  const [transportasi, setTransportasi] = useState(0);
-  const [keberangkatan, setKeberangkatan] = useState(0);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [statusHadir, setStatusHadir] = useState(STATUS_HADIR);
   const [hasExistingOrder, setHasExistingOrder] = useState(false);
@@ -135,13 +133,7 @@ const AddMemberPage = () => {
       const method = hasExistingOrder ? "put" : "post";
       const url = hasExistingOrder ? `/order/${nipp}` : "/order";
 
-      await api[method](url, {
-        nipp,
-        nama: uniqueNames,
-        status: statusHadir,
-        transportasi: transportasi,
-        keberangkatan: keberangkatan,
-      });
+      await api[method](url, { nipp, nama: uniqueNames });
 
       alert("Tiket berhasil didaftarkan!");
       navigate("/qrresult", { state: { nipp } });
