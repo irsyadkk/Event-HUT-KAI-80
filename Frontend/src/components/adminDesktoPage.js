@@ -3,7 +3,7 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { ADMIN_NIPP } from "../utils";
-import api from "../api"; // ✅ pakai instance yang sudah handle token & refresh
+import api from "../api";
 
 const AdminDesktopPage = () => {
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ const AdminDesktopPage = () => {
   const [namaAdd, setNamaAdd] = useState("");
   const [penetapanAdd, setPenetapanAdd] = useState("");
 
-  // ✅ cek token & role admin
   useEffect(() => {
     const token = localStorage.getItem("token");
     const nipp = localStorage.getItem("nipp");
