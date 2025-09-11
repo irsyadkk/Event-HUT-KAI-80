@@ -7,7 +7,7 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
 
   // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
-  const targetTime = new Date("2025-09-11T23:00:00+07:00");
+  const targetTime = new Date("2025-09-12T09:00:00+07:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -73,7 +73,7 @@ function LandingPage() {
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                 Gathering
-                <span className="block text-yellow-300">HUT KAI 80</span>
+                <span className="block text-yellow-300">HUT KAI 80 DAOP 6</span>
               </h1>
               <p className="text-lg text-blue-200 font-medium">
                 📍 Puncak Sosok, Bantul, DIY
@@ -118,13 +118,13 @@ function LandingPage() {
             ) : (
               <button
                 onClick={() => navigate("/inputnipp")}
-                className="w-full py-3 px-6 rounded-xl font-bold text-lg shadow-xl 
-                           bg-gradient-to-r from-yellow-400 to-yellow-500 
-                           hover:from-yellow-500 hover:to-yellow-600 text-gray-800 
-                           transition-all duration-300 transform 
-                           animate-bounce hover:scale-105 hover:shadow-2xl"
+                className="w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
+             bg-gradient-to-r from-yellow-400 to-yellow-500 
+             hover:from-yellow-500 hover:to-yellow-600 text-gray-900 
+             transition-all duration-300 transform 
+             animate-bounce hover:scale-110 hover:shadow-3xl"
               >
-                KLIK DISINI UNTUK REGISTRASI
+                MULAI
               </button>
             )}
           </div>
@@ -187,13 +187,13 @@ function LandingPage() {
                 <li>
                   Cek kesesuaian nama pegawai, jika sudah sesuai, masukkan:
                   <ul className="list-disc list-inside ml-3 mt-1">
-                    <li>Nama anggota keluarga yang akan hadir</li>
-                    <li>Pilih lokasi keberangkatan terdekat dari domisili</li>
                     <li>Pilih transportasi yang akan digunakan</li>
+                    <li>Pilih lokasi keberangkatan terdekat dari domisili</li>
+                    <li>Nama anggota keluarga yang akan hadir</li>
                   </ul>
                 </li>
                 <li>
-                  Apabila data sudah sesuai, klik tombol <b>DAFTAR SEKARANG</b>
+                  Apabila data sudah sesuai, klik tombol <b>DAFTAR</b>
                 </li>
                 <li>
                   Simpan bukti registrasi (screenshot) untuk penukaran gelang &

@@ -136,9 +136,10 @@ const QRResultPage = () => {
                     />
                   </svg>
                   <div className="text-left">
-                    <h4 className="font-medium text-blue-900 mb-2">
-                      Langkah Selanjutnya:
-                    </h4>
+                    <h3 className="font-medium text-blue-900 mb-2">
+                      PERHATIAN!
+                    </h3>
+                    <p>SCREENSHOT halaman ini sebagai bukti registrasi</p>
                     <ul className="text-sm text-blue-800 space-y-1 text-justify">
                       <li>
                         Penukaran kode registrasi dengan gelang, kupon makan,
@@ -151,7 +152,7 @@ const QRResultPage = () => {
                       </li>
                       <li>
                         Penukaran kode registrasi secara kolektif harus membawa
-                        daftar nominatif pekerja beserta fotocopy kmf berikut
+                        daftar nominatif pekerja beserta fotocopy kartu identitas anggota/kmf berikut
                         dengan detail masing-masing kode registrasi, dan apabila
                         peserta tidak menerima gelang, kupon makan, dan kupon
                         doorprize maka bukan menjadi tanggung jawab panitia.
