@@ -20,6 +20,9 @@ const AdminDesktopPage = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [allowed, setAllowed] = useState(false);
+  const [nippAdd, setNippAdd] = useState("");
+  const [namaAdd, setNamaAdd] = useState("");
+  const [penetapanAdd, setPenetapanAdd] = useState("");
 
   const axiosJWT = axios.create();
   const navigate = useNavigate();
@@ -134,6 +137,30 @@ const AdminDesktopPage = () => {
       });
     }
   };
+
+  // ADD USER
+  const addUser = async ()=> {
+    try {
+      const response = await axiosJWT.post(`${BASE_URL}/users`,{
+        nipp: nippAdd,
+        nama: namaAdd,
+        penetapan: Number(penetapanAdd)
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response) {
+        throw console.error();
+      }
+      alert(`Berhasil menambahkan ${namaAdd} dengan ${nippAdd} dan jatah ${penetapanAdd} !`);
+      console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
+    } catch (error) {
+      console.error("Gagal menambahkan orang :", error);
+      setMessage({
+        text: `Gagal menambahkan ${nippAdd} dengan nama ${namaAdd} !`,
+        type: "error",
+      });
+    }
+  }
 
   const handleAddQuota = async () => {
     try {
