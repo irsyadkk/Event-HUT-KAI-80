@@ -64,14 +64,6 @@ const QRResultPage = () => {
     }
   };
 
-  const downloadQR = () => {
-    if (!orderData?.qr) return;
-    const link = document.createElement("a");
-    link.href = orderData.qr; // base64 image
-    link.download = `qr-${nipp}.png`; // nama file
-    link.click();
-  };
-
   // load data
   useEffect(() => {
     const initData = async () => {
@@ -141,42 +133,29 @@ const QRResultPage = () => {
                   <div className="bg-white p-4 rounded-xl shadow-lg border-2 border-gray-200">
                     <img src={orderData.qr} alt="QR Code" />
                   </div>
-                  <button
-                    onClick={downloadQR}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Download QR
-                  </button>
+                  {/* Tambahan NIPP */}
+                  <p className="text-gray-800 font-medium mt-2">NIPP: {nipp}</p>
                 </div>
               )}
 
               {/* Registration Info */}
               <div className="bg-gray-50 rounded-xl p-6 text-left">
                 <h3 className="font-semibold text-lg text-gray-800 mb-4">
-                  Detail Pendaftaran
+                  Data Peserta Terdaftar:
                 </h3>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">NIPP:</span>
-                    <span className="font-medium text-gray-900">{nipp}</span>
-                  </div>
-                </div>
-
                 <div className="border-t pt-4">
-                  <h4 className="font-medium text-gray-800 mb-3">
-                    Anggota Keluarga yang Terdaftar:
-                  </h4>
                   <div className="space-y-2">
                     {Array.isArray(orderData.nama) &&
                       orderData.nama.map((nm, index) => (
                         <div
                           key={index}
-                          className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                          className="flex items-center py-2 border-b border-gray-200 last:border-b-0"
                         >
-                          <span className="font-medium text-gray-900">
-                            {nm}
+                          <span className="text-gray-600 mr-2">
+                            {index + 1}.
                           </span>
+                          <span className="text-gray-900">{nm}</span>
                         </div>
                       ))}
                   </div>
@@ -213,21 +192,28 @@ const QRResultPage = () => {
                     <h4 className="font-medium text-blue-900 mb-2">
                       Langkah Selanjutnya:
                     </h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
+                    <ul className="text-sm text-blue-800 space-y-1 text-justify">
                       <li>
-                        • Silakan Screenshot Halaman Ini dan download QR Code di
-                        atas untuk keperluan daftar ulang
+                        Penukaran kode registrasi dengan gelang, kupon makan,
+                        dan kupon doorprize dapat dilakukan pada :
+                      </li>
+                      <li>• Hari Selasa-Rabu, tanggal 16-17 September 2025</li>
+                      <li>
+                        • Pukul 09.00-16.00 WIB di Unit Keuangan Kantor Daop 6
+                        YK
                       </li>
                       <li>
-                        • Tunjukkan QR Code ini saat registrasi ulang di lokasi
-                        acara
+                        Penukaran kode registrasi secara kolektif harus membawa
+                        daftar nominatif pekerja beserta fotocopy kmf berikut
+                        dengan detail masing-masing kode registrasi, dan apabila
+                        peserta tidak menerima gelang, kupon makan, dan kupon
+                        doorprize maka bukan menjadi tanggung jawab panitia.
                       </li>
-                      <li>• QR Code akan ditukarkan dengan gelang peserta</li>
-                      <li>• Simpan QR Code dengan baik sampai hari acara</li>
                     </ul>
                   </div>
                 </div>
               </div>
+
               {/* Additional Actions */}
               <div className="flex space-x-4">
                 <button
