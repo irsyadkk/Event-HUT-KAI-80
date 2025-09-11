@@ -51,29 +51,30 @@ export const getUserByNIPP = async (req, res) => {
 };
 
 // ADD USER PENETAPAN/JATAH BY NIPP
-export const addPenetapan = async (req, res) => {
+export const addUser = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { add } = req.body;
-    const nipp = req.params.nipp;
-    if (!add) {
-      throw makeError("Add Field Cannot be Empty !", 400);
+    const { nipp, nama, penetapan } = req.body;
+    if (!nipp || !nama || !penetapan) {
+      const msg = !nipp
+        ? "Nama field cannot be empty !"
+        : !nama
+        ? "Status field cannot be empty !"
+        : "Penetapan field cannot be empty !";
+      throw makeError(msg, 400);
     }
 
     const ifUserExist = await User.findOne({
       where: { nipp: nipp },
       transaction: t,
     });
-    if (!ifUserExist) {
-      throw makeError("User Not Found !", 404);
+    if (ifUserExist) {
+      throw makeError("User Already Exist !", 400);
     }
 
-    const updatedPenetapan = ifUserExist.penetapan + add;
-
-    await User.update(
-      { penetapan: updatedPenetapan },
+    await User.create(
+      { nipp: nipp, nama: nama, penetapan: penetapan },
       {
-        where: { nipp: nipp },
         transaction: t,
       }
     );
@@ -81,8 +82,8 @@ export const addPenetapan = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `${nipp} Penetapan Added By ${add}`,
-      data: { nipp, updatedPenetapan },
+      message: `Added ${nama} With ${nipp} and ${penetapan} Penetapan to Database !`,
+      data: { nipp, nama, penetapan },
     });
   } catch (error) {
     await t.rollback();

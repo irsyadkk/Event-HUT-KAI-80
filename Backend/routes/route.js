@@ -6,7 +6,7 @@ import {
   getUserByNIPP,
   loginHandler,
   logout,
-  addPenetapan,
+  addUser,
 } from "../controllers/userController.js";
 import {
   addOrder,
@@ -32,7 +32,7 @@ router.delete("/logout", logout);
 // USERS
 router.get("/users", verifyToken, getUser);
 router.get("/users/:nipp", verifyToken, getUserByNIPP);
-router.patch("/users/:nipp", verifyToken, addPenetapan);
+router.post("/users", verifyToken, addUser);
 
 // ORDER
 router.post("/order", verifyToken, addOrder);

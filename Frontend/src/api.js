@@ -1,6 +1,6 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { BASE_URL} from "utils.js" // Pastikan path ke utils.js sudah benar
+import { BASE_URL} from "./utils.js"; // Pastikan path ke utils.js sudah benar
 
 // Buat satu instance Axios terpusat
 const api = axios.create({
@@ -33,11 +33,11 @@ api.interceptors.request.use(
           console.error("Gagal refresh token:", error);
           // Jika refresh gagal, hapus token lama dan arahkan ke halaman login
           localStorage.removeItem("token");
-          window.location.href = '/'; 
+          window.location.href = '/';
           return Promise.reject(error);
         }
       }
-      
+
       // 4. Selalu lampirkan token yang valid ke header Authorization
       config.headers.Authorization = `Bearer ${token}`;
     }
