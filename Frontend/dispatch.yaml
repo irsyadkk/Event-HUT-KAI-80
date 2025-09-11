@@ -1,0 +1,3 @@
+dispatch:
+  - url: "hutkai.daop6.id/*"
+    service: frontend-event-hut-kai-80
