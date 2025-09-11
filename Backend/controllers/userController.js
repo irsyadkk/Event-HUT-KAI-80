@@ -157,7 +157,7 @@ export async function loginHandler(req, res) {
       httpOnly: false,
       sameSite: "Strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: True, // kalau pakai HTTP
+      secure: true, // kalau pakai HTTPS
     });
 
     res.status(200).json({
