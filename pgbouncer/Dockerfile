@@ -1,6 +1,9 @@
 FROM debian:bullseye-slim
-RUN apt-get update && apt-get install -y pgbouncer && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pgbouncer ca-certificates tini \
+    && rm -rf /var/lib/apt/lists/*
 COPY pgbouncer.ini /etc/pgbouncer/
 COPY userlist.txt /etc/pgbouncer/
 EXPOSE 5432
-CMD ["pgbouncer", "/etc/pgbouncer/pgbouncer.ini"]
+ENTRYPOINT ["/usr/bin/tini","--"]
+CMD ["pgbouncer","/etc/pgbouncer/pgbouncer.ini"]
