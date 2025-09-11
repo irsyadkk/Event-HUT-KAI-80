@@ -526,6 +526,12 @@ const AdminDesktopPage = () => {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                     Anggota Keluarga
                   </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Transportasi
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Keberangkatan
+                  </th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                     Aksi
                   </th>
@@ -584,6 +590,12 @@ const AdminDesktopPage = () => {
                             </div>
                           ))}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {order.transportasi ?? "-"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {order.keberangkatan ?? "-"}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button
