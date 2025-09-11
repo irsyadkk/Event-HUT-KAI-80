@@ -155,10 +155,10 @@ export async function loginHandler(req, res) {
     );
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
+      httpOnly: false,
+      sameSite: "Strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: false, // kalau pakai HTTPS
+      secure: true, // kalau pakai HTTPS
     });
 
     res.status(200).json({
