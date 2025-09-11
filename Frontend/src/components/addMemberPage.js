@@ -404,9 +404,9 @@ const AddMemberPage = () => {
 
   const { orderCount, newCount } = getCounts();
   let currentUsed = 0;
-  if (statusHadir === STATUS_HADIR) {
+  
     currentUsed += 1;
-  }
+  
   currentUsed += orderCount;
   currentUsed += newCount;
 

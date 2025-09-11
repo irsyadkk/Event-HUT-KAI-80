@@ -134,11 +134,11 @@ const QRResultPage = () => {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <div className="text-left">
+                  <div className="text-left ">
                     <h3 className="font-medium text-blue-900 mb-2">
                       PERHATIAN!
                     </h3>
-                    <p>SCREENSHOT halaman ini sebagai bukti registrasi</p>
+                    <p className="text-sm text-blue-800 mb-2">SCREENSHOT halaman ini sebagai bukti registrasi</p>
                     <ul className="text-sm text-blue-800 space-y-1 text-justify">
                       <li>
                         Penukaran kode registrasi dengan gelang, kupon makan,
