@@ -49,7 +49,6 @@ const QRResultPage = () => {
           <h1 className="text-2xl font-bold text-white mb-2">
             Registrasi Berhasil!
           </h1>
-          <p className="text-green-200 text-sm">PT Kereta Api Indonesia</p>
         </div>
 
         {/* Main Card */}
