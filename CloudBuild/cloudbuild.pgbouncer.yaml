@@ -21,4 +21,4 @@ images:
   - "gcr.io/$PROJECT_ID/pgbouncer"
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
