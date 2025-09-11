@@ -6,6 +6,7 @@ function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
 
+  // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
   const targetTime = new Date("2025-09-12T09:00:00+07:00");
 
   useEffect(() => {

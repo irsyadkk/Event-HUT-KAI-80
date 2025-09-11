@@ -9,12 +9,13 @@ const AddMemberPage = () => {
   const nipp = location.state?.nipp;
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
-  const [orderMembers, setOrderMembers] = useState([]); 
+  const [orderMembers, setOrderMembers] = useState([]);
   const [maxMembers, setMaxMembers] = useState(0);
   const [token, setToken] = useState("");
   const [expire, setExpire] = useState("");
   const [namaPengguna, setNamaPengguna] = useState("");
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [allowed, setAllowed] = useState(false);
 
   const axiosJWT = axios.create();
 
@@ -115,7 +116,7 @@ const AddMemberPage = () => {
         }
       );
       alert("Tiket berhasil didaftarkan!");
-      navigate("/qrresult" , { state: { nipp } });  
+      navigate("/qrresult", { state: { nipp } });
     } catch (error) {
       console.error("Error saat mendaftarkan tiket:", error);
       const errorMessage = error.response?.data?.msg || "Gagal mencetak tiket.";
@@ -140,6 +141,20 @@ const AddMemberPage = () => {
       getOrderByNipp();
     }
   }, [isDataLoaded, token]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    } else {
+      setAllowed(true);
+    }
+  }, [navigate]);
+
+  if (!allowed) return null;
 
   const handleMemberNameChange = (id, newName) => {
     setMembers((prevMembers) =>
