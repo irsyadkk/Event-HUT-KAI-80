@@ -5,18 +5,22 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
-  // SET TIME HERE
-  const targetTime = new Date("2025-09-11T02:00:00");
+
+  // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
+  const targetTime = new Date("2025-09-12T09:00:00+07:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
       const diff = Math.floor((targetTime - now) / 1000);
+      console.log("Sekarang:", now.toString());
+      console.log("Target:", targetTime.toString());
+      console.log("Selisih (detik):", diff);
       setTimeLeft(diff > 0 ? diff : 0);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetTime]);
+  }, []);
 
   const formatTime = (seconds) => {
     const days = Math.floor(seconds / (24 * 60 * 60));
@@ -43,6 +47,12 @@ function LandingPage() {
           "linear-gradient(135deg, #2d5016 0%, #406017 50%, #5a7c2a 100%)",
       }}
     >
+      <div className="fixed bottom-2 left-2 bg-white p-2 text-black z-50">
+        <p>Target: {targetTime.toString()}</p>
+        <p>Sekarang: {new Date().toString()}</p>
+        <p>Time left: {timeLeft}</p>
+      </div>
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-yellow-300/10 rounded-full animate-pulse"></div>
@@ -105,7 +115,7 @@ function LandingPage() {
             {/* Action Button */}
             <button
               onClick={() => navigate("/inputnipp")}
-              //disabled={timeLeft > 0}
+              disabled={timeLeft > 0}
               className={`w-full py-4 px-8 rounded-2xl font-bold text-lg shadow-2xl transition-all duration-300 transform ${
                 timeLeft > 0
                   ? "bg-gray-400 text-gray-600 cursor-not-allowed"
@@ -119,7 +129,6 @@ function LandingPage() {
           </div>
 
           {/* Right Column - Info Cards */}
-
           <div className="space-y-4">
             {/* Card SELAMAT DATANG */}
             <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-2xl p-6 text-white text-center">
