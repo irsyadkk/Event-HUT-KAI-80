@@ -152,6 +152,26 @@ const DetailRegisterPage = () => {
                         </div>
                       ))}
                   </div>
+                  <h4 className="font-medium text-gray-800 mb-3 pt-2 border-t">
+                    Lokasi Keberangkatan:
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                      <span className="text-gray-600">
+                        {orderData.keberangkatan}
+                      </span>
+                    </div>
+                  </div>
+                  <h4 className="font-medium text-gray-800 mb-3 pt-2 border-t">
+                    Transportasi:
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                      <span className="text-gray-600">
+                        {orderData.transportasi}
+                      </span>
+                    </div>
+                  </div>
                   <div className="mt-3 pt-2 border-t">
                     <div className="flex justify-between font-medium">
                       <span className="text-gray-800">Total Peserta:</span>
