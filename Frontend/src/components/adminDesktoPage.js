@@ -11,6 +11,8 @@ const AdminDesktopPage = () => {
   const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageCari, setMessageCari] = useState("");
+  const [messageTambah, setMessageTambah] = useState("");
   const [token, setToken] = useState("");
   const [expire, setExpire] = useState("");
   const [orderList, setOrderList] = useState("");
@@ -139,28 +141,51 @@ const AdminDesktopPage = () => {
   };
 
   // ADD USER
-  const addUser = async ()=> {
+  const handleAddUser = async () => {
     try {
-      const response = await axiosJWT.post(`${BASE_URL}/users`,{
-        nipp: nippAdd,
-        nama: namaAdd,
-        penetapan: Number(penetapanAdd)
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!nippAdd.trim() || !namaAdd.trim() || !penetapanAdd.trim()) {
+        const msg = !nippAdd.trim()
+          ? "NIPP tidak boleh kosong !"
+          : !namaAdd.trim()
+          ? "Nama tidak boleh kosong !"
+          : "Jatah tidak boleh kosong & harus angka !";
+        setMessageTambah({ text: msg, type: "error" });
+        setIsLoading(false);
+        return;
+      }
+      const response = await axiosJWT.post(
+        `${BASE_URL}/users`,
+        {
+          nipp: nippAdd,
+          nama: namaAdd,
+          penetapan: Number(penetapanAdd),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!response) {
         throw console.error();
       }
-      alert(`Berhasil menambahkan ${namaAdd} dengan ${nippAdd} dan jatah ${penetapanAdd} !`);
       console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
+      setMessageTambah({
+        text: `Berhasil menambahkan ${namaAdd} dengan ${nippAdd} dan jatah ${penetapanAdd} !`,
+        type: "success",
+      });
+      setNippAdd("");
+      setNamaAdd("");
+      setPenetapanAdd("");
     } catch (error) {
       console.error("Gagal menambahkan orang :", error);
-      setMessage({
-        text: `Gagal menambahkan ${nippAdd} dengan nama ${namaAdd} !`,
+      setNippAdd("");
+      setNamaAdd("");
+      setPenetapanAdd("");
+      setMessageTambah({
+        text: `Gagal menambahkan ${namaAdd} dengan NIPP ${nippAdd}`,
         type: "error",
       });
     }
-  }
+  };
 
   const handleAddQuota = async () => {
     try {
@@ -239,11 +264,11 @@ const AdminDesktopPage = () => {
   const handleSearch = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage("");
+    setMessageCari("");
     setSearchResult(null);
 
     if (!searchNipp.trim()) {
-      setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
+      setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
       setIsLoading(false);
       return;
     }
@@ -276,10 +301,10 @@ const AdminDesktopPage = () => {
         qr: orderData.qr, // dari tabel orders
       });
 
-      setMessage({ text: "Data ditemukan !", type: "success" });
+      setMessageCari({ text: "Data ditemukan !", type: "success" });
     } catch (error) {
       console.error("Gagal mengambil data:", error);
-      setMessage({
+      setMessageCari({
         text: "NIPP tersebut belum mendaftar acara ini",
         type: "error",
       });
@@ -431,8 +456,62 @@ const AdminDesktopPage = () => {
           </div>
         )}
 
+        {/* TAMBAH USER */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <p className="text-lg font-semibold text-gray-700">
+            Tambah Pegawai <span className="text-green-700"></span>
+          </p>
+          <div className="flex space-x-4">
+            <input
+              type="text"
+              value={nippAdd}
+              onChange={(e) => setNippAdd(e.target.value)}
+              placeholder="Masukkan NIPP"
+              className="flex-1 border rounded-xl px-4 py-2"
+              disabled={isLoading}
+            />
+            <input
+              type="text"
+              value={namaAdd}
+              onChange={(e) => setNamaAdd(e.target.value)}
+              placeholder="Masukkan Nama"
+              className="flex-1 border rounded-xl px-4 py-2"
+              disabled={isLoading}
+            />
+            <input
+              type="number"
+              value={penetapanAdd}
+              onChange={(e) => setPenetapanAdd(e.target.value)}
+              placeholder="Masukkan Jatah"
+              className="flex-1 border rounded-xl px-4 py-2"
+              disabled={isLoading}
+            />
+          </div>
+          <button
+            onClick={handleAddUser}
+            className="px-6 py-2 bg-green-700 text-white rounded-xl"
+            disabled={isLoading}
+          >
+            {isLoading ? "Menambahkan..." : "Tambah"}
+          </button>
+          {messageTambah && (
+            <p
+              className={`mt-3 text-sm ${
+                messageTambah.type === "success"
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {messageTambah.text}
+            </p>
+          )}
+        </div>
+
         {/* Search Form */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <p className="text-lg font-semibold text-gray-700">
+            Cari NIPP / NIPKWT <span className="text-green-700"></span>
+          </p>
           <div className="flex space-x-4">
             <input
               type="text"
@@ -450,13 +529,15 @@ const AdminDesktopPage = () => {
               {isLoading ? "Mencari..." : "Cari"}
             </button>
           </div>
-          {message && (
+          {messageCari && (
             <p
               className={`mt-3 text-sm ${
-                message.type === "success" ? "text-green-600" : "text-red-600"
+                messageCari.type === "success"
+                  ? "text-green-600"
+                  : "text-red-600"
               }`}
             >
-              {message.text}
+              {messageCari.text}
             </p>
           )}
         </div>
