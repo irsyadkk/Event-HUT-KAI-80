@@ -23,7 +23,7 @@ steps:
       - "5432"
       - --add-cloudsql-instances
       - hut-kai-80:asia-southeast2:hut-kai-80
-      - --no-allow-unauthenticated
+      - --allow-unauthenticated
       - --set-env-vars
       - INSTANCE_CONNECTION_NAME=hut-kai-80:asia-southeast2:hut-kai-80
 
