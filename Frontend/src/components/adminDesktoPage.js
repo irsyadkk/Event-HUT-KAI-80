@@ -24,6 +24,7 @@ const AdminDesktopPage = () => {
   const [namaAdd, setNamaAdd] = useState("");
   const [penetapanAdd, setPenetapanAdd] = useState("");
 
+  // ✅ cek token & role admin
   useEffect(() => {
     const token = localStorage.getItem("token");
     const nipp = localStorage.getItem("nipp");
@@ -174,7 +175,7 @@ const AdminDesktopPage = () => {
     if (!searchResult || !searchResult.qr) return;
 
     const link = document.createElement("a");
-    link.href = searchResult.qr; // langsung pakai base64 dari DB
+    link.href = searchResult.qr;
     link.download = `QR-${searchResult.nipp}.png`;
     link.click();
   };
@@ -182,77 +183,131 @@ const AdminDesktopPage = () => {
   if (!allowed) return null;
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 py-8"
-      style={{ backgroundColor: "#406017" }}
-    >
-      <div className="max-w-5xl w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 px-4 py-6 md:py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img
-              src={LogoKAI}
-              alt="Logo HUT KAI 80"
-              className="h-24 w-auto drop-shadow-lg"
-            />
-          </div>
-          <button
-            onClick={logout}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow"
-          >
-            Logout
-          </button>
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-white mt-2">Pencarian & Manajemen Kuota Peserta</p>
-        </div>
-
-        {/* Quota Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center justify-between">
-          <div>
-            <p className="text-lg font-semibold text-gray-700">
-              Sisa Kuota: <span className="text-green-700">{quota}</span>
-            </p>
-            <p className="text-sm text-gray-500">
-              Total Kuota: {quotaTotal} | Terdaftar: {quotaTotal - quota}
-            </p>
-          </div>
-          <div className="space-x-2">
+        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 md:p-8 text-center border border-white/20">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <img
+                src={LogoKAI}
+                alt="Logo HUT KAI 80"
+                className="h-16 md:h-20 w-auto drop-shadow-lg"
+              />
+              <div className="text-left">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  Admin Panel
+                </h1>
+                <p className="text-white/80 text-sm md:text-base">
+                  Manajemen Peserta & Kuota
+                </p>
+              </div>
+            </div>
             <button
-              onClick={() => setIsAddOpen(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow"
+              onClick={logout}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
             >
-              Tambah Kuota
-            </button>
-            <button
-              onClick={() => setIsSubOpen(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow"
-            >
-              Kurangi Kuota
+              Logout
             </button>
           </div>
         </div>
 
-        {/* Modal Tambah Kuota */}
+        {/* Quota Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quota Stats */}
+          <div className="lg:col-span-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              Status Kuota
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-xl">
+                <p className="text-sm text-blue-600 font-medium">Sisa Kuota</p>
+                <p className="text-2xl font-bold text-blue-800">{quota}</p>
+              </div>
+              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-xl">
+                <p className="text-sm text-green-600 font-medium">
+                  Total Kuota
+                </p>
+                <p className="text-2xl font-bold text-green-800">
+                  {quotaTotal}
+                </p>
+              </div>
+              <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-xl">
+                <p className="text-sm text-orange-600 font-medium">Terdaftar</p>
+                <p className="text-2xl font-bold text-orange-800">
+                  {quotaTotal - quota}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Progress Pendaftaran
+                </span>
+                <span className="text-sm text-gray-500">
+                  {Math.round(((quotaTotal - quota) / quotaTotal) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${((quotaTotal - quota) / quotaTotal) * 100}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quota Management */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Kelola Kuota
+            </h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => setIsAddOpen(true)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+              >
+                + Tambah Kuota
+              </button>
+              <button
+                onClick={() => setIsSubOpen(true)}
+                className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+              >
+                - Kurangi Kuota
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Components */}
         {isAddOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-lg w-96 p-6">
-              <h2 className="text-lg font-semibold mb-4">Tambah Kuota</h2>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">
+                Tambah Kuota
+              </h2>
               <input
                 type="number"
+                value={quotaValue}
                 onChange={(e) => setQuotaValue(e.target.value)}
                 placeholder="Masukkan jumlah kuota"
-                className="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-500"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-6 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setIsAddOpen(false)}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all font-medium"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleAddQuota}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all font-medium"
                 >
                   Simpan
                 </button>
@@ -261,27 +316,29 @@ const AdminDesktopPage = () => {
           </div>
         )}
 
-        {/* Modal Kurangi Kuota */}
         {isSubOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-lg w-96 p-6">
-              <h2 className="text-lg font-semibold mb-4">Kurangi Kuota</h2>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">
+                Kurangi Kuota
+              </h2>
               <input
                 type="number"
+                value={quotaValue}
                 onChange={(e) => setQuotaValue(e.target.value)}
                 placeholder="Masukkan jumlah kuota"
-                className="w-full border rounded-lg px-3 py-2 mb-4 focus:ring-2 focus:ring-red-500"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-6 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setIsSubOpen(false)}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all font-medium"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleSubQuota}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-medium"
                 >
                   Simpan
                 </button>
@@ -290,18 +347,19 @@ const AdminDesktopPage = () => {
           </div>
         )}
 
-        {/* TAMBAH USER */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <p className="text-lg font-semibold text-gray-700">
-            Tambah Pegawai <span className="text-green-700"></span>
-          </p>
-          <div className="flex space-x-4">
+        {/* Add User Section */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            Tambah Pegawai Baru
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <input
               type="text"
               value={nippAdd}
               onChange={(e) => setNippAdd(e.target.value)}
               placeholder="Masukkan NIPP"
-              className="flex-1 border rounded-xl px-4 py-2"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               disabled={isLoading}
             />
             <input
@@ -309,7 +367,7 @@ const AdminDesktopPage = () => {
               value={namaAdd}
               onChange={(e) => setNamaAdd(e.target.value)}
               placeholder="Masukkan Nama"
-              className="flex-1 border rounded-xl px-4 py-2"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               disabled={isLoading}
             />
             <input
@@ -317,157 +375,234 @@ const AdminDesktopPage = () => {
               value={penetapanAdd}
               onChange={(e) => setPenetapanAdd(e.target.value)}
               placeholder="Masukkan Jatah"
-              className="flex-1 border rounded-xl px-4 py-2"
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
               disabled={isLoading}
             />
           </div>
           <button
             onClick={handleAddUser}
-            className="px-6 py-2 bg-green-700 text-white rounded-xl"
+            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
             disabled={isLoading}
           >
-            {isLoading ? "Menambahkan..." : "Tambah"}
+            {isLoading ? "Menambahkan..." : "Tambah Pegawai"}
           </button>
           {messageTambah && (
-            <p
-              className={`mt-3 text-sm ${
+            <div
+              className={`mt-4 p-4 rounded-xl ${
                 messageTambah.type === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
               }`}
             >
-              {messageTambah.text}
-            </p>
+              <p className="font-medium">{messageTambah.text}</p>
+            </div>
           )}
         </div>
 
-        {/* Search Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <p className="text-lg font-semibold text-gray-700">
-            Cari NIPP / NIPKWT <span className="text-green-700"></span>
-          </p>
-          <div className="flex space-x-4">
+        {/* Search Section */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            Pencarian Peserta
+          </h2>
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col sm:flex-row gap-4 mb-4"
+          >
             <input
               type="text"
               value={searchNipp}
               onChange={(e) => setSearchNipp(e.target.value)}
-              placeholder="Masukkan NIPP"
-              className="flex-1 border rounded-xl px-4 py-2"
+              placeholder="Masukkan NIPP / NIPKWT"
+              className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               disabled={isLoading}
             />
             <button
-              onClick={handleSearch}
-              className="px-6 py-2 bg-green-700 text-white rounded-xl"
+              type="submit"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? "Mencari..." : "Cari"}
+              {isLoading ? "Mencari..." : "Cari Data"}
             </button>
-          </div>
+          </form>
           {messageCari && (
-            <p
-              className={`mt-3 text-sm ${
+            <div
+              className={`mb-4 p-4 rounded-xl ${
                 messageCari.type === "success"
-                  ? "text-green-600"
-                  : "text-red-600"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
               }`}
             >
-              {messageCari.text}
-            </p>
+              <p className="font-medium">{messageCari.text}</p>
+            </div>
           )}
         </div>
 
-        {/* Result */}
+        {/* Search Result */}
         {searchResult && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               Detail Registrasi
             </h3>
-            <p>
-              <b>NIPP:</b> {searchResult.nipp}
-            </p>
-            <p>
-              <b>Nama:</b> {searchResult.nama}
-            </p>
-            <p>
-              <b>Penetapan:</b> {searchResult.penetapan}
-            </p>
-            <p>
-              <b>Anggota Terdaftar:</b>
-            </p>
-            <ol className="list-decimal list-inside mt-1">
-              {searchResult.anggota && searchResult.anggota.length > 0 ? (
-                searchResult.anggota.map((item, index) => (
-                  <li key={index} className="ml-4">
-                    {item}
-                  </li>
-                ))
-              ) : (
-                <p className="ml-4">-</p>
-              )}
-            </ol>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchResult.nipp}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Nama</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchResult.nama}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Penetapan</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchResult.penetapan}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium mb-2">
+                    Anggota Terdaftar
+                  </p>
+                  {searchResult.anggota && searchResult.anggota.length > 0 ? (
+                    <ol className="list-decimal list-inside space-y-1">
+                      {searchResult.anggota.map((item, index) => (
+                        <li key={index} className="text-gray-700">
+                          {item}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="text-gray-500">Belum ada anggota terdaftar</p>
+                  )}
+                </div>
+              </div>
 
-            <div className="mt-4 text-center">
-              <img
-                src={searchResult.qr}
-                alt="QR Code"
-                className="mx-auto border rounded-lg p-2 bg-white"
-                style={{ width: "200px", height: "200px" }}
-              />
-              <button
-                onClick={downloadQRCode}
-                className="mt-4 px-6 py-2 bg-green-700 text-white rounded-xl"
-              >
-                Download QR Code
-              </button>
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-100">
+                  <img
+                    src={searchResult.qr}
+                    alt="QR Code"
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <button
+                  onClick={downloadQRCode}
+                  className="mt-6 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+                >
+                  Download QR Code
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Table Orders */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-gray-700">
-                <th className="px-4 py-2 text-left">NIPP</th>
-                <th className="px-4 py-2 text-left">Nama</th>
-                <th className="px-4 py-2 text-left">Transportasi</th>
-                <th className="px-4 py-2 text-left">Keberangkatan</th>
-                <th className="px-4 py-2 text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderList.length === 0 ? (
+        {/* Orders Table */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              Data Peserta Terdaftar
+              <span className="ml-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                {orderList.length} peserta
+              </span>
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className="text-center text-gray-500 py-4">
-                    Tidak ada data order !
-                  </td>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    No
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    NIPP
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Anggota Keluarga
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                    Aksi
+                  </th>
                 </tr>
-              ) : (
-                orderList.map((order) => (
-                  <tr key={order.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-2">{order.nipp}</td>
-                    <td className="px-4 py-2 space-y-1">
-                      {order.nama.map((n, index) => (
-                        <div key={index}>{n}</div>
-                      ))}
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => {
-                          navigate("/detailregister", {
-                            state: { nipp: order.nipp },
-                          });
-                        }}
-                        className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs rounded-lg"
-                      >
-                        Detail
-                      </button>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {orderList.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
+                            ></path>
+                          </svg>
+                        </div>
+                        <p className="font-medium">Belum ada data peserta</p>
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  orderList.map((order, index) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {index + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                          {order.nipp}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          {order.nama.map((n, nameIndex) => (
+                            <div
+                              key={nameIndex}
+                              className="flex items-center gap-2"
+                            >
+                              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                              <span className="text-sm text-gray-700">{n}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => {
+                            navigate("/detailregister", {
+                              state: { nipp: order.nipp },
+                            });
+                          }}
+                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all duration-200 hover:shadow-lg transform hover:scale-105"
+                        >
+                          Detail
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
