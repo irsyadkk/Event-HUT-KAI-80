@@ -25,6 +25,7 @@ steps:
     dir: "Frontend"
     env:
       - REACT_APP_ADMIN_NIPP=${_REACT_APP_ADMIN_NIPP} # inject dari trigger
+      - REACT_APP_API_URL=${_REACT_APP_API_URL}
     volumes:
       - name: "npm-cache"
         path: /root/.npm
