@@ -430,6 +430,8 @@ const AdminDesktopPage = () => {
               <tr className="bg-gray-100 text-gray-700">
                 <th className="px-4 py-2 text-left">NIPP</th>
                 <th className="px-4 py-2 text-left">Nama</th>
+                <th className="px-4 py-2 text-left">Transportasi</th>
+                <th className="px-4 py-2 text-left">Keberangkatan</th>
                 <th className="px-4 py-2 text-left">Action</th>
               </tr>
             </thead>
