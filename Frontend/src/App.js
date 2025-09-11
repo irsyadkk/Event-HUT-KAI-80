@@ -8,7 +8,7 @@ import LandingPage from "./components/landingPage";
 
 function App() {
   return (
-    <BrowserRouter basename="/">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/inputnipp" element={<InputNipp />} />
