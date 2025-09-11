@@ -14,13 +14,15 @@ const makeError = (msg, code = 400) => {
 export const addOrder = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { nipp, nama, status } = req.body;
+    const { nipp, nama, status, transportasi, keberangkatan } = req.body;
 
     // INPUT VALIDATION
     if (
       !nipp ||
       !nama ||
       !status ||
+      !transportasi ||
+      !keberangkatan ||
       !Array.isArray(nama) ||
       nama.some((n) => typeof n !== "string" || !n.trim())
     ) {
@@ -30,6 +32,10 @@ export const addOrder = async (req, res) => {
         ? "Nama field cannot be empty !"
         : !status
         ? "Status field cannot be empty !"
+        : !transportasi
+        ? "Transportasi field cannot be empty !"
+        : !keberangkatan
+        ? "Keberangkatan field cannot be empty !"
         : !Array.isArray(nama)
         ? "Nama must be an array !"
         : "Each Element in Nama Must be String & Cannot be Empty !";
@@ -92,7 +98,12 @@ export const addOrder = async (req, res) => {
       const qrCode = await QRCode.toDataURL(qrData);
 
       await existingOrder.update(
-        { nama: updatedNama, qr: qrCode, status },
+        {
+          nama: updatedNama,
+          qr: qrCode,
+          transportasi: transportasi,
+          keberangkatan: keberangkatan,
+        },
         { transaction: t }
       );
     } else {
@@ -100,7 +111,14 @@ export const addOrder = async (req, res) => {
       const qrCode = await QRCode.toDataURL(qrData);
 
       await Order.create(
-        { nipp, nama, status, qr: qrCode },
+        {
+          nipp,
+          nama,
+          status,
+          qr: qrCode,
+          transportasi: transportasi,
+          keberangkatan: keberangkatan,
+        },
         { transaction: t }
       );
     }
@@ -122,7 +140,15 @@ export const addOrder = async (req, res) => {
     res.status(201).json({
       status: "Success",
       message: "Order Created",
-      data: { nipp, nama, status, updatedPenetapan, updatedQuota },
+      data: {
+        nipp,
+        nama,
+        status,
+        updatedPenetapan,
+        updatedQuota,
+        transportasi,
+        keberangkatan,
+      },
     });
   } catch (error) {
     await t.rollback();
@@ -177,12 +203,14 @@ export const editOrder = async (req, res) => {
   const t = await db.transaction();
   try {
     const nipp = req.params.nipp;
-    const { nama, status } = req.body;
+    const { nama, status, transportasi, keberangkatan } = req.body;
 
     // VALIDASI INPUT
     if (
       !nama ||
       !status ||
+      !transportasi ||
+      !keberangkatan ||
       !Array.isArray(nama) ||
       nama.some((n) => typeof n !== "string" || !n.trim())
     ) {
@@ -190,6 +218,10 @@ export const editOrder = async (req, res) => {
         ? "Nama field cannot be empty !"
         : !status
         ? "Status field cannot be empty !"
+        : !transportasi
+        ? "Transportasi field cannot be empty !"
+        : !keberangkatan
+        ? "Keberangkatan field cannot be empty !"
         : !Array.isArray(nama)
         ? "Nama must be an array !"
         : "Each Element in Nama Must be String & Cannot be Empty !";
@@ -254,7 +286,16 @@ export const editOrder = async (req, res) => {
     const qrData = JSON.stringify({ nipp, nama, status });
     const qrCode = await QRCode.toDataURL(qrData);
 
-    await order.update({ nama, status, qr: qrCode }, { transaction: t });
+    await order.update(
+      {
+        nama,
+        status,
+        qr: qrCode,
+        transportasi: transportasi,
+        keberangkatan: keberangkatan,
+      },
+      { transaction: t }
+    );
 
     await t.commit();
     res.status(200).json({
