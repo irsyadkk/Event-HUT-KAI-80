@@ -11,7 +11,7 @@ const makeError = (msg, code = 400) => {
 };
 
 // ADD ORDER BY ADMIN
-export const addOrderByAdmin = async (req, req) => {
+export const addOrderByAdmin = async (req, res) => {
   const t = await db.transaction();
   try {
     const { nipp, nama, status, transportasi, keberangkatan } = req.body;
