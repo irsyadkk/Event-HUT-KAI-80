@@ -73,7 +73,8 @@ function LandingPage() {
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                 Gathering
-                <span className="block text-yellow-300">HUT KAI 80 DAOP 6</span>
+                <span className="block text-yellow-300">HUT KAI 80</span>
+                <span className="block text-green-400">DAOP 6</span>
               </h1>
               <p className="text-lg text-blue-200 font-medium">
                 📍 Puncak Sosok, Bantul, DIY
