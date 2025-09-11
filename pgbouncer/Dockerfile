@@ -1,26 +1,21 @@
 FROM debian:bullseye-slim
 
-# Install pgbouncer dan tini
+# Install PgBouncer & wget untuk Cloud SQL Proxy
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pgbouncer ca-certificates tini gettext-base \
+    pgbouncer wget ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy konfigurasi dan script
-COPY pgbouncer.ini.template /etc/pgbouncer/
-COPY userlist.txt /etc/pgbouncer/
+# Download Cloud SQL Proxy
+RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O /cloud_sql_proxy \
+    && chmod +x /cloud_sql_proxy
+
+# Copy konfigurasi PgBouncer dan entrypoint
+COPY pgbouncer.ini /etc/pgbouncer/pgbouncer.ini
+COPY userlist.txt /etc/pgbouncer/userlist.txt
 COPY entrypoint.sh /entrypoint.sh
 
-# Make entrypoint executable (root masih aktif di sini)
 RUN chmod +x /entrypoint.sh
 
-# Buat user non-root
-RUN useradd -ms /bin/bash pgbouncer
-
-# Gunakan user non-root
-USER pgbouncer
-
-# Expose port
 EXPOSE 5432
 
-# Jalankan entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

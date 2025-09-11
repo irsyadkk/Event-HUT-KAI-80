@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-# Buat direktori writable untuk runtime config
-mkdir -p /home/pgbouncer/config
-envsubst < /etc/pgbouncer/pgbouncer.ini.template > /home/pgbouncer/config/pgbouncer.ini
+# Jalankan Cloud SQL Proxy di background
+/cloud_sql_proxy -instances=${INSTANCE_CONNECTION_NAME}=tcp:5432 &
 
-# Jalankan PgBouncer dengan file yang baru
-exec pgbouncer -vv /home/pgbouncer/config/pgbouncer.ini
+# Tunggu beberapa detik agar proxy siap
+sleep 5
+
+# Jalankan PgBouncer
+exec pgbouncer -u postgres /etc/pgbouncer/pgbouncer.ini
