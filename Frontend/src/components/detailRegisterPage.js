@@ -1,64 +1,21 @@
 import React, { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import { BASE_URL } from "../utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ADMIN_NIPP } from "../utils";
+import api from "../api"; // gunakan instance axios terpusat
 
 const DetailRegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const nipp = location.state?.nipp;
-  const [token, setToken] = useState("");
-  const [expire, setExpire] = useState("");
   const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [allowed, setAllowed] = useState(false);
 
-  // axios instance
-  const axiosJWT = axios.create();
-
-  axiosJWT.interceptors.request.use(
-    async (config) => {
-      const currentDate = new Date();
-      if (expire * 1000 < currentDate.getTime()) {
-        try {
-          const response = await axios.get(`${BASE_URL}/token`);
-          const newAccessToken = response.data.accessToken;
-          config.headers.Authorization = `Bearer ${newAccessToken}`;
-          setToken(newAccessToken);
-          const decoded = jwtDecode(newAccessToken);
-          setExpire(decoded.exp);
-        } catch (error) {
-          console.error("Gagal memperbarui token:", error);
-        }
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // refresh token pertama kali
-  const refreshToken = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/token`);
-      const decoded = jwtDecode(response.data.accessToken);
-      setToken(response.data.accessToken);
-      setNamaPegawai(decoded.nama);
-      setExpire(decoded.exp);
-    } catch (error) {
-      console.error("Gagal mengambil token:", error);
-    }
-  };
-
   // get order
   const getOrderByNipp = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/order/${nipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await api.get(`/order/${nipp}`);
       if (response.data && response.data.data) {
         setOrderData(response.data.data); // simpan ke state
       }
@@ -75,39 +32,31 @@ const DetailRegisterPage = () => {
     link.click();
   };
 
-  // load data
+  // load data awal
   useEffect(() => {
-    const initData = async () => {
-      if (nipp) {
-        await refreshToken();
-      }
-    };
-    initData();
-  }, [nipp]);
-
-  useEffect(() => {
-    if (token) {
+    if (nipp) {
       getOrderByNipp();
     }
-  }, [token]);
+  }, [nipp]);
 
+  // cek otorisasi
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const nipp = localStorage.getItem("nipp");
+    const nippLogin = localStorage.getItem("nipp");
 
-    if (!token || !nipp) {
+    if (!token || !nippLogin) {
       navigate("/");
       return;
     }
-    if (nipp !== ADMIN_NIPP) {
+    if (nippLogin !== ADMIN_NIPP) {
       navigate("/");
     }
-    if (nipp === ADMIN_NIPP && !location.state?.nipp) {
+    if (nippLogin === ADMIN_NIPP && !location.state?.nipp) {
       navigate("/admindesk");
     } else {
       setAllowed(true);
     }
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   if (!allowed) return null;
 
