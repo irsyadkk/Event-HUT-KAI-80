@@ -47,12 +47,6 @@ function LandingPage() {
           "linear-gradient(135deg, #2d5016 0%, #406017 50%, #5a7c2a 100%)",
       }}
     >
-      <div className="fixed bottom-2 left-2 bg-white p-2 text-black z-50">
-        <p>Target: {targetTime.toString()}</p>
-        <p>Sekarang: {new Date().toString()}</p>
-        <p>Time left: {timeLeft}</p>
-      </div>
-
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-yellow-300/10 rounded-full animate-pulse"></div>
