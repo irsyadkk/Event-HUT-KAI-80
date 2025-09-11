@@ -1,13 +1,9 @@
 FROM debian:bullseye-slim
 
-# Install PgBouncer & wget untuk Cloud SQL Proxy
+# Install PgBouncer
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pgbouncer wget ca-certificates \
+    pgbouncer ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Download Cloud SQL Proxy
-RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O /cloud_sql_proxy \
-    && chmod +x /cloud_sql_proxy
 
 # Copy konfigurasi PgBouncer dan entrypoint
 COPY pgbouncer.ini /etc/pgbouncer/pgbouncer.ini

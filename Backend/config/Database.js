@@ -11,9 +11,9 @@ const DB_SOCKET = process.env.DB_SOCKET;
 
 const db = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
   dialect: "postgres",
-  host: DB_SOCKET,
+  host: DB_HOST,
   dialectOptions: {
-    socketPath: DB_SOCKET,
+    socketPath: DB_HOST,
   },
   logging: false,
   pool: {
