@@ -1,84 +1,32 @@
 import React, { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import { BASE_URL } from "../utils";
+import api from "../api"; // pakai api instance yang sudah ada
 import { useLocation } from "react-router-dom";
 
 const QRResultPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
-  const [token, setToken] = useState("");
-  const [expire, setExpire] = useState("");
   const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
 
-  // axios instance
-  const axiosJWT = axios.create();
-
-  axiosJWT.interceptors.request.use(
-    async (config) => {
-      const currentDate = new Date();
-      if (expire * 1000 < currentDate.getTime()) {
-        try {
-          const response = await axios.get(`${BASE_URL}/token`);
-          const newAccessToken = response.data.accessToken;
-          config.headers.Authorization = `Bearer ${newAccessToken}`;
-          setToken(newAccessToken);
-          const decoded = jwtDecode(newAccessToken);
-          setExpire(decoded.exp);
-        } catch (error) {
-          console.error("Gagal memperbarui token:", error);
-        }
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // refresh token pertama kali
-  const refreshToken = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/token`);
-      const decoded = jwtDecode(response.data.accessToken);
-      setToken(response.data.accessToken);
-      setNamaPegawai(decoded.nama);
-      setExpire(decoded.exp);
-    } catch (error) {
-      console.error("Gagal mengambil token:", error);
-    }
-  };
-
-  // get order
+  // Ambil order by NIPP
   const getOrderByNipp = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/order/${nipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await api.get(`/order/${nipp}`);
       if (response.data && response.data.data) {
-        setOrderData(response.data.data); // simpan ke state
+        setOrderData(response.data.data);
       }
     } catch (error) {
       console.error("Gagal mengambil data order:", error);
     }
   };
 
-  // load data
+  // Load data pertama kali
   useEffect(() => {
-    const initData = async () => {
-      if (nipp) {
-        await refreshToken();
-      }
-    };
-    initData();
-  }, [nipp]);
-
-  useEffect(() => {
-    if (token) {
+    if (nipp) {
       getOrderByNipp();
     }
-  }, [token]);
+  }, [nipp]);
 
   return (
     <div
@@ -133,7 +81,6 @@ const QRResultPage = () => {
                   <div className="bg-white p-4 rounded-xl shadow-lg border-2 border-gray-200">
                     <img src={orderData.qr} alt="QR Code" />
                   </div>
-                  {/* Tambahan NIPP */}
                   <p className="text-gray-800 font-medium mt-2">NIPP: {nipp}</p>
                 </div>
               )}
@@ -143,7 +90,6 @@ const QRResultPage = () => {
                 <h3 className="font-semibold text-lg text-gray-800 mb-4">
                   Data Peserta Terdaftar:
                 </h3>
-
                 <div className="border-t pt-4">
                   <div className="space-y-2">
                     {Array.isArray(orderData.nama) &&
@@ -172,6 +118,7 @@ const QRResultPage = () => {
                   </div>
                 </div>
               </div>
+
               {/* Instructions */}
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div className="flex items-start space-x-3">
@@ -207,7 +154,7 @@ const QRResultPage = () => {
                         daftar nominatif pekerja beserta fotocopy kmf berikut
                         dengan detail masing-masing kode registrasi, dan apabila
                         peserta tidak menerima gelang, kupon makan, dan kupon
-                        doorprize maka bukan menjadi tanggung jawab panitia.
+                        doorprize maka bukan menjadi tanggung jawab panitia.
                       </li>
                     </ul>
                   </div>
