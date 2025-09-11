@@ -484,13 +484,17 @@ const AdminDesktopPage = () => {
                   )}
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">Transportasi</p>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Transportasi
+                  </p>
                   <p className="text-lg text-gray-800">
                     {searchResult.transportasi}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">Keberangkatan</p>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Keberangkatan
+                  </p>
                   <p className="text-lg text-gray-800">
                     {searchResult.keberangkatan}
                   </p>

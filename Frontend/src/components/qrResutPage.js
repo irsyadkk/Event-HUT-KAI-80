@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api"; // pakai api instance yang sudah ada
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const QRResultPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
   const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
+  const navigate = useNavigate();
 
   // Ambil order by NIPP
   const getOrderByNipp = async () => {
@@ -18,6 +19,18 @@ const QRResultPage = () => {
       }
     } catch (error) {
       console.error("Gagal mengambil data order:", error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await api.delete("/logout", { withCredentials: true });
+    } catch (err) {
+      console.error("Gagal logout:", err);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("nipp");
+      navigate("/");
     }
   };
 
@@ -138,7 +151,9 @@ const QRResultPage = () => {
                     <h3 className="font-medium text-blue-900 mb-2">
                       PERHATIAN!
                     </h3>
-                    <p className="text-sm text-blue-800 mb-2">SCREENSHOT halaman ini sebagai bukti registrasi</p>
+                    <p className="text-sm text-blue-800 mb-2">
+                      SCREENSHOT halaman ini sebagai bukti registrasi
+                    </p>
                     <ul className="text-sm text-blue-800 space-y-1 text-justify">
                       <li>
                         Penukaran kode registrasi dengan gelang, kupon makan,
@@ -151,10 +166,11 @@ const QRResultPage = () => {
                       </li>
                       <li>
                         Penukaran kode registrasi secara kolektif harus membawa
-                        daftar nominatif pekerja beserta fotocopy kartu identitas anggota/kmf berikut
-                        dengan detail masing-masing kode registrasi, dan apabila
-                        peserta tidak menerima gelang, kupon makan, dan kupon
-                        doorprize maka bukan menjadi tanggung jawab panitia.
+                        daftar nominatif pekerja beserta fotocopy kartu
+                        identitas anggota/kmf berikut dengan detail
+                        masing-masing kode registrasi, dan apabila peserta tidak
+                        menerima gelang, kupon makan, dan kupon doorprize maka
+                        bukan menjadi tanggung jawab panitia.
                       </li>
                     </ul>
                   </div>
@@ -165,7 +181,7 @@ const QRResultPage = () => {
               <div className="flex space-x-4">
                 <button
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-all duration-200"
-                  onClick={() => (window.location.href = "/")}
+                  onClick={logout}
                 >
                   <div className="flex items-center justify-center space-x-2">
                     <svg
