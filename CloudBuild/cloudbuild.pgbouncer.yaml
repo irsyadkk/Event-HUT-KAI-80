@@ -23,6 +23,3 @@ steps:
       - --allow-unauthenticated
 images:
   - gcr.io/$PROJECT_ID/pgbouncer:latest
-options:
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
-  logging: CLOUD_LOGGING_ONLY
