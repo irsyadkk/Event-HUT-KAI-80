@@ -3,75 +3,28 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { BASE_URL } from "../utils";
 import { useLocation, useNavigate } from "react-router-dom";
+import api from "../api"; // Pastikan path ini benar
 
 const AddMemberPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
-  const [orderMembers, setOrderMembers] = useState([]); 
+  const [orderMembers, setOrderMembers] = useState([]);
   const [maxMembers, setMaxMembers] = useState(0);
-  const [token, setToken] = useState("");
-  const [expire, setExpire] = useState("");
-  const [namaPengguna, setNamaPengguna] = useState("");
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-
-  const axiosJWT = axios.create();
-
-  axiosJWT.interceptors.request.use(
-    async (config) => {
-      const currentDate = new Date();
-      if (expire * 1000 < currentDate.getTime()) {
-        try {
-          const response = await axios.get(`${BASE_URL}/token`);
-          const newAccessToken = response.data.accessToken;
-          config.headers.Authorization = `Bearer ${newAccessToken}`;
-          setToken(newAccessToken);
-          const decoded = jwtDecode(newAccessToken);
-          setExpire(decoded.exp);
-        } catch (error) {
-          console.error("Gagal memperbarui token:", error);
-        }
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // --- Fungsi API ---
-  const refreshToken = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/token`);
-      const decoded = jwtDecode(response.data.accessToken);
-      setToken(response.data.accessToken);
-      setNamaPengguna(decoded.nama);
-      setMaxMembers(decoded.penetapan);
-      setExpire(decoded.exp);
-    } catch (error) {
-      console.error("Gagal mengambil token:", error);
-    }
-  };
 
   // Ambil data order by nipp
   const getOrderByNipp = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/order/${nipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/order/${nipp}`);
       const orderData = response.data.data;
-      // Pastikan nama adalah array
-      const namesFromOrders = Array.isArray(orderData.nama)
-        ? orderData.nama
-        : [];
-
+      const namesFromOrders = Array.isArray(orderData.nama) ? orderData.nama : [];
       const orderMembersList = namesFromOrders.map((nm, idx) => ({
-        id: `order-${idx}`,
-        name: nm,
-        fromOrder: true,
+        id: `order-${idx}`, name: nm, fromOrder: true,
       }));
-
       setOrderMembers(orderMembersList);
-      setMembers(orderMembersList); // awal hanya dari order
+      setMembers(orderMembersList);
     } catch (error) {
       console.error("Gagal mengambil data order:", error);
     }
@@ -79,9 +32,7 @@ const AddMemberPage = () => {
 
   const getUserByNipp = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/users/${nipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/users/${nipp}`);
       const userData = response.data.data;
       setMaxMembers(userData.penetapan);
     } catch (error) {
@@ -91,12 +42,7 @@ const AddMemberPage = () => {
 
   const submitOrder = async (e) => {
     e.preventDefault();
-
-    // hanya ambil anggota manual, bukan yang dari order
-    const memberNames = members
-      .filter((m) => !m.fromOrder)
-      .map((m) => m.name)
-      .filter((n) => n.trim() !== "");
+    const memberNames = members.filter((m) => !m.fromOrder).map((m) => m.name).filter((n) => n.trim() !== "");
 
     if (memberNames.length === 0) {
       alert("Harap masukkan setidaknya satu nama anggota tambahan.");
@@ -104,18 +50,9 @@ const AddMemberPage = () => {
     }
 
     try {
-      await axiosJWT.post(
-        `${BASE_URL}/order`,
-        {
-          nipp,
-          nama: memberNames,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.post(`/order`, { nipp, nama: memberNames });
       alert("Tiket berhasil didaftarkan!");
-      navigate("/qrresult" , { state: { nipp } });  
+      navigate("/qrresult", { state: { nipp } });
     } catch (error) {
       console.error("Error saat mendaftarkan tiket:", error);
       const errorMessage = error.response?.data?.msg || "Gagal mencetak tiket.";
@@ -124,22 +61,21 @@ const AddMemberPage = () => {
   };
 
   // --- Efek dan Logika UI ---
+  // --- Efek dan Logika UI (Sudah Disederhanakan) ---
   useEffect(() => {
     const initData = async () => {
       if (nipp) {
-        await refreshToken();
-        setIsDataLoaded(true);
+        try {
+          await getUserByNipp(); // Memuat maxMembers
+          await getOrderByNipp(); // Memuat anggota yang sudah ada
+          setIsDataLoaded(true);
+        } catch (error) {
+          console.error("Gagal memuat data awal:", error);
+        }
       }
     };
     initData();
   }, [nipp]);
-
-  useEffect(() => {
-    if (isDataLoaded && token) {
-      getUserByNipp();
-      getOrderByNipp();
-    }
-  }, [isDataLoaded, token]);
 
   const handleMemberNameChange = (id, newName) => {
     setMembers((prevMembers) =>
@@ -213,11 +149,10 @@ const AddMemberPage = () => {
                           ? "Nama dari order"
                           : "Masukkan nama anggota"
                       }
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        member.fromOrder
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${member.fromOrder
                           ? "bg-gray-100 text-gray-600 cursor-not-allowed"
                           : "bg-white text-gray-900"
-                      }`}
+                        }`}
                     />
                   </div>
                   {!member.fromOrder && (
