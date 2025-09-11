@@ -19,10 +19,18 @@ const Order = db.define(
     },
     nama: {
       type: DataTypes.ARRAY(DataTypes.TEXT),
-      allowNull: true,
+      allowNull: false,
     },
     qr: {
       type: Sequelize.BLOB,
+      allowNull: true,
+    },
+    transportasi: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    },
+    keberangkatan: {
+      type: Sequelize.TEXT,
       allowNull: true,
     },
   },
