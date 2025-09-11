@@ -4,6 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 COPY pgbouncer.ini /etc/pgbouncer/
 COPY userlist.txt /etc/pgbouncer/
-EXPOSE 6543
+EXPOSE 5432
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["pgbouncer","/etc/pgbouncer/pgbouncer.ini"]
