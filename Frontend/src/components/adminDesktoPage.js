@@ -82,6 +82,8 @@ const AdminDesktopPage = () => {
         penetapan: userData.penetapan,
         anggota: orderData.nama,
         qr: orderData.qr,
+        transportasi: orderData.transportasi,
+        keberangkatan: orderData.keberangkatan,
       });
       setMessageCari({ text: "Data ditemukan !", type: "success" });
     } catch (err) {
@@ -481,6 +483,18 @@ const AdminDesktopPage = () => {
                     <p className="text-gray-500">Belum ada anggota terdaftar</p>
                   )}
                 </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Transportasi</p>
+                  <p className="text-lg text-gray-800">
+                    {searchResult.transportasi}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Keberangkatan</p>
+                  <p className="text-lg text-gray-800">
+                    {searchResult.keberangkatan}
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-col items-center justify-center">
@@ -513,7 +527,7 @@ const AdminDesktopPage = () => {
               </span>
             </h2>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
@@ -195,6 +195,9 @@ const AddMemberPage = () => {
   const [hasExistingOrder, setHasExistingOrder] = useState(false);
   const [lokasi, setLokasi] = useState("");
   const [transportasi, setTransportasi] = useState("");
+  const [quotaValue, setQuotaValue] = useState("");
+  const [quota, setQuota] = useState(0);
+  const [quotaTotal, setQuotaTotal] = useState(0);
 
   const [modalInfo, setModalInfo] = useState({
     isOpen: false,
@@ -246,8 +249,9 @@ const AddMemberPage = () => {
         }
 
         const orderNames = Array.isArray(orderData.nama) ? orderData.nama : [];
-        setLokasi(orderData.lokasi || "");
-        setTransportasi(orderData.transportasi || "");
+        setLokasi(orderData.lokasi );
+        setTransportasi(orderData.transportasi );
+        setStatusHadir(orderData.status );
 
         const orderMembersList = orderNames.map((nm, i) => ({
           id: `order-${i}`,
@@ -282,11 +286,25 @@ const AddMemberPage = () => {
     loadData();
   }, [isDataLoaded, nipp]);
 
+  useEffect(() => {
+    getQuota(); // ambil kuota global
+  }, []);
+
   const getCounts = () => {
     const orderCount = members.filter((m) => m.fromOrder).length;
     const newCount = members.filter((m) => !m.fromOrder && !m.fromUser).length;
     return { orderCount, newCount };
   };
+
+  const getQuota = useCallback(async () => {
+    try {
+      const res = await api.get("/quota");
+      setQuota(res.data.data.quota);
+      setQuotaTotal(res.data.data.total_quota);
+    } catch (err) {
+      console.error("Gagal mengambil data quota :", err);
+    }
+  }, []);
 
   const canAddMember = () => {
     const { orderCount, newCount } = getCounts();
@@ -404,9 +422,9 @@ const AddMemberPage = () => {
 
   const { orderCount, newCount } = getCounts();
   let currentUsed = 0;
-  
-    currentUsed += 1;
-  
+
+  currentUsed += 1;
+
   currentUsed += orderCount;
   currentUsed += newCount;
 
@@ -430,7 +448,13 @@ const AddMemberPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 py-6 px-4">
+      <div
+        className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 py-6 px-4"
+        style={{
+          background:
+            "linear-gradient(to bottom right, #406017, #527020, #334d12)",
+        }}
+      >
         <div className="max-w-4xl mx-auto w-full space-y-6">
           {userFromUsers && (
             <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 md:p-8 text-center border border-white/20">
@@ -455,10 +479,39 @@ const AddMemberPage = () => {
             </div>
           )}
 
+          {/* Kuota Keluarga */}
+          <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-green-800 font-semibold mb-1">
+                  Kuota Keluarga
+                </p>
+                <p className="text-green-700 text-sm">
+                  Anda memiliki <strong>{maxMembers}</strong> kuota untuk
+                  mendaftarkan anggota keluarga.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Kuota Keseluruhan */}
           {isDataLoaded && (
-            <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 shadow-lg">
+            <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6 shadow-lg">
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg
                     className="w-4 h-4 text-white"
                     fill="currentColor"
@@ -466,18 +519,18 @@ const AddMemberPage = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      d="M11 17a1 1 0 01-1 1H6a1 1 0 110-2h4a1 1 0 011 1zM6 9a1 1 0 100 2h8a1 1 0 100-2H6zm-1 6a1 1 0 100 2h10a1 1 0 100-2H5z"
                       clipRule="evenodd"
                     />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-green-800 font-semibold mb-1">
-                    Informasi Kuota
+                  <p className="text-purple-800 font-semibold mb-1">
+                    Kuota Keseluruhan
                   </p>
-                  <p className="text-green-700 text-sm">
-                    Anda memiliki <strong>{maxMembers} kuota</strong> untuk
-                    mendaftarkan anggota keluarga.
+                  <p className="text-purple-700 text-sm">
+                    Tersisa <strong>{quota}</strong> dari total{" "}
+                    <strong>{quotaTotal}</strong> kuota.
                   </p>
                 </div>
               </div>
@@ -771,6 +824,10 @@ const AddMemberPage = () => {
                         ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                         : "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
                     }`}
+                    style={{
+                      background:
+                        "linear-gradient(to bottom right, #406017, #527020, #334d12)",
+                    }}
                   >
                     {currentUsed === 0 ? (
                       <>
@@ -804,7 +861,7 @@ const AddMemberPage = () => {
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        DAFTAR
+                        Daftar Sekarang ({currentUsed} anggota)
                       </>
                     )}
                   </button>
