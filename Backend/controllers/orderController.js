@@ -59,7 +59,10 @@ export const addOrder = async (req, res) => {
       penguranganPenetapan = jumlahPeserta;
       penguranganQuota = jumlahPeserta;
     } else {
-      throw makeError("Status tidak valid (gunakan 'hadir' atau 'tidak hadir')", 400);
+      throw makeError(
+        "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
+        400
+      );
     }
 
     // VALIDASI
@@ -77,7 +80,10 @@ export const addOrder = async (req, res) => {
     }
 
     // CEK ORDER EXIST
-    const existingOrder = await Order.findOne({ where: { nipp }, transaction: t });
+    const existingOrder = await Order.findOne({
+      where: { nipp },
+      transaction: t,
+    });
 
     // UPDATE / CREATE ORDER
     if (existingOrder) {
@@ -85,20 +91,32 @@ export const addOrder = async (req, res) => {
       const qrData = JSON.stringify({ nipp, nama: updatedNama, status });
       const qrCode = await QRCode.toDataURL(qrData);
 
-      await existingOrder.update({ nama: updatedNama, qr: qrCode, status }, { transaction: t });
+      await existingOrder.update(
+        { nama: updatedNama, qr: qrCode, status },
+        { transaction: t }
+      );
     } else {
       const qrData = JSON.stringify({ nipp, nama, status });
       const qrCode = await QRCode.toDataURL(qrData);
 
-      await Order.create({ nipp, nama, status, qr: qrCode }, { transaction: t });
+      await Order.create(
+        { nipp, nama, status, qr: qrCode },
+        { transaction: t }
+      );
     }
 
     // UPDATE PENETAPAN & QUOTA
     const updatedPenetapan = currentPenetapan - penguranganPenetapan;
     const updatedQuota = currentQuota - penguranganQuota;
 
-    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
-    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
+    await User.update(
+      { penetapan: updatedPenetapan },
+      { where: { nipp }, transaction: t }
+    );
+    await Quota.update(
+      { quota: updatedQuota },
+      { where: { id: 1 }, transaction: t }
+    );
 
     await t.commit();
     res.status(201).json({
@@ -203,12 +221,18 @@ export const editOrder = async (req, res) => {
       penguranganPenetapan = diff;
       penguranganQuota = diff;
     } else {
-      throw makeError("Status tidak valid (gunakan 'hadir' atau 'tidak hadir')", 400);
+      throw makeError(
+        "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
+        400
+      );
     }
 
     // VALIDASI
     if (user.penetapan < penguranganPenetapan) {
-      throw makeError(`Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`, 400);
+      throw makeError(
+        `Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`,
+        400
+      );
     }
     if (quota.quota < penguranganQuota) {
       throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
@@ -218,8 +242,14 @@ export const editOrder = async (req, res) => {
     const updatedPenetapan = user.penetapan - penguranganPenetapan;
     const updatedQuota = quota.quota - penguranganQuota;
 
-    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
-    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
+    await User.update(
+      { penetapan: updatedPenetapan },
+      { where: { nipp }, transaction: t }
+    );
+    await Quota.update(
+      { quota: updatedQuota },
+      { where: { id: 1 }, transaction: t }
+    );
 
     const qrData = JSON.stringify({ nipp, nama, status });
     const qrCode = await QRCode.toDataURL(qrData);
@@ -269,8 +299,14 @@ export const deleteOrder = async (req, res) => {
     const updatedPenetapan = user.penetapan + pengembalianPenetapan;
     const updatedQuota = quota.quota + pengembalianQuota;
 
-    await User.update({ penetapan: updatedPenetapan }, { where: { nipp }, transaction: t });
-    await Quota.update({ quota: updatedQuota }, { where: { id: 1 }, transaction: t });
+    await User.update(
+      { penetapan: updatedPenetapan },
+      { where: { nipp }, transaction: t }
+    );
+    await Quota.update(
+      { quota: updatedQuota },
+      { where: { id: 1 }, transaction: t }
+    );
     await Order.destroy({ where: { nipp }, transaction: t });
 
     await t.commit();
@@ -287,4 +323,3 @@ export const deleteOrder = async (req, res) => {
     });
   }
 };
-

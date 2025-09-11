@@ -8,7 +8,7 @@ import LandingPage from "./components/landingPage";
 
 function App() {
   return (
-    <BrowserRouter basename="/">
+    <BrowserRouter basename="hutkai.daop6.id/">
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/inputnipp" element={<InputNipp />} />
