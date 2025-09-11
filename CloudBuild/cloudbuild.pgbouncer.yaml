@@ -1,8 +1,13 @@
 steps:
+  # 1. Build image
   - name: "gcr.io/cloud-builders/docker"
     args: ["build", "-t", "gcr.io/$PROJECT_ID/pgbouncer:latest", "./pgbouncer"]
+
+  # 2. Push image
   - name: "gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/pgbouncer:latest"]
+
+  # 3. Deploy ke Cloud Run
   - name: "gcr.io/cloud-builders/gcloud"
     args:
       - run
@@ -12,16 +17,19 @@ steps:
       - gcr.io/$PROJECT_ID/pgbouncer:latest
       - --region
       - asia-south2
-      - --add-cloudsql-instances
-      - hut-kai-80:asia-southeast2:hut-kai-80
       - --port
-      - "5432" # pastikan sama dengan listen_port
+      - "5432"
       - --timeout
       - "300"
-      - "--allow-unauthenticated"
-      # Hapus --allow-unauthenticated jika tidak perlu publik
+      - --add-cloudsql-instances
+      - hut-kai-80:asia-southeast2:hut-kai-80
+      - --set-env-vars
+      - DB_SOCKET_DIR=/cloudsql
+      - --allow-unauthenticated # hapus baris ini jika tidak mau publik
+
 images:
   - "gcr.io/$PROJECT_ID/pgbouncer:latest"
+
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
   logging: CLOUD_LOGGING_ONLY
