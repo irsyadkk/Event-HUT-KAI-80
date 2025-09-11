@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import { BASE_URL } from "../utils";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api"; // Pastikan path ini benar
 
@@ -10,28 +7,30 @@ const AddMemberPage = () => {
   const nipp = location.state?.nipp;
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
-  const [orderMembers, setOrderMembers] = useState([]);
   const [maxMembers, setMaxMembers] = useState(0);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [allowed, setAllowed] = useState(false);
 
-  // Ambil data order by nipp
-  const getOrderByNipp = async () => {
+// Perbaikan #3: Bungkus fungsi dengan useCallback
+  const getOrderByNipp = useCallback(async () => {
+    if (!nipp) return;
     try {
       const response = await api.get(`/order/${nipp}`);
       const orderData = response.data.data;
-      const namesFromOrders = Array.isArray(orderData.nama) ? orderData.nama : [];
+      const namesFromOrders = Array.isArray(orderData?.nama) ? orderData.nama : [];
       const orderMembersList = namesFromOrders.map((nm, idx) => ({
         id: `order-${idx}`, name: nm, fromOrder: true,
       }));
-      setOrderMembers(orderMembersList);
+      // setOrderMembers(orderMembersList); // Dihapus - Perbaikan #2
       setMembers(orderMembersList);
     } catch (error) {
       console.error("Gagal mengambil data order:", error);
+      // Jika tidak ada order, set member menjadi array kosong
+      setMembers([]);
     }
-  };
+  }, [nipp]);
 
-  const getUserByNipp = async () => {
+  const getUserByNipp = useCallback(async () => {
+    if (!nipp) return;
     try {
       const response = await api.get(`/users/${nipp}`);
       const userData = response.data.data;
@@ -39,7 +38,7 @@ const AddMemberPage = () => {
     } catch (error) {
       console.error("Gagal mengambil data pengguna:", error);
     }
-  };
+  }, [nipp]);
 
   const submitOrder = async (e) => {
     e.preventDefault();
@@ -54,29 +53,24 @@ const AddMemberPage = () => {
       await api.post(`/order`, { nipp, nama: memberNames });
       alert("Tiket berhasil didaftarkan!");
       navigate("/qrresult", { state: { nipp } });
-    } catch (error) {
-      console.error("Error saat mendaftarkan tiket:", error);
-      const errorMessage = error.response?.data?.msg || "Gagal mencetak tiket.";
+    } catch (error)  {
+      const errorMessage = error.response?.data?.message || "Gagal mencetak tiket.";
       alert(errorMessage);
     }
   };
 
-  // --- Efek dan Logika UI ---
-  // --- Efek dan Logika UI (Sudah Disederhanakan) ---
   useEffect(() => {
     const initData = async () => {
-      if (nipp) {
         try {
-          await getUserByNipp(); // Memuat maxMembers
-          await getOrderByNipp(); // Memuat anggota yang sudah ada
+          await getUserByNipp();
+          await getOrderByNipp();
           setIsDataLoaded(true);
         } catch (error) {
           console.error("Gagal memuat data awal:", error);
         }
-      }
     };
     initData();
-  }, [nipp]);
+  }, [nipp, getUserByNipp, getOrderByNipp]);
 
   const handleMemberNameChange = (id, newName) => {
     setMembers((prevMembers) =>
