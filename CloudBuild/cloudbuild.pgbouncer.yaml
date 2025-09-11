@@ -15,7 +15,7 @@ steps:
       - --add-cloudsql-instances
       - hut-kai-80:asia-southeast2:hut-kai-80
       - --port
-      - "5432" # pastikan sama dengan listen_port
+      - "6543" # pastikan sama dengan listen_port
       - --timeout
       - "300"
       - "--allow-unauthenticated"

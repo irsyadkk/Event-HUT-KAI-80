@@ -11,7 +11,7 @@ const DB_PORT = process.env.DB_PORT;
 const db = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD, {
   dialect: "postgres",
   host: DB_HOST,
-  port: process.env.DB_PORT,
+  port: DB_PORT,
   logging: false,
   pool: {
     max: 5, // kecil, biarkan PgBouncer yang menangani pooling besar
