@@ -78,30 +78,6 @@ const AddMemberPage = () => {
     initData();
   }, [nipp]);
 
-<<<<<<< HEAD
-=======
-  useEffect(() => {
-    if (isDataLoaded && token) {
-      getUserByNipp();
-      getOrderByNipp();
-    }
-  }, [isDataLoaded, token]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const nipp = localStorage.getItem("nipp");
-
-    if (!token || !nipp) {
-      navigate("/");
-      return;
-    } else {
-      setAllowed(true);
-    }
-  }, [navigate]);
-
-  if (!allowed) return null;
-
->>>>>>> 47e098947e4a772e6b77fa12fc4a0dce57bbeaeb
   const handleMemberNameChange = (id, newName) => {
     setMembers((prevMembers) =>
       prevMembers.map((member) =>
