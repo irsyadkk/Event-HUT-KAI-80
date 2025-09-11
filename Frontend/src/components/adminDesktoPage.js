@@ -1,24 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { BASE_URL } from "../utils";
 import { jwtDecode } from "jwt-decode";
 import { ADMIN_NIPP } from "../utils";
+import api from "../api"; // ✅ pakai instance yang sudah handle token & refresh
 
 const AdminDesktopPage = () => {
+  const navigate = useNavigate();
+
   const [searchNipp, setSearchNipp] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [messageCari, setMessageCari] = useState("");
   const [messageTambah, setMessageTambah] = useState("");
-  const [token, setToken] = useState("");
-  const [expire, setExpire] = useState("");
-  const [orderList, setOrderList] = useState("");
-  let [quotaValue, setQuotaValue] = useState("");
-  let [quota, setQuota] = useState("");
-  let [quotaTotal, setQuotaTotal] = useState("");
+  const [orderList, setOrderList] = useState([]);
+  const [quotaValue, setQuotaValue] = useState("");
+  const [quota, setQuota] = useState(0);
+  const [quotaTotal, setQuotaTotal] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubOpen, setIsSubOpen] = useState(false);
   const [allowed, setAllowed] = useState(false);
@@ -26,162 +24,103 @@ const AdminDesktopPage = () => {
   const [namaAdd, setNamaAdd] = useState("");
   const [penetapanAdd, setPenetapanAdd] = useState("");
 
-  const axiosJWT = axios.create();
-  const navigate = useNavigate();
-
-  axiosJWT.interceptors.request.use(
-    async (config) => {
-      const currentDate = new Date();
-      if (expire * 1000 < currentDate.getTime()) {
-        try {
-          const response = await axios.get(`${BASE_URL}/token`);
-          const newAccessToken = response.data.accessToken;
-          config.headers.Authorization = `Bearer ${newAccessToken}`;
-          setToken(newAccessToken);
-          const decoded = jwtDecode(newAccessToken);
-          setExpire(decoded.exp);
-        } catch (error) {
-          console.error("Gagal memperbarui token:", error);
-        }
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // Refresh token
-  const refreshToken = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/token`);
-      const decoded = jwtDecode(response.data.accessToken);
-      setToken(response.data.accessToken);
-      setExpire(decoded.exp);
-    } catch (error) {
-      console.error("Gagal mengambil token:", error);
+  // ✅ cek token & role admin
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
     }
-  };
-
-  // Ambil data order berdasarkan NIPP
-  const getOrderByNipp = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/order/${searchNipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const orderData = response.data.data;
+      const decoded = jwtDecode(token);
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
-      // Simpan hasil order ke state
+  // ===================== API CALLS =====================
+  const getAllOrders = useCallback(async () => {
+    try {
+      const res = await api.get("/order");
+      setOrderList(res.data.data || []);
+    } catch (err) {
+      console.error("Gagal mengambil data order :", err);
+    }
+  }, []);
+
+  const getQuota = useCallback(async () => {
+    try {
+      const res = await api.get("/quota");
+      setQuota(res.data.data.quota);
+      setQuotaTotal(res.data.data.total_quota);
+    } catch (err) {
+      console.error("Gagal mengambil data quota :", err);
+    }
+  }, []);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchNipp.trim()) {
+      setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const [orderRes, userRes] = await Promise.all([
+        api.get(`/order/${searchNipp}`),
+        api.get(`/users/${searchNipp}`),
+      ]);
+      const orderData = orderRes.data.data;
+      const userData = userRes.data.data;
+
       setSearchResult({
         nipp: orderData.nipp,
-        nama: orderData.nama,
-        qr: orderData.qr, // QR code base64
+        nama: userData.nama,
+        penetapan: userData.penetapan,
+        anggota: orderData.nama,
+        qr: orderData.qr,
       });
-
-      setMessage({ text: "Data ditemukan!", type: "success" });
-    } catch (error) {
-      console.error("Gagal mengambil data order:", error);
-      setMessage({
-        text: "NIPP tersebut belum mendaftar acara ini",
+      setMessageCari({ text: "Data ditemukan !", type: "success" });
+    } catch (err) {
+      console.error("Gagal mengambil data:", err);
+      setMessageCari({
+        text: "NIPP tidak ditemukan / belum mendaftar",
         type: "error",
       });
       setSearchResult(null);
     }
+    setIsLoading(false);
   };
 
-  const logout = async () => {
-    try {
-      await axios.delete(`${BASE_URL}/logout`, {
-        withCredentials: true,
-      });
-    } catch (error) {
-      console.error("Gagal logout:", error);
-    } finally {
-      localStorage.removeItem("token");
-      localStorage.removeItem("nipp");
-      navigate("/");
-    }
-  };
-
-  // GET ALL ORDERS
-  const getAllOrders = async () => {
-    try {
-      const response = await axiosJWT.get(`${BASE_URL}/order`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const ordersData = response.data.data;
-      setOrderList(ordersData || []);
-    } catch (error) {
-      console.error("Gagal mengambil data order :", error);
-      setMessage({
-        text: "Data tidak ditemukan !",
-        type: "error",
-      });
-    }
-  };
-
-  // GET QUOTA
-  const getQuota = async () => {
-    try {
-      const response = await axiosJWT.get(`${BASE_URL}/quota`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response) {
-        setQuota(0);
-        setQuotaTotal(0);
-      }
-      const quotaData = response.data.data;
-      setQuota(quotaData.quota);
-      setQuotaTotal(quotaData.total_quota);
-    } catch (error) {
-      console.error("Gagal mengambil data quota :", error);
-      setMessage({
-        text: "Gagal mendapatkan data quota !",
-        type: "error",
-      });
-    }
-  };
-
-  // ADD USER
   const handleAddUser = async () => {
-    try {
-      if (!nippAdd.trim() || !namaAdd.trim() || !penetapanAdd.trim()) {
-        const msg = !nippAdd.trim()
-          ? "NIPP tidak boleh kosong !"
-          : !namaAdd.trim()
-          ? "Nama tidak boleh kosong !"
-          : "Jatah tidak boleh kosong & harus angka !";
-        setMessageTambah({ text: msg, type: "error" });
-        setIsLoading(false);
-        return;
-      }
-      const response = await axiosJWT.post(
-        `${BASE_URL}/users`,
-        {
-          nipp: nippAdd,
-          nama: namaAdd,
-          penetapan: Number(penetapanAdd),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!response) {
-        throw console.error();
-      }
-      console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
+    if (!nippAdd.trim() || !namaAdd.trim() || !penetapanAdd.trim()) {
       setMessageTambah({
-        text: `Berhasil menambahkan ${namaAdd} dengan ${nippAdd} dan jatah ${penetapanAdd} !`,
+        text: "NIPP, Nama, dan Jatah wajib diisi!",
+        type: "error",
+      });
+      return;
+    }
+    try {
+      await api.post("/users", {
+        nipp: nippAdd,
+        nama: namaAdd,
+        penetapan: Number(penetapanAdd),
+      });
+      setMessageTambah({
+        text: `Berhasil menambahkan ${namaAdd} (${nippAdd})`,
         type: "success",
       });
       setNippAdd("");
       setNamaAdd("");
       setPenetapanAdd("");
-    } catch (error) {
-      console.error("Gagal menambahkan orang :", error);
-      setNippAdd("");
-      setNamaAdd("");
-      setPenetapanAdd("");
+      getAllOrders();
+    } catch (err) {
+      console.error("Gagal menambah user:", err);
       setMessageTambah({
-        text: `Gagal menambahkan ${namaAdd} dengan NIPP ${nippAdd}`,
+        text: `Gagal menambahkan ${namaAdd}`,
         type: "error",
       });
     }
@@ -189,130 +128,47 @@ const AdminDesktopPage = () => {
 
   const handleAddQuota = async () => {
     try {
-      const response = await axiosJWT.patch(
-        `${BASE_URL}/addquota`,
-        {
-          add: Number(quotaValue),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response) {
-        throw console.error();
-      }
-      getQuota();
+      await api.patch("/addquota", { add: Number(quotaValue) });
       setIsAddOpen(false);
-      setQuotaValue(0);
+      setQuotaValue("");
+      getQuota();
       alert(`Kuota sebanyak ${quotaValue} berhasil ditambahkan !`);
-      console.log(`Berhasil menambahkan ${quotaValue} kuota !`);
-    } catch (error) {
-      setQuotaValue = 0;
-      console.error("Gagal menambahkan quota :", error);
-      setMessage({
-        text: `Gagal menambahkan kuota sebanyak ${quotaValue} !`,
-        type: "error",
-      });
+    } catch (err) {
+      console.error("Gagal menambah kuota:", err);
     }
   };
 
   const handleSubQuota = async () => {
     try {
-      const response = await axiosJWT.patch(
-        `${BASE_URL}/subquota`,
-        {
-          sub: Number(quotaValue),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response) {
-        throw console.error();
-      }
-      getQuota();
+      await api.patch("/subquota", { sub: Number(quotaValue) });
       setIsSubOpen(false);
-      setQuotaValue = 0;
+      setQuotaValue("");
+      getQuota();
       alert(`Kuota sebanyak ${quotaValue} berhasil dikurangi !`);
-      console.log(`Berhasil mengurangi ${quotaValue} kuota !`);
-    } catch (error) {
-      setQuotaValue = 0;
-      console.error("Gagal mengurangi quota :", error);
-      setMessage({
-        text: `Gagal mengurangi kuota sebanyak ${quotaValue} !`,
-        type: "error",
-      });
+    } catch (err) {
+      console.error("Gagal mengurangi kuota:", err);
     }
   };
 
-  const getUserByNipp = async () => {
+  const logout = async () => {
     try {
-      const response = await axiosJWT.get(`${BASE_URL}/users/${searchNipp}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userData = response.data.data;
-    } catch (error) {
-      console.error("Gagal mengambil data pengguna:", error);
+      await api.delete("/logout", { withCredentials: true });
+    } catch (err) {
+      console.error("Gagal logout:", err);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("nipp");
+      navigate("/");
     }
   };
 
-  // Cari data
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessageCari("");
-    setSearchResult(null);
-
-    if (!searchNipp.trim()) {
-      setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
-      setIsLoading(false);
-      return;
+  // initial load
+  useEffect(() => {
+    if (allowed) {
+      getAllOrders();
+      getQuota();
     }
-
-    try {
-      // ambil order
-      const orderResponse = await axiosJWT.get(
-        `${BASE_URL}/order/${searchNipp}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const orderData = orderResponse.data.data;
-
-      // ambil user
-      const userResponse = await axiosJWT.get(
-        `${BASE_URL}/users/${searchNipp}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const userData = userResponse.data.data;
-
-      // gabungkan hasil
-      setSearchResult({
-        nipp: orderData.nipp,
-        nama: userData.nama, // dari tabel users
-        penetapan: userData.penetapan, // dari tabel users
-        anggota: orderData.nama, // array dari tabel orders
-        qr: orderData.qr, // dari tabel orders
-      });
-
-      setMessageCari({ text: "Data ditemukan !", type: "success" });
-    } catch (error) {
-      console.error("Gagal mengambil data:", error);
-      setMessageCari({
-        text: "NIPP tersebut belum mendaftar acara ini",
-        type: "error",
-      });
-      setSearchResult(null);
-    }
-
-    setIsLoading(false);
-  };
+  }, [allowed, getAllOrders, getQuota]);
 
   // Download QR
   const downloadQRCode = () => {
@@ -323,27 +179,6 @@ const AdminDesktopPage = () => {
     link.download = `QR-${searchResult.nipp}.png`;
     link.click();
   };
-
-  useEffect(() => {
-    refreshToken();
-    getAllOrders();
-    getQuota();
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const nipp = localStorage.getItem("nipp");
-
-    if (!token || !nipp) {
-      navigate("/");
-      return;
-    }
-    if (nipp !== ADMIN_NIPP) {
-      navigate("/");
-    } else {
-      setAllowed(true);
-    }
-  }, [navigate]);
 
   if (!allowed) return null;
 
