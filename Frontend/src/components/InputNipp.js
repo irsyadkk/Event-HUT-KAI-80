@@ -9,7 +9,7 @@ const InputNipp = () => {
   const [nipp, setNipp] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(true);
 
   // CHANGE THIS AND targetTime IN landingPage.js TO SYNC
   const targetTime = new Date("2025-09-12T09:00:00+07:00");
