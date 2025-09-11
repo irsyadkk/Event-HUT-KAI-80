@@ -10,6 +10,153 @@ const makeError = (msg, code = 400) => {
   return error;
 };
 
+// ADD ORDER BY ADMIN
+export const addOrderByAdmin = async (req, req) => {
+  const t = await db.transaction();
+  try {
+    const { nipp, nama, status, transportasi, keberangkatan } = req.body;
+
+    // INPUT VALIDATION
+    if (
+      !nipp ||
+      !nama ||
+      !status ||
+      !transportasi ||
+      !keberangkatan ||
+      !Array.isArray(nama) ||
+      nama.some((n) => typeof n !== "string" || !n.trim())
+    ) {
+      const msg = !nipp
+        ? "NIPP field cannot be empty !"
+        : !nama
+        ? "Nama field cannot be empty !"
+        : !status
+        ? "Status field cannot be empty !"
+        : !transportasi
+        ? "Transportasi field cannot be empty !"
+        : !keberangkatan
+        ? "Keberangkatan field cannot be empty !"
+        : !Array.isArray(nama)
+        ? "Nama must be an array !"
+        : "Each Element in Nama Must be String & Cannot be Empty !";
+      throw makeError(msg, 400);
+    }
+
+    const jumlahPeserta = nama.length;
+
+    // ORDER CHECK
+    const order = await Order.findOne({ where: { nipp }, transaction: t });
+    if (!order) throw makeError(`Order dengan NIPP ${nipp} sudah ada !`, 400);
+
+    // QUOTA CHECK
+    const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
+    const currentQuota = quota.quota;
+
+    // HITUNG PENGURANGAN SESUAI STATUS
+    let penguranganPenetapan;
+    let penguranganQuota;
+
+    if (status.toLowerCase() === "tidak hadir") {
+      penguranganPenetapan = jumlahPeserta + 1;
+      penguranganQuota = jumlahPeserta;
+    } else if (status.toLowerCase() === "hadir") {
+      penguranganPenetapan = jumlahPeserta;
+      penguranganQuota = jumlahPeserta;
+    } else {
+      throw makeError(
+        "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
+        400
+      );
+    }
+
+    // VALIDASI
+    if (currentPenetapan < penguranganPenetapan) {
+      throw makeError(
+        `Jatah Kamu Tidak Mencukupi. Jatah Tersisa ${currentPenetapan} !`,
+        400
+      );
+    }
+    if (currentQuota < penguranganQuota) {
+      throw makeError(
+        `Quota Tidak Mencukupi. Quota Tersisa ${currentQuota} !`,
+        400
+      );
+    }
+
+    // CEK ORDER EXIST
+    const existingOrder = await Order.findOne({
+      where: { nipp },
+      transaction: t,
+    });
+
+    // UPDATE / CREATE ORDER
+    if (existingOrder) {
+      const updatedNama = [...existingOrder.nama, ...nama];
+      const qrData = JSON.stringify({ nipp, nama: updatedNama, status });
+      const qrCode = await QRCode.toDataURL(qrData);
+
+      await existingOrder.update(
+        {
+          nama: updatedNama,
+          qr: qrCode,
+          transportasi: transportasi,
+          keberangkatan: keberangkatan,
+        },
+        { transaction: t }
+      );
+    } else {
+      const qrData = JSON.stringify({ nipp, nama, status });
+      const qrCode = await QRCode.toDataURL(qrData);
+
+      await Order.create(
+        {
+          nipp,
+          nama,
+          status,
+          qr: qrCode,
+          transportasi: transportasi,
+          keberangkatan: keberangkatan,
+        },
+        { transaction: t }
+      );
+    }
+
+    // UPDATE PENETAPAN & QUOTA
+    const updatedPenetapan = currentPenetapan - penguranganPenetapan;
+    const updatedQuota = currentQuota - penguranganQuota;
+
+    await User.update(
+      { penetapan: updatedPenetapan },
+      { where: { nipp }, transaction: t }
+    );
+    await Quota.update(
+      { quota: updatedQuota },
+      { where: { id: 1 }, transaction: t }
+    );
+
+    await t.commit();
+    res.status(201).json({
+      status: "Success",
+      message: "Order Created",
+      data: {
+        nipp,
+        nama,
+        status,
+        updatedPenetapan,
+        updatedQuota,
+        transportasi,
+        keberangkatan,
+      },
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
 // ADD ORDER
 export const addOrder = async (req, res) => {
   const t = await db.transaction();
