@@ -14,6 +14,8 @@ COPY pgbouncer.ini.template /etc/pgbouncer/
 COPY userlist.txt /etc/pgbouncer/
 COPY entrypoint.sh /entrypoint.sh
 
+RUN chmod +x /entrypoint.sh
+
 # Expose port
 EXPOSE 5432
 
