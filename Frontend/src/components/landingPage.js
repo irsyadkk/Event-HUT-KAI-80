@@ -7,7 +7,7 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
 
   // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
-  const targetTime = new Date("2025-09-11T11:00:00+07:00");
+  const targetTime = new Date("2025-09-11T23:00:00+07:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
