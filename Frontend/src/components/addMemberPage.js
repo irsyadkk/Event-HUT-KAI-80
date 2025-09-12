@@ -174,7 +174,7 @@ const STATUS_HADIR = "hadir";
 const STATUS_TIDAK = "tidak hadir";
 const LOKASI_OPTIONS = [
   "purworejo",
-  "DIY Yogyakarta",
+  "DI Yogyakarta",
   "klaten",
   "surakarta",
   "sragen",
