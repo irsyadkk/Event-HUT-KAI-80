@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { ADMIN_NIPP } from "../utils";
 import api from "../api";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const AdminDesktopPage = () => {
   const navigate = useNavigate();
@@ -97,6 +99,33 @@ const AdminDesktopPage = () => {
     setIsLoading(false);
   };
 
+  const exportExcel = () => {
+    if (!orderList || orderList.length === 0) return;
+
+    const data = orderList.map((order, index) => ({
+      No: index + 1,
+      NIPP: order.nipp,
+      "Anggota Keluarga": order.nama.join(", "),
+      "Jumlah Anggota": order.nama.length,
+      Transportasi: order.transportasi,
+      Keberangkatan: order.keberangkatan,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Peserta");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, "DataPeserta.xlsx");
+  };
   const handleAddUser = async () => {
     if (!nippAdd.trim() || !namaAdd.trim() || !penetapanAdd.trim()) {
       setMessageTambah({
@@ -530,6 +559,12 @@ const AdminDesktopPage = () => {
                 {orderList.length} peserta
               </span>
             </h2>
+            <button
+              onClick={exportExcel}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-medium"
+            >
+              Export Excel (.xlsx)
+            </button>
           </div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full">
@@ -543,6 +578,9 @@ const AdminDesktopPage = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                     Anggota Keluarga
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Jumlah Anggota
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                     Transportasi
@@ -608,6 +646,9 @@ const AdminDesktopPage = () => {
                             </div>
                           ))}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {order.nama.length ?? "-"}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {order.transportasi ?? "-"}
