@@ -249,9 +249,21 @@ const AddMemberPage = () => {
         }
 
         const orderNames = Array.isArray(orderData.nama) ? orderData.nama : [];
-        setLokasi(orderData.lokasi );
-        setTransportasi(orderData.transportasi );
-        setStatusHadir(orderData.status );
+        setLokasi(orderData.keberangkatan);
+        setTransportasi(orderData.transportasi);
+        if (orderNames.length > 0) {
+          if (
+            orderNames[0].trim().toLowerCase() ===
+            userData.nama.trim().toLowerCase()
+          ) {
+            setStatusHadir(STATUS_HADIR);
+          } else {
+            setStatusHadir(STATUS_TIDAK);
+          }
+        } else {
+          // kalau belum ada data order → default hadir
+          setStatusHadir(STATUS_HADIR);
+        }
 
         const orderMembersList = orderNames.map((nm, i) => ({
           id: `order-${i}`,
