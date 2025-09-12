@@ -109,26 +109,27 @@ function LandingPage() {
             )}
 
             {/* Action Button */}
-            {timeLeft > 0 ? (
-              <button
-                disabled
-                className="w-full py-3 px-6 rounded-xl font-bold text-base shadow-xl 
-                           bg-gray-400 text-gray-600 cursor-not-allowed"
-              >
-                ⏳ Menunggu Registrasi...
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate("/inputnipp")}
-                className="w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
-             bg-gradient-to-r from-yellow-400 to-yellow-500 
-             hover:from-yellow-500 hover:to-yellow-600 text-gray-900 
-             transition-all duration-300 transform 
-             animate-bounce hover:scale-110 hover:shadow-3xl"
-              >
-                MULAI
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (timeLeft > 0) {
+                  // Belum waktunya
+                  navigate("/"); // balik ke landingpage (opsional karena memang sudah di sini)
+                } else {
+                  // Sudah waktunya
+                  navigate("/inputnipp");
+                }
+              }}
+              className={`w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
+    transition-all duration-300 transform
+    ${
+      timeLeft > 0
+        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+        : "bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 animate-bounce hover:scale-110 hover:shadow-3xl"
+    }`}
+              disabled={timeLeft > 0} // opsional kalau mau tetap disable
+            >
+              {timeLeft > 0 ? "⏳ Menunggu Registrasi..." : "MULAI"}
+            </button>
           </div>
 
           {/* Right Column - Info Cards */}
