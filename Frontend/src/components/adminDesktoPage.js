@@ -158,24 +158,38 @@ const AdminDesktopPage = () => {
   };
 
   const handleAddQuota = async () => {
+    const value = Number(quotaValue);
+    if (isNaN(value) || value <= 0) {
+      alert("Jumlah kuota yang ditambahkan harus lebih dari 0!");
+      return;
+    }
     try {
-      await api.patch("/addquota", { add: Number(quotaValue) });
+      await api.patch("/addquota", { add: value });
       setIsAddOpen(false);
       setQuotaValue("");
       getQuota();
-      alert(`Kuota sebanyak ${quotaValue} berhasil ditambahkan !`);
+      alert(`Kuota sebanyak ${value} berhasil ditambahkan !`);
     } catch (err) {
       console.error("Gagal menambah kuota:", err);
     }
   };
 
   const handleSubQuota = async () => {
+    const value = Number(quotaValue);
+    if (isNaN(value) || value <= 0) {
+      alert("Jumlah kuota yang dikurangi harus lebih dari 0!");
+      return;
+    }
+    if (value > quota) {
+      alert("Tidak bisa mengurangi kuota melebihi sisa kuota!");
+      return;
+    }
     try {
-      await api.patch("/subquota", { sub: Number(quotaValue) });
+      await api.patch("/subquota", { sub: value });
       setIsSubOpen(false);
       setQuotaValue("");
       getQuota();
-      alert(`Kuota sebanyak ${quotaValue} berhasil dikurangi !`);
+      alert(`Kuota sebanyak ${value} berhasil dikurangi !`);
     } catch (err) {
       console.error("Gagal mengurangi kuota:", err);
     }

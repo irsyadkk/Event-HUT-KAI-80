@@ -7,7 +7,7 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
 
   // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
-  const targetTime = new Date("2025-09-12T09:00:00+07:00");
+  const targetTime = new Date("2025-09-13T09:00:00+07:00");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -178,11 +178,11 @@ function LandingPage() {
                   tombol <b>LANJUTKAN</b>.
                 </li>
                 <li>
-                  Cek kesesuaian nama pegawai, jika sudah sesuai, masukkan:
+                  Cek kesesuaian nama pegawai, jika sudah sesuai:
                   <ul className="list-disc list-inside ml-3 mt-1">
                     <li>Pilih lokasi keberangkatan terdekat dari domisili</li>
                     <li>Pilih transportasi yang akan digunakan</li>
-                    <li>Nama anggota keluarga yang akan hadir</li>
+                    <li>Masukkan nama anggota keluarga yang akan hadir</li>
                   </ul>
                 </li>
                 <li>
