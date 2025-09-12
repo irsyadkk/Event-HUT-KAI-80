@@ -402,6 +402,7 @@ const AddMemberPage = () => {
 
   const handleOpenConfirmModal = (e) => {
     e.preventDefault();
+
     if (!lokasi || !transportasi) {
       setModalInfo({
         isOpen: true,
@@ -412,6 +413,7 @@ const AddMemberPage = () => {
       });
       return;
     }
+
     const hasEmptyName = members.some(
       (m) => !m.fromUser && !m.fromOrder && m.name.trim() === ""
     );
@@ -424,6 +426,23 @@ const AddMemberPage = () => {
       });
       return;
     }
+
+    // ✅ Tambahan validasi:
+    // Jika status pegawai "tidak hadir" DAN tidak ada anggota tambahan, blok submit
+    const anggotaTambahan = members.filter(
+      (m) => !m.fromUser && !m.fromOrder && m.name.trim() !== ""
+    );
+    if (statusHadir === STATUS_TIDAK && anggotaTambahan.length === 0) {
+      setModalInfo({
+        isOpen: true,
+        title: "Tidak Bisa Mendaftar",
+        message:
+          "Anda memilih status 'Tidak Hadir'. Tambahkan minimal satu anggota keluarga untuk bisa mendaftar.",
+        type: "warning",
+      });
+      return;
+    }
+
     setIsConfirmModalOpen(true);
   };
 
