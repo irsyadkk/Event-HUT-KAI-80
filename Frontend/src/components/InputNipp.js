@@ -86,7 +86,7 @@ const InputNipp = () => {
           <h1 className="text-2xl font-bold text-white mb-2">
             Registrasi Gathering
           </h1>
-          <p className="text-white text-sm">PT Kereta Api Indonesia</p>
+          
         </div>
 
         {/* Main Card */}
