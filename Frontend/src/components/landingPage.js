@@ -80,7 +80,7 @@ function LandingPage() {
                 📍 Puncak Sosok, Bantul, DIY
               </p>
               <p className="text-base text-green-200">
-                🗓️ Minggu, 20 September 2025 | ⏰ 14:00-21:00 WIB
+                🗓️ Sabtu, 20 September 2025 | ⏰ 14:00-21:00 WIB
               </p>
             </div>
 
