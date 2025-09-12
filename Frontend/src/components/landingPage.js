@@ -74,13 +74,13 @@ function LandingPage() {
               <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                 Gathering
                 <span className="block text-yellow-300">HUT KAI 80</span>
-                <span className="block text-green-400">DAOP 6</span>
+                <span className="block text-green-400">DAOP 6 Yogyakarta</span>
               </h1>
               <p className="text-lg text-blue-200 font-medium">
                 📍 Puncak Sosok, Bantul, DIY
               </p>
               <p className="text-base text-green-200">
-                🗓️ 20 September 2025 | ⏰ 15:00-21:00 WIB
+                🗓️ 20 September 2025 | ⏰ 14:00-21:00 WIB
               </p>
             </div>
 
@@ -95,7 +95,7 @@ function LandingPage() {
                     {formatTime(timeLeft)}
                   </div>
                   <p className="text-xs text-gray-500">
-                    12 September 2025 - 09:00 WIB
+                    13 September 2025 - 09:00 WIB
                   </p>
                 </div>
               </div>
@@ -147,27 +147,19 @@ function LandingPage() {
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
                       <span className="font-medium">Tahap 1</span>
                       <span className="text-blue-600 font-bold">
-                        12 September 2025 • 09:00 WIB
+                        Sabtu, 13 September 2025 • 09:00 WIB
                       </span>
                     </div>
                     <div className="flex justify-between items-center bg-white rounded-lg p-2 shadow-sm">
                       <span className="font-medium">Tahap 2</span>
                       <span className="text-blue-600 font-bold">
-                        13 September 2025 • 15:00 WIB
+                        Minggu, 14 September 2025 • 15:00 WIB
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Quota Info */}
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3">
-                  <h3 className="font-bold text-orange-700 mb-2 text-sm flex items-center">
-                    👨‍👩‍👧‍👦 Kuota Keluarga
-                  </h3>
-                  <p className="text-xs text-gray-700">
-                    Kuota per NIPP sesuai data terdaftar di HRIS
-                  </p>
-                </div>
+                
               </div>
             </div>
 
@@ -188,8 +180,8 @@ function LandingPage() {
                 <li>
                   Cek kesesuaian nama pegawai, jika sudah sesuai, masukkan:
                   <ul className="list-disc list-inside ml-3 mt-1">
-                    <li>Pilih transportasi yang akan digunakan</li>
                     <li>Pilih lokasi keberangkatan terdekat dari domisili</li>
+                    <li>Pilih transportasi yang akan digunakan</li>
                     <li>Nama anggota keluarga yang akan hadir</li>
                   </ul>
                 </li>

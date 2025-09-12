@@ -179,8 +179,9 @@ const LOKASI_OPTIONS = [
   "surakarta",
   "sragen",
   "wonogiri",
+  "magelang",
 ];
-const TRANSPORTASI_OPTIONS = ["kendaraan pribadi", "kendaraan umum"];
+const TRANSPORTASI_OPTIONS = ["kendaraan pribadi", "kendaraan umum / online"];
 
 const AddMemberPage = () => {
   const location = useLocation();
@@ -627,7 +628,7 @@ const AddMemberPage = () => {
                     htmlFor="lokasi"
                     className="block text-sm font-semibold text-gray-700 mb-2"
                   >
-                    Lokasi Keberangkatan
+                    Lokasi Keberangkatan Terdekat
                   </label>
                   <select
                     id="lokasi"
@@ -641,7 +642,7 @@ const AddMemberPage = () => {
                     }`}
                   >
                     <option value="" disabled>
-                      Pilih Lokasi Keberangkatan
+                      Pilih Lokasi Keberangkatan Terdekat
                     </option>
                     {LOKASI_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
@@ -655,7 +656,7 @@ const AddMemberPage = () => {
                     htmlFor="transportasi"
                     className="block text-sm font-semibold text-gray-700 mb-2"
                   >
-                    Jenis Transportasi
+                    Jenis Transportasi Menuju Puncak Sosok
                   </label>
                   <select
                     id="transportasi"
@@ -669,7 +670,7 @@ const AddMemberPage = () => {
                     }`}
                   >
                     <option value="" disabled>
-                      Pilih Jenis Transportasi
+                      Pilih Jenis Transportasi Menuju Puncak Sosok
                     </option>
                     {TRANSPORTASI_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
