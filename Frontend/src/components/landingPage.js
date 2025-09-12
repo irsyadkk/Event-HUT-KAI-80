@@ -72,7 +72,7 @@ function LandingPage() {
 
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-                Gathering
+                Family Gathering
                 <span className="block text-yellow-300">HUT KAI 80</span>
                 <span className="block text-green-400">DAOP 6 Yogyakarta</span>
               </h1>
@@ -80,7 +80,7 @@ function LandingPage() {
                 📍 Puncak Sosok, Bantul, DIY
               </p>
               <p className="text-base text-green-200">
-                🗓️ 20 September 2025 | ⏰ 14:00-21:00 WIB
+                🗓️ Minggu, 20 September 2025 | ⏰ 14:00-21:00 WIB
               </p>
             </div>
 

@@ -167,7 +167,7 @@ const QRResultPage = () => {
                       <li>
                         Penukaran kode registrasi secara kolektif harus membawa
                         daftar nominatif pekerja beserta fotocopy kartu
-                        identitas anggota/kmf berikut dengan detail
+                        identitas pekerja/kmf berikut dengan detail
                         masing-masing kode registrasi, dan apabila peserta tidak
                         menerima gelang, kupon makan, dan kupon doorprize maka
                         bukan menjadi tanggung jawab panitia.
