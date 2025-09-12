@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL, ADMIN_NIPP } from "../utils";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
+import api from "../api";
 
 const InputNipp = () => {
   const navigate = useNavigate();
@@ -26,11 +27,8 @@ const InputNipp = () => {
   if (!allowed) return null;
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // penting supaya form tidak reload page
+    e.preventDefault();
     setIsLoading(true);
-
-    // Simulasi delay untuk loading
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (!nipp) {
       setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
@@ -43,13 +41,38 @@ const InputNipp = () => {
     }
 
     try {
+      // Login request
       const response = await axios.post(`${BASE_URL}/login`, { nipp });
+
       console.log("Login success:", response.data);
       localStorage.setItem("token", response.data.accessToken);
       localStorage.setItem("nipp", response.data.user.nipp);
       localStorage.setItem("nama", response.data.user.nama);
 
       setMessage({ text: "Selamat Datang", type: "success" });
+      // Check if order exists (handle 404 as normal)
+      let orderExists = false;
+      try {
+        const ifOrderExist = await api.get(`${BASE_URL}/order/${nipp}`);
+        if (ifOrderExist.data) {
+          orderExists = true;
+        }
+      } catch (err) {
+        if (err.response?.status === 404) {
+          // Order not found is okay, just continue
+          orderExists = false;
+        } else {
+          // Other errors should be thrown
+          throw err;
+        }
+      }
+
+      if (orderExists) {
+        navigate(`/qrresult`, { state: { nipp } });
+        setIsLoading(false);
+        return;
+      }
+
       if (response.data.user.nipp === ADMIN_NIPP) {
         navigate("/admindesk");
       } else {
@@ -63,6 +86,7 @@ const InputNipp = () => {
       }
       setMessage({ text: errorMessage, type: "error" });
     }
+
     setIsLoading(false);
   };
 
