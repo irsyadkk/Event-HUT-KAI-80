@@ -191,99 +191,89 @@ export const addOrder = async (req, res) => {
 
     const jumlahPeserta = nama.length;
 
-    // USER CHECK
-    const user = await User.findOne({ where: { nipp }, transaction: t });
+    // AMBIL USER & QUOTA DENGAN LOCK
+    const user = await User.findOne({
+      where: { nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
     if (!user) throw makeError("User Tidak Ditemukan !", 404);
 
-    const currentPenetapan = user.penetapan;
-
-    // QUOTA CHECK
-    const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    const currentQuota = quota.quota;
+    const quota = await Quota.findOne({
+      where: { id: 1 },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
 
     // HITUNG PENGURANGAN SESUAI STATUS
-    let penguranganPenetapan;
-    let penguranganQuota;
+    let penguranganPenetapan = jumlahPeserta;
+    let penguranganQuota = jumlahPeserta;
 
     if (status.toLowerCase() === "tidak hadir") {
-      penguranganPenetapan = jumlahPeserta + 1;
-      penguranganQuota = jumlahPeserta;
-    } else if (status.toLowerCase() === "hadir") {
-      penguranganPenetapan = jumlahPeserta;
-      penguranganQuota = jumlahPeserta;
-    } else {
+      penguranganPenetapan = jumlahPeserta + 1; // sesuai aturan
+    } else if (status.toLowerCase() !== "hadir") {
       throw makeError(
         "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
         400
       );
     }
 
-    // VALIDASI
-    if (currentPenetapan < penguranganPenetapan) {
+    // VALIDASI PENETAPAN & QUOTA
+    if (user.penetapan < penguranganPenetapan) {
       throw makeError(
-        `Jatah Kamu Tidak Mencukupi. Jatah Tersisa ${currentPenetapan} !`,
+        `Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`,
         400
       );
     }
-    if (currentQuota < penguranganQuota) {
-      throw makeError(
-        `Quota Tidak Mencukupi. Quota Tersisa ${currentQuota} !`,
-        400
-      );
+    if (quota.quota < penguranganQuota) {
+      throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
     }
 
     // CEK ORDER EXIST
     const existingOrder = await Order.findOne({
       where: { nipp },
       transaction: t,
+      lock: t.LOCK.UPDATE,
     });
+
+    // GENERATE QR
+    const qrData = JSON.stringify({
+      nipp,
+      nama: existingOrder ? [...existingOrder.nama, ...nama] : nama,
+      status,
+    });
+    const qrCode = await QRCode.toDataURL(qrData);
 
     // UPDATE / CREATE ORDER
     if (existingOrder) {
-      const updatedNama = [...existingOrder.nama, ...nama];
-      const qrData = JSON.stringify({ nipp, nama: updatedNama, status });
-      const qrCode = await QRCode.toDataURL(qrData);
-
       await existingOrder.update(
         {
-          nama: updatedNama,
+          nama: [...existingOrder.nama, ...nama],
           qr: qrCode,
-          transportasi: transportasi,
-          keberangkatan: keberangkatan,
+          transportasi,
+          keberangkatan,
         },
         { transaction: t }
       );
     } else {
-      const qrData = JSON.stringify({ nipp, nama, status });
-      const qrCode = await QRCode.toDataURL(qrData);
-
       await Order.create(
-        {
-          nipp,
-          nama,
-          status,
-          qr: qrCode,
-          transportasi: transportasi,
-          keberangkatan: keberangkatan,
-        },
+        { nipp, nama, status, qr: qrCode, transportasi, keberangkatan },
         { transaction: t }
       );
     }
 
-    // UPDATE PENETAPAN & QUOTA
-    const updatedPenetapan = currentPenetapan - penguranganPenetapan;
-    const updatedQuota = currentQuota - penguranganQuota;
-
+    // UPDATE PENETAPAN & QUOTA SECARA ATOMIK
     await User.update(
-      { penetapan: updatedPenetapan },
+      { penetapan: db.literal(`penetapan - ${penguranganPenetapan}`) },
       { where: { nipp }, transaction: t }
     );
     await Quota.update(
-      { quota: updatedQuota },
+      { quota: db.literal(`quota - ${penguranganQuota}`) },
       { where: { id: 1 }, transaction: t }
     );
 
     await t.commit();
+
     res.status(201).json({
       status: "Success",
       message: "Order Created",
@@ -291,8 +281,8 @@ export const addOrder = async (req, res) => {
         nipp,
         nama,
         status,
-        updatedPenetapan,
-        updatedQuota,
+        updatedPenetapan: user.penetapan - penguranganPenetapan,
+        updatedQuota: quota.quota - penguranganQuota,
         transportasi,
         keberangkatan,
       },
