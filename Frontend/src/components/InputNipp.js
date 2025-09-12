@@ -10,7 +10,7 @@ const InputNipp = () => {
   const [nipp, setNipp] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [allowed, setAllowed] = useState(true);
+  const [allowed, setAllowed] = useState(false);
 
   // CHANGE THIS AND targetTime IN landingPage.js TO SYNC
   const targetTime = new Date("2025-09-13T09:00:00+07:00");
@@ -110,7 +110,6 @@ const InputNipp = () => {
           <h1 className="text-2xl font-bold text-white mb-2">
             Registrasi Gathering
           </h1>
-          
         </div>
 
         {/* Main Card */}
