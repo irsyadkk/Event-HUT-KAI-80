@@ -50,18 +50,12 @@ export const addOrderByAdmin = async (req, res) => {
 
     // QUOTA CHECK
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
-    const currentQuota = quota.quota;
-
-    // HITUNG PENGURANGAN SESUAI STATUS
-    let penguranganPenetapan;
-    let penguranganQuota;
+    const currentTotalQuota = quota.total_quota;
 
     if (status.toLowerCase() === "tidak hadir") {
-      penguranganPenetapan = jumlahPeserta + 1;
-      penguranganQuota = jumlahPeserta;
+      jumlahPeserta -= 1;
     } else if (status.toLowerCase() === "hadir") {
-      penguranganPenetapan = jumlahPeserta;
-      penguranganQuota = jumlahPeserta;
+      jumlahPeserta;
     } else {
       throw makeError(
         "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
@@ -69,66 +63,23 @@ export const addOrderByAdmin = async (req, res) => {
       );
     }
 
-    // VALIDASI
-    if (currentPenetapan < penguranganPenetapan) {
-      throw makeError(
-        `Jatah Kamu Tidak Mencukupi. Jatah Tersisa ${currentPenetapan} !`,
-        400
-      );
-    }
-    if (currentQuota < penguranganQuota) {
-      throw makeError(
-        `Quota Tidak Mencukupi. Quota Tersisa ${currentQuota} !`,
-        400
-      );
-    }
+    const qrData = JSON.stringify({ nipp, nama, status });
+    const qrCode = await QRCode.toDataURL(qrData);
 
-    // CEK ORDER EXIST
-    const existingOrder = await Order.findOne({
-      where: { nipp },
-      transaction: t,
-    });
-
-    // UPDATE / CREATE ORDER
-    if (existingOrder) {
-      const updatedNama = [...existingOrder.nama, ...nama];
-      const qrData = JSON.stringify({ nipp, nama: updatedNama, status });
-      const qrCode = await QRCode.toDataURL(qrData);
-
-      await existingOrder.update(
-        {
-          nama: updatedNama,
-          qr: qrCode,
-          transportasi: transportasi,
-          keberangkatan: keberangkatan,
-        },
-        { transaction: t }
-      );
-    } else {
-      const qrData = JSON.stringify({ nipp, nama, status });
-      const qrCode = await QRCode.toDataURL(qrData);
-
-      await Order.create(
-        {
-          nipp,
-          nama,
-          status,
-          qr: qrCode,
-          transportasi: transportasi,
-          keberangkatan: keberangkatan,
-        },
-        { transaction: t }
-      );
-    }
-
-    // UPDATE PENETAPAN & QUOTA
-    const updatedPenetapan = currentPenetapan - penguranganPenetapan;
-    const updatedQuota = currentQuota - penguranganQuota;
-
-    await User.update(
-      { penetapan: updatedPenetapan },
-      { where: { nipp }, transaction: t }
+    await Order.create(
+      {
+        nipp,
+        nama,
+        status,
+        qr: qrCode,
+        transportasi: transportasi,
+        keberangkatan: keberangkatan,
+      },
+      { transaction: t }
     );
+
+    const updatedQuota = currentQuota + jumlahPeserta;
+
     await Quota.update(
       { quota: updatedQuota },
       { where: { id: 1 }, transaction: t }

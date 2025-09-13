@@ -50,7 +50,7 @@ export const getUserByNIPP = async (req, res) => {
   }
 };
 
-// ADD USER PENETAPAN/JATAH BY NIPP
+// ADD USER
 export const addUser = async (req, res) => {
   const t = await db.transaction();
   try {
@@ -84,6 +84,100 @@ export const addUser = async (req, res) => {
       status: "Success",
       message: `Added ${nama} With ${nipp} and ${penetapan} Penetapan to Database !`,
       data: { nipp, nama, penetapan },
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
+// ADD USER PENETAPAN/JATAH BY NIPP
+export const addPenetapanByNIPP = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const { add } = req.body;
+    const nipp = req.params.nipp;
+    if (!add) {
+      throw makeError("Add Field Cannot be Empty !", 400);
+    }
+
+    const ifUserExist = await User.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifUserExist) {
+      throw makeError("User Not Found !", 404);
+    }
+
+    const updatedPenetapan = ifUserExist.penetapan + add;
+
+    await User.update(
+      { penetapan: updatedPenetapan },
+      {
+        where: { nipp: nipp },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `${nipp} Penetapan Added By ${add}`,
+      data: { nipp, updatedPenetapan },
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
+// SUB USER PENETAPAN/JATAH BY NIPP
+export const subPenetapanByNIPP = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const { sub } = req.body;
+    const nipp = req.params.nipp;
+    if (!sub) {
+      throw makeError("Sub Field Cannot be Empty !", 400);
+    }
+
+    const ifUserExist = await User.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifUserExist) {
+      throw makeError("User Not Found !", 404);
+    }
+    if (sub > ifUserExist.penetapan) {
+      throw makeError(
+        "Sub Value Can't Be Higher Than Current Penetapan !",
+        400
+      );
+    }
+
+    const updatedPenetapan = ifUserExist.penetapan - sub;
+
+    await User.update(
+      { penetapan: updatedPenetapan },
+      {
+        where: { nipp: nipp },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `${nipp} Penetapan Subbed By ${sub}`,
+      data: { nipp, updatedPenetapan },
     });
   } catch (error) {
     await t.rollback();

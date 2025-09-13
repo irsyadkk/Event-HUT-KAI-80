@@ -7,6 +7,8 @@ import {
   loginHandler,
   logout,
   addUser,
+  addPenetapanByNIPP,
+  subPenetapanByNIPP,
 } from "../controllers/userController.js";
 import {
   addOrder,
@@ -14,6 +16,7 @@ import {
   getOrder,
   getOrderByNIPP,
   editOrder,
+  addOrderByAdmin,
 } from "../controllers/orderController.js";
 import {
   getQuota,
@@ -33,9 +36,12 @@ router.delete("/logout", logout);
 router.get("/users", verifyToken, getUser);
 router.get("/users/:nipp", verifyToken, getUserByNIPP);
 router.post("/users", verifyToken, addUser);
+router.patch("/usersadd/:nipp", verifyToken, addPenetapanByNIPP);
+router.patch("/userssub/:nipp", verifyToken, subPenetapanByNIPP);
 
 // ORDER
 router.post("/order", verifyToken, addOrder);
+router.post("/orderadmin", verifyToken, addOrderByAdmin);
 router.get("/order", verifyToken, getOrder);
 router.get("/order/:nipp", verifyToken, getOrderByNIPP);
 router.delete("/order/:nipp", verifyToken, deleteOrder);

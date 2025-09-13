@@ -11,12 +11,18 @@ const AdminDesktopPage = () => {
   const navigate = useNavigate();
 
   const [searchNipp, setSearchNipp] = useState("");
+  const [searchNippPegawai, setSearchNippPegawai] = useState("");
   const [searchResult, setSearchResult] = useState(null);
+  const [searchPegawaiResult, setSearchPegawaiResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTambah, setIsLoadingTambah] = useState(false);
+  const [isLoadingPegawai, setIsLoadingPegawai] = useState(false);
   const [messageCari, setMessageCari] = useState("");
+  const [messageCariPegawai, setMessageCariPegawai] = useState("");
   const [messageTambah, setMessageTambah] = useState("");
   const [orderList, setOrderList] = useState([]);
   const [quotaValue, setQuotaValue] = useState("");
+  const [penetapanValueAdd, setPenetapanValueAdd] = useState("");
   const [quota, setQuota] = useState(0);
   const [quotaTotal, setQuotaTotal] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -99,6 +105,55 @@ const AdminDesktopPage = () => {
     setIsLoading(false);
   };
 
+  const handleSearchPegawai = async (e) => {
+    e.preventDefault();
+    if (!searchNippPegawai.trim()) {
+      setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
+      return;
+    }
+    setIsLoadingPegawai(true);
+    try {
+      const res = await api.get(`/users/${searchNippPegawai}`);
+      const userData = res.data.data;
+
+      setSearchPegawaiResult({
+        nipp: userData.nipp,
+        nama: userData.nama,
+        penetapan: userData.penetapan,
+      });
+      setMessageCariPegawai({ text: "Data ditemukan !", type: "success" });
+    } catch (err) {
+      console.error("Gagal mengambil data:", err);
+      setMessageCariPegawai({
+        text: "NIPP tidak ditemukan",
+        type: "error",
+      });
+      setSearchPegawaiResult(null);
+    }
+    setIsLoadingPegawai(false);
+  };
+
+  // NOT FINISHED
+  const handleAddPeserta = async (e) => {
+    e.preventDefault();
+    if (!searchNippPegawai.trim()) {
+      //setMessageTambahPeserta({ text: "NIPP tidak boleh kosong!", type: "error" });
+      return;
+    }
+    //setIsLoadingPeserta(true);
+    try {
+      const res = await api.post(`/addorderbyadmin`);
+      //setMessageTambahPeserta({ text: "Data ditambahkan !", type: "success" });
+    } catch (err) {
+      console.error("Gagal menambahkan data:", err);
+      setMessageCariPegawai({
+        text: "NIPP tidak ditemukan",
+        type: "error",
+      });
+    }
+    //setIsLoadingTambahPeserta(false);
+  };
+
   const exportExcel = () => {
     if (!orderList || orderList.length === 0) return;
 
@@ -126,7 +181,9 @@ const AdminDesktopPage = () => {
 
     saveAs(blob, "DataPeserta.xlsx");
   };
-  const handleAddUser = async () => {
+
+  const handleAddUser = async (e) => {
+    e.preventDefault();
     if (!nippAdd.trim() || !namaAdd.trim() || !penetapanAdd.trim()) {
       setMessageTambah({
         text: "NIPP, Nama, dan Jatah wajib diisi!",
@@ -134,6 +191,7 @@ const AdminDesktopPage = () => {
       });
       return;
     }
+    setIsLoadingTambah(true);
     try {
       await api.post("/users", {
         nipp: nippAdd,
@@ -154,6 +212,47 @@ const AdminDesktopPage = () => {
         text: `Gagal menambahkan ${namaAdd}`,
         type: "error",
       });
+    }
+    setIsLoadingTambah(false);
+  };
+
+  const handleAddPenetapan = async (e) => {
+    e.preventDefault();
+    const value = Number(penetapanValueAdd);
+    if (isNaN(value) || value <= 0) {
+      alert("Jumlah Penetapan yang ditambahkan harus lebih dari 0!");
+      return;
+    }
+    try {
+      await api.patch(`/usersadd/${searchNippPegawai}`, { add: value });
+      setPenetapanValueAdd("");
+      setSearchPegawaiResult((prev) =>
+        prev ? { ...prev, penetapan: prev.penetapan + value } : prev
+      );
+      alert(`Penetapan sebanyak ${value} berhasil ditambahkan !`);
+    } catch (err) {
+      console.error("Gagal menambah Penetapan:", err);
+    }
+  };
+
+  const handleSubPenetapan = async (e) => {
+    e.preventDefault();
+    const value = Number(penetapanValueAdd);
+    if (isNaN(value) || value > searchPegawaiResult.penetapan) {
+      alert(
+        "Jumlah Penetapan yang dikurangi harus lebih dari 0 & lebih banyak daripada penetapan !"
+      );
+      return;
+    }
+    try {
+      await api.patch(`/userssub/${searchNippPegawai}`, { sub: value });
+      setPenetapanValueAdd("");
+      setSearchPegawaiResult((prev) =>
+        prev ? { ...prev, penetapan: prev.penetapan - value } : prev
+      );
+      alert(`Penetapan sebanyak ${value} berhasil dikurangi !`);
+    } catch (err) {
+      console.error("Gagal menambah Penetapan:", err);
     }
   };
 
@@ -405,7 +504,7 @@ const AdminDesktopPage = () => {
               onChange={(e) => setNippAdd(e.target.value)}
               placeholder="Masukkan NIPP"
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-              disabled={isLoading}
+              disabled={isLoadingTambah}
             />
             <input
               type="text"
@@ -413,7 +512,7 @@ const AdminDesktopPage = () => {
               onChange={(e) => setNamaAdd(e.target.value)}
               placeholder="Masukkan Nama"
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-              disabled={isLoading}
+              disabled={isLoadingTambah}
             />
             <input
               type="number"
@@ -421,15 +520,15 @@ const AdminDesktopPage = () => {
               onChange={(e) => setPenetapanAdd(e.target.value)}
               placeholder="Masukkan Jatah"
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-              disabled={isLoading}
+              disabled={isLoadingTambah}
             />
           </div>
           <button
             onClick={handleAddUser}
             className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
-            disabled={isLoading}
+            disabled={isLoadingTambah}
           >
-            {isLoading ? "Menambahkan..." : "Tambah Pegawai"}
+            {isLoadingTambah ? "Menambahkan..." : "Tambah Pegawai"}
           </button>
           {messageTambah && (
             <div
@@ -443,6 +542,121 @@ const AdminDesktopPage = () => {
             </div>
           )}
         </div>
+
+        {/* Search Pegawai Section */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            Pencarian Pegawai
+          </h2>
+          <form
+            onSubmit={handleSearchPegawai}
+            className="flex flex-col sm:flex-row gap-4 mb-4"
+          >
+            <input
+              type="text"
+              value={searchNippPegawai}
+              onChange={(e) => setSearchNippPegawai(e.target.value)}
+              placeholder="Masukkan NIPP / NIPKWT"
+              className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              disabled={isLoadingPegawai}
+            />
+            <button
+              type="submit"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+              disabled={isLoadingPegawai}
+            >
+              {isLoadingPegawai ? "Mencari..." : "Cari Data"}
+            </button>
+          </form>
+          {messageCariPegawai && (
+            <div
+              className={`mb-4 p-4 rounded-xl ${
+                messageCariPegawai.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
+            >
+              <p className="font-medium">{messageCariPegawai.text}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Search Pegawai Result */}
+        {searchPegawaiResult && (
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              Detail Pegawai
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchPegawaiResult.nipp}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Nama</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchPegawaiResult.nama}
+                  </p>
+                </div>
+
+                {/* Penetapan + input + 2 tombol */}
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium mb-2">
+                    Penetapan
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchPegawaiResult.penetapan}
+                    </p>
+
+                    <form
+                      onSubmit={(e) => e.preventDefault()} // kita handle manual
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        type="number"
+                        value={penetapanValueAdd}
+                        onChange={(e) => setPenetapanValueAdd(e.target.value)}
+                        placeholder="Jumlah..."
+                        className="w-28 border-2 border-gray-200 rounded-xl px-3 py-1
+                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        disabled={isLoading}
+                      />
+                      {/* Tombol Tambah */}
+                      <button
+                        type="button"
+                        onClick={handleAddPenetapan}
+                        className="px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700
+                           hover:from-blue-700 hover:to-blue-800 text-white rounded-xl
+                           shadow transition-all font-medium"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Menambahkan..." : "Tambah Penetapan"}
+                      </button>
+
+                      {/* Tombol Kurang */}
+                      <button
+                        type="button"
+                        onClick={handleSubPenetapan}
+                        className="px-4 py-1 bg-gradient-to-r from-red-600 to-red-700
+                           hover:from-red-700 hover:to-red-800 text-white rounded-xl
+                           shadow transition-all font-medium"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Mengurangi..." : "Kurangi Penetapan"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Search Section */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
