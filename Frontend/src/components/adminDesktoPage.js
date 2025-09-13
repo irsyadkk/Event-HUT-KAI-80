@@ -16,6 +16,10 @@ const AdminDesktopPage = () => {
   const [searchPegawaiResult, setSearchPegawaiResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingTambah, setIsLoadingTambah] = useState(false);
+  const [isLoadingTambahPenetapan, setIsLoadingTambahPenetapan] =
+    useState(false);
+  const [isLoadingKurangPenetapan, setIsLoadingKurangPenetapan] =
+    useState(false);
   const [isLoadingPegawai, setIsLoadingPegawai] = useState(false);
   const [messageCari, setMessageCari] = useState("");
   const [messageCariPegawai, setMessageCariPegawai] = useState("");
@@ -223,6 +227,7 @@ const AdminDesktopPage = () => {
       alert("Jumlah Penetapan yang ditambahkan harus lebih dari 0!");
       return;
     }
+    setIsLoadingTambahPenetapan(true);
     try {
       await api.patch(`/usersadd/${searchNippPegawai}`, { add: value });
       setPenetapanValueAdd("");
@@ -233,6 +238,7 @@ const AdminDesktopPage = () => {
     } catch (err) {
       console.error("Gagal menambah Penetapan:", err);
     }
+    setIsLoadingTambahPenetapan(false);
   };
 
   const handleSubPenetapan = async (e) => {
@@ -244,6 +250,7 @@ const AdminDesktopPage = () => {
       );
       return;
     }
+    setIsLoadingKurangPenetapan(true);
     try {
       await api.patch(`/userssub/${searchNippPegawai}`, { sub: value });
       setPenetapanValueAdd("");
@@ -254,6 +261,7 @@ const AdminDesktopPage = () => {
     } catch (err) {
       console.error("Gagal menambah Penetapan:", err);
     }
+    setIsLoadingKurangPenetapan(false);
   };
 
   const handleAddQuota = async () => {
@@ -615,7 +623,7 @@ const AdminDesktopPage = () => {
                     </p>
 
                     <form
-                      onSubmit={(e) => e.preventDefault()} // kita handle manual
+                      onSubmit={(e) => e.preventDefault()}
                       className="flex items-center gap-2"
                     >
                       <input
@@ -634,9 +642,11 @@ const AdminDesktopPage = () => {
                         className="px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700
                            hover:from-blue-700 hover:to-blue-800 text-white rounded-xl
                            shadow transition-all font-medium"
-                        disabled={isLoading}
+                        disabled={isLoadingTambahPenetapan}
                       >
-                        {isLoading ? "Menambahkan..." : "Tambah Penetapan"}
+                        {isLoadingTambahPenetapan
+                          ? "Menambahkan..."
+                          : "Tambah Penetapan"}
                       </button>
 
                       {/* Tombol Kurang */}
@@ -646,9 +656,11 @@ const AdminDesktopPage = () => {
                         className="px-4 py-1 bg-gradient-to-r from-red-600 to-red-700
                            hover:from-red-700 hover:to-red-800 text-white rounded-xl
                            shadow transition-all font-medium"
-                        disabled={isLoading}
+                        disabled={isLoadingKurangPenetapan}
                       >
-                        {isLoading ? "Mengurangi..." : "Kurangi Penetapan"}
+                        {isLoadingKurangPenetapan
+                          ? "Mengurangi..."
+                          : "Kurangi Penetapan"}
                       </button>
                     </form>
                   </div>
