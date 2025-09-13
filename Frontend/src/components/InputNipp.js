@@ -13,7 +13,7 @@ const InputNipp = () => {
   const [allowed, setAllowed] = useState(false);
 
   // CHANGE THIS AND targetTime IN landingPage.js TO SYNC
-  const targetTime = new Date("2025-09-13T09:00:00+07:00");
+  const targetTime = new Date("2025-09-14T15:00:00+07:00");
 
   useEffect(() => {
     const now = new Date();
