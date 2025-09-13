@@ -17,6 +17,9 @@ function LandingPage() {
       console.log("Target:", targetTime.toString());
       console.log("Selisih (detik):", diff);
       setTimeLeft(diff > 0 ? diff : 0);
+      localStorage.removeItem("token");
+      localStorage.removeItem("nipp");
+      localStorage.removeItem("nama");
     }, 1000);
 
     return () => clearInterval(timer);
