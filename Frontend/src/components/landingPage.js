@@ -99,7 +99,7 @@ function LandingPage() {
                     {formatTime(timeLeft)}
                   </div>
                   <p className="text-xs text-gray-500">
-                    13 September 2025 - 09:00 WIB
+                    14 September 2025 - 09:00 WIB
                   </p>
                 </div>
               </div>
