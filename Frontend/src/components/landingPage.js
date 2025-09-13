@@ -93,7 +93,7 @@ function LandingPage() {
               <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-5 border border-white/20">
                 <div className="text-center">
                   <p className="text-gray-600 font-medium mb-2 text-sm">
-                    🔥 WAR TICKET TAHAP 1
+                    🔥 WAR TICKET TAHAP 2
                   </p>
                   <div className="text-2xl md:text-3xl font-bold text-green-700 mb-2">
                     {formatTime(timeLeft)}
