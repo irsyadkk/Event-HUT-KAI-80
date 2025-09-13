@@ -8,6 +8,7 @@ const QRResultPage = () => {
   const nipp = location.state?.nipp;
   const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
+  const [allowed, setAllowed] = useState(false);
   const navigate = useNavigate();
 
   // Ambil order by NIPP
@@ -34,13 +35,22 @@ const QRResultPage = () => {
     }
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+    } else {
+      setAllowed(true);
+    }
+  }, [navigate]);
+
   // Load data pertama kali
   useEffect(() => {
     if (nipp) {
       getOrderByNipp();
     }
   }, [nipp]);
-
+  if (!allowed) return null;
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8"
