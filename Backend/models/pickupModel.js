@@ -2,8 +2,8 @@ import { Sequelize, DataTypes } from "sequelize";
 import db from "../config/Database.js";
 import User from "./userModel.js";
 
-const Pickup = db.define(
-  "pickup",
+const Pickups = db.define(
+  "pickups",
   {
     id: {
       type: Sequelize.INTEGER,
@@ -11,13 +11,17 @@ const Pickup = db.define(
       allowNull: false,
       autoIncrement: true,
     },
+    timestamp: {
+      type: Sequelize.TEXT,
+      allowNull: false,
+    },
     nipp: {
-      type: Sequelize.STRING,
+      type: Sequelize.TEXT,
       allowNull: false,
       references: { model: User, key: "nipp" },
     },
     nama: {
-      type: DataTypes.ARRAY(DataTypes.TEXT),
+      type: Sequelize.TEXT,
       allowNull: false,
     },
     jumlah_kuota: {
@@ -28,15 +32,19 @@ const Pickup = db.define(
       type: Sequelize.TEXT,
       allowNull: false,
     },
-    status_pengambilan: {
-      type: Sequelize.TEXT,
-      allowNull: false,
-    },
-    penanggung_jawab: {
-      type: Sequelize.TEXT,
-      allowNull: false,
-    },
     pos_pengambilan: {
+      type: Sequelize.TEXT,
+      allowNull: false,
+    },
+    nipp_pj: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    },
+    nama_pj: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    },
+    status: {
       type: Sequelize.TEXT,
       allowNull: false,
     },
@@ -49,4 +57,4 @@ const Pickup = db.define(
 
 db.sync().then(() => console.log("Database synced"));
 
-export default Pickup;
+export default Pickups;
