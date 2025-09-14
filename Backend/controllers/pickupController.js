@@ -89,3 +89,76 @@ export const addPickup = async (req, res) => {
     });
   }
 };
+
+// GET PICKUP
+export const getPickup = async (req, res) => {
+  try {
+    const pickups = await Pickups.findAll();
+    res.status(200).json({
+      status: "Success",
+      message: "Pickups Retrieved",
+      data: pickups,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// GET PICKUP BY NIPP
+export const getPickupByNIPP = async (req, res) => {
+  try {
+    const nipp = req.params.nipp;
+    const pickup = await Pickups.findOne({
+      where: {
+        nipp: nipp,
+      },
+    });
+    if (!pickup) {
+      throw makeError("Pickup Not Found !", 404);
+    }
+    res.status(200).json({
+      status: "Success",
+      message: "Pickup Retrieved",
+      data: pickup,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// DELETE PICKUP BY NIPP
+export const deletePickupByNIPP = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const pickup = await Pickups.findOne({
+      where: {
+        nipp: nipp,
+      },
+      transaction: t,
+    });
+    if (!pickup) {
+      throw makeError("Pickup Not Found !", 404);
+    }
+
+    await Pickups.destroy({ where: { nipp: nipp }, transaction: t });
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Success Delete Pickup With NIPP ${nipp} !`,
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};

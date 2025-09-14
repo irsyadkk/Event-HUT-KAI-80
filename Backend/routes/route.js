@@ -23,7 +23,12 @@ import {
   addQuota,
   subQuota,
 } from "../controllers/quotaController.js";
-import { addPickup } from "../controllers/pickupController.js";
+import {
+  addPickup,
+  getPickup,
+  getPickupByNIPP,
+  deletePickupByNIPP,
+} from "../controllers/pickupController.js";
 
 const router = express.Router();
 // REFRESH TOKEN
@@ -55,5 +60,8 @@ router.patch("/subquota", verifyToken, subQuota);
 
 // PICKUP
 router.post("/pickup", verifyToken, addPickup);
+router.get("/pickup", verifyToken, getPickup);
+router.get("/pickup/:nipp", verifyToken, getPickupByNIPP);
+router.delete("/pickup/:nipp", verifyToken, deletePickupByNIPP);
 
 export default router;
