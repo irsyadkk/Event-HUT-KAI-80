@@ -57,6 +57,16 @@ export const addPickup = async (req, res) => {
       throw makeError("jumlah_kuota must be a positive number", 400);
     }
 
+    const ifPickupExist = await Pickups.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!ifPickupExist) {
+      throw makeError(`Pickup ${nipp} Already Exist !`, 400);
+    }
+
     await Pickups.create(
       {
         timestamp:
