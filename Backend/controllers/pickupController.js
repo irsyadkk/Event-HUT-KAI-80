@@ -65,8 +65,8 @@ export const addPickup = async (req, res) => {
         jumlah_kuota: jumlah_kuota,
         jenis_pengambilan: jenis_pengambilan,
         pos_pengambilan: pos_pengambilan,
-        nipp_pj: nipp_pj,
-        nama_pj: nama_pj,
+        nipp_pj: nipp_pj ?? null,
+        nama_pj: nama_pj ?? null,
         status: status,
       },
       { transaction: t }
