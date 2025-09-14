@@ -71,7 +71,7 @@ export default function QRPickupApp() {
 
     const payload = {
       // timestamp bisa dikosongkan agar server pakai Date.now(); kirim jika mau catat waktu client
-      // timestamp: new Date().toISOString(),
+    //   timestamp: new Date(),
       nipp: String(qrData.nipp),
       nama: namaPertama,
       jumlah_kuota: kuota,

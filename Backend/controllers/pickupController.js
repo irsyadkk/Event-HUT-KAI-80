@@ -59,7 +59,8 @@ export const addPickup = async (req, res) => {
 
     await Pickups.create(
       {
-        timestamp: timestamp ?? new Date(),
+        timestamp:
+          typeof timestamp === "string" ? timestamp : new Date().toISOString(),
         nipp: nipp,
         nama: nama,
         jumlah_kuota: jumlah_kuota,
