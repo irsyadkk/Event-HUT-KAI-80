@@ -561,7 +561,7 @@ const AddMemberPage = () => {
                     Kuota Keseluruhan
                   </p>
                   <p className="text-purple-700 text-sm">
-                    Tersisa <strong>{quota + 28}</strong> dari total{" "}
+                    Tersisa <strong>{quota}</strong> dari total{" "}
                     <strong>{quotaTotal}</strong> kuota.
                   </p>
                 </div>
