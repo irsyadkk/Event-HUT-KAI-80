@@ -30,8 +30,7 @@ export default function QRPickupApp() {
   const canGoScan = useMemo(() => {
     if (!pos) return false;
     if (!jenis) return false;
-    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim()))
-      return false;
+    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim())) return false;
     return true;
   }, [pos, jenis, pjNipp, pjNama]);
 
@@ -46,11 +45,7 @@ export default function QRPickupApp() {
   function handleQRText(text) {
     try {
       const parsed = JSON.parse(text);
-      if (
-        !parsed?.nipp ||
-        !Array.isArray(parsed?.nama) ||
-        parsed.nama.length === 0
-      ) {
+      if (!parsed?.nipp || !Array.isArray(parsed?.nama) || parsed.nama.length === 0) {
         alert("QR tidak valid. Harus berisi nipp dan array nama.");
         return;
       }
@@ -84,13 +79,12 @@ export default function QRPickupApp() {
 
     try {
       const res = await api.post("/pickup", payload);
-      setSuccessMsg(res?.data?.message || "Konfirmasi tersimpan!");
+      setSuccessMsg("Berhasil menyimpan data pengambilan!");
       setQrData(null);
       setRawText("");
-      setStep("scan");
+      setStep("start"); // ⬅️ NAVIGASI KE HALAMAN INPUT SEBELUM SCAN
     } catch (err) {
       const status = err?.response?.status;
-      // const serverMsg = err?.response?.data?.message; // tidak dipakai kalau mau pakai pesan frontend
 
       if (status === 409) {
         // duplikat NIPP
@@ -106,9 +100,23 @@ export default function QRPickupApp() {
     }
   }
 
+  const closePopup = () => {
+    setErrorMsg("");
+    setSuccessMsg("");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-xl mx-auto p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
+      {/* === POPUP (global) === */}
+      {(errorMsg || successMsg) && (
+        <PopupNotification
+          type={successMsg ? "success" : "error"}
+          message={successMsg || errorMsg}
+          onClose={closePopup}
+        />
+      )}
+
+      <div className="max-w-2xl mx-auto p-6">
         <Header />
 
         {step === "start" && (
@@ -147,6 +155,7 @@ export default function QRPickupApp() {
             onBack={() => setStep("scan")}
             onConfirm={confirmPickup}
             submitting={submitting}
+            // kirim state pesan ke Confirm (untuk banner di dalam kartu)
             errorMsg={errorMsg}
             successMsg={successMsg}
           />
@@ -156,16 +165,102 @@ export default function QRPickupApp() {
   );
 }
 
+function PopupNotification({ type, message, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      ></div>
+
+      {/* Popup */}
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+        <div
+          className={`p-6 rounded-t-2xl ${
+            type === "success"
+              ? "bg-gradient-to-r from-green-500 to-green-600"
+              : "bg-gradient-to-r from-red-500 to-red-600"
+          }`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+              {type === "success" ? (
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">
+                {type === "success" ? "Berhasil!" : "Terjadi Kesalahan"}
+              </h3>
+              <p className="text-white text-opacity-90 text-sm">
+                {type === "success" ? "" : "Silakan coba lagi"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <p className="text-gray-700 mb-6 leading-relaxed">{message}</p>
+
+          <button
+            onClick={onClose}
+            className={`w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-lg ${
+              type === "success" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+            }`}
+          >
+            {type === "success" ? "✓ OK" : "↻ COBA LAGI"}
+          </button>
+        </div>
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white hover:bg-opacity-30 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Header() {
   return (
-    <div className="mb-4">
-      <h1 className="text-xl font-semibold">
-        SCAN PENGAMBILAN – Gelang & Kupon
-      </h1>
-      <p className="text-sm text-gray-600">
-        Flow: Pos → Jenis (Individu/Kolektif & PJ) → Scan QR → Konfirmasi →
-        Simpan (DB)
-      </p>
+    <div className="mb-8 text-center">
+      <div
+        className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+        style={{ backgroundColor: "#406017" }}
+      >
+        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 011-1h2a1 1 0 011 1v1a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 00-1 1H9a1 1 0 00-1-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z"
+          />
+        </svg>
+      </div>
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">SCAN PENGAMBILAN</h1>
+      <p className="text-lg font-medium text-gray-600 mb-3">Gelang & Kupon</p>
     </div>
   );
 }
@@ -183,91 +278,147 @@ function StartCombined({
   goScan,
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow p-4">
-      <ol className="list-decimal ml-5 space-y-4">
-        <li>
-          <div className="font-medium mb-2">Pilih Pos Pengambilan</div>
-          <select
-            className="border p-2 rounded w-full"
-            value={pos}
-            onChange={(e) => setPos(e.target.value)}
-          >
-            <option>POS 1</option>
-            <option>POS 2</option>
-            <option>POS 3</option>
-          </select>
-        </li>
-
-        <li>
-          <div className="font-medium mb-2">Pilih Jenis Pengambilan</div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={`px-4 py-2 rounded text-white ${
-                jenis === "INDIVIDU" ? "bg-amber-500" : "bg-gray-400"
-              }`}
-              onClick={() => setJenis("INDIVIDU")}
-            >
-              INDIVIDU
-            </button>
-            <button
-              type="button"
-              className={`px-4 py-2 rounded text-white ${
-                jenis === "KOLEKTIF" ? "bg-orange-600" : "bg-gray-400"
-              }`}
-              onClick={() => setJenis("KOLEKTIF")}
-            >
-              KOLEKTIF
-            </button>
-          </div>
-          {jenis === "INDIVIDU" && (
-            <p className="text-xs text-gray-600 mt-2">
-              Individu: pegawai NIPP tsb ambil sendiri gelang kupon miliknya.
-            </p>
-          )}
-          {jenis === "KOLEKTIF" && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-600">
-                Kolektif: pegawai NIPP tsb diminta utk bantu ambil kupon
-                rekan-rekannya (perwakilan).
-              </p>
-              <div className="mt-2 grid grid-cols-1 gap-3">
-                <div>
-                  <label className="block text-sm mb-1">
-                    NIPP/NIPKWT Penanggung Jawab
-                  </label>
-                  <input
-                    className="border p-2 rounded w-full"
-                    value={pjNipp}
-                    onChange={(e) => setPjNipp(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm mb-1">
-                    Nama Penanggung Jawab
-                  </label>
-                  <input
-                    className="border p-2 rounded w-full"
-                    value={pjNama}
-                    onChange={(e) => setPjNama(e.target.value)}
-                  />
-                </div>
+    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="p-6">
+        <div className="space-y-8">
+          {/* Step 1: Pos */}
+          <div className="relative">
+            <div className="flex items-center mb-4">
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-bold mr-3"
+                style={{ backgroundColor: "#406017" }}
+              >
+                1
               </div>
+              <h3 className="text-lg font-semibold text-gray-800">Pilih Pos Pengambilan</h3>
             </div>
-          )}
-        </li>
-      </ol>
+            <div className="ml-11">
+              <select
+                className="w-full border-2 border-gray-200 rounded-xl p-4 text-lg font-medium transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
+                value={pos}
+                onChange={(e) => setPos(e.target.value)}
+              >
+                <option>POS 1</option>
+                <option>POS 2</option>
+                <option>POS 3</option>
+              </select>
+            </div>
+          </div>
 
-      <div className="mt-4 flex gap-2">
+          {/* Step 2: Jenis */}
+          <div className="relative">
+            <div className="flex items-center mb-4">
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-bold mr-3"
+                style={{ backgroundColor: "#406017" }}
+              >
+                2
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">Pilih Jenis Pengambilan</h3>
+            </div>
+            <div className="ml-11">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <button
+                  type="button"
+                  className={`px-6 py-4 rounded-xl font-semibold transition-all duration-200 ${
+                    jenis === "INDIVIDU"
+                      ? "text-white shadow-lg transform scale-105"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-gray-200"
+                  }`}
+                  style={jenis === "INDIVIDU" ? { backgroundColor: "#406017" } : {}}
+                  onClick={() => setJenis("INDIVIDU")}
+                >
+                  <div className="text-center">
+                    <div className="text-lg">👤</div>
+                    <div>INDIVIDU</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={`px-6 py-4 rounded-xl font-semibold transition-all duration-200 ${
+                    jenis === "KOLEKTIF"
+                      ? "text-white shadow-lg transform scale-105"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-gray-200"
+                  }`}
+                  style={jenis === "KOLEKTIF" ? { backgroundColor: "#406017" } : {}}
+                  onClick={() => setJenis("KOLEKTIF")}
+                >
+                  <div className="text-center">
+                    <div className="text-lg">👥</div>
+                    <div>KOLEKTIF</div>
+                  </div>
+                </button>
+              </div>
+
+              {jenis === "INDIVIDU" && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-blue-500 mt-0.5">ℹ️</div>
+                    <p className="text-sm text-blue-700">
+                      <strong>Individu:</strong> Pegawai dengan NIPP tersebut mengambil sendiri gelang dan kupon miliknya.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {jenis === "KOLEKTIF" && (
+                <div className="space-y-4">
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="text-orange-500 mt-0.5">⚠️</div>
+                      <p className="text-sm text-orange-700">
+                        <strong>Kolektif:</strong> Pegawai dengan NIPP tersebut diminta untuk membantu mengambil kupon rekan-rekannya sebagai perwakilan.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                    <h4 className="font-medium text-gray-800 flex items-center">
+                      <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: "#406017" }}></span>
+                      Data Penanggung Jawab
+                    </h4>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">NIPP/NIPKWT Penanggung Jawab</label>
+                        <input
+                          className="w-full border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
+                          value={pjNipp}
+                          onChange={(e) => setPjNipp(e.target.value)}
+                          placeholder="Masukkan NIPP/NIPKWT"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nama Penanggung Jawab</label>
+                        <input
+                          className="w-full border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
+                          value={pjNama}
+                          onChange={(e) => setPjNama(e.target.value)}
+                          placeholder="Masukkan nama lengkap"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Button */}
+      <div className="bg-gray-50 px-6 py-4">
         <button
           type="button"
-          className={`px-4 py-2 rounded text-white ${
-            canGoScan ? "bg-green-600" : "bg-gray-400"
+          className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 ${
+            canGoScan
+              ? "text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
+          style={canGoScan ? { backgroundColor: "#406017" } : {}}
           disabled={!canGoScan}
           onClick={goScan}
         >
-          LANJUT SCAN
+          {canGoScan ? "🚀 LANJUT KE SCAN QR" : "⚠️ LENGKAPI DATA TERLEBIH DAHULU"}
         </button>
       </div>
     </div>
@@ -276,42 +427,70 @@ function StartCombined({
 
 function ScanQR({ onBack, onResult, rawText, setRawText }) {
   return (
-    <div className="bg-white rounded-2xl shadow p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Halaman Scan QR</h2>
-        <button
-          className="px-3 py-1 rounded bg-gray-600 text-white"
-          onClick={onBack}
-        >
-          KEMBALI
-        </button>
+    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 011-1h2a1 1 0 011 1v1a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 00-1 1H9a1 1 0 00-1-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white">Scan QR Code</h2>
+          </div>
+          <button
+            className="px-4 py-2 rounded-lg bg-white bg-opacity-20 text-white hover:bg-opacity-30 transition-all duration-200 font-medium"
+            onClick={onBack}
+          >
+            ← KEMBALI
+          </button>
+        </div>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded">
-        <Scanner
-          onScan={(results) => {
-            const code = results?.[0]?.rawValue;
-            if (code) onResult(code);
-          }}
-          onError={(err) => console.error(err)}
-        />
-      </div>
+      <div className="p-6">
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200">
+            <div className="flex items-center space-x-3">
+              <div className="text-blue-500">📱</div>
+              <div className="text-sm text-blue-700">
+                <strong>Petunjuk:</strong> Arahkan kamera ke QR code untuk memindai secara otomatis
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div className="mt-4">
-        <p className="text-sm text-gray-600">
-          Tidak bisa akses kamera? Tempel JSON QR di bawah lalu klik "LANJUT".
-        </p>
-        <textarea
-          className="border p-2 rounded w-full h-28"
-          value={rawText}
-          onChange={(e) => setRawText(e.target.value)}
-        />
-        <button
-          className="mt-2 px-4 py-2 rounded bg-blue-600 text-white"
-          onClick={() => onResult(rawText)}
-        >
-          LANJUT (dari teks)
-        </button>
+        <div className="rounded-2xl overflow-hidden border-4 border-gray-200 mb-6 bg-black">
+          <Scanner
+            onScan={(results) => {
+              const code = results?.[0]?.rawValue;
+              if (code) onResult(code);
+            }}
+            onError={(err) => console.error(err)}
+          />
+        </div>
+
+        <div className="bg-gray-50 rounded-2xl p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="text-gray-600">📄</div>
+            <h3 className="font-semibold text-gray-800">Alternatif: Input Manual</h3>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Tidak bisa mengakses kamera? Salin dan tempel JSON QR di bawah ini, lalu klik tombol "PROSES".
+          </p>
+          <textarea
+            className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20 font-mono text-sm"
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            placeholder='{"nipp":"123456","nama":["John Doe","Jane Smith"]}'
+          />
+          <button
+            className="w-full mt-4 py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
+            style={{ backgroundColor: "#406017" }}
+            onClick={() => onResult(rawText)}
+          >
+            🔄 PROSES DARI TEKS
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -328,75 +507,136 @@ function Confirm({
   onBack,
   onConfirm,
   submitting,
+  // === tambahkan dua props ini agar banner di dalam kartu bekerja ===
   errorMsg,
   successMsg,
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">SCAN SUCCESS!!</h2>
-        <button
-          className="px-3 py-1 rounded bg-gray-600 text-white"
-          onClick={onBack}
-        >
-          KEMBALI
-        </button>
+    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <div
+        className="bg-gradient-to-r px-6 py-4"
+        style={{ background: "linear-gradient(135deg, #406017 0%, #5a7c2a 100%)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+              <div className="text-2xl">✅</div>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">SCAN BERHASIL!</h2>
+              <p className="text-green-100 text-sm">Verifikasi data sebelum konfirmasi</p>
+            </div>
+          </div>
+          <button
+            className="px-4 py-2 rounded-lg bg-white bg-opacity-20 text-white hover:bg-opacity-30 transition-all duration-200 font-medium"
+            onClick={onBack}
+          >
+            ← KEMBALI
+          </button>
+        </div>
       </div>
 
-      <div className="mt-3 space-y-1 text-sm">
-        <div>
-          <b>POS:</b> {pos}
+      <div className="p-6">
+        {/* Data Summary */}
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-6">
+          <h3 className="font-bold text-gray-800 mb-4 flex items-center">
+            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: "#406017" }}></span>
+            Ringkasan Data
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pos Pengambilan</div>
+              <div className="text-lg font-semibold text-gray-800">{pos}</div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Jenis</div>
+              <div className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">{jenis === "INDIVIDU" ? "👤" : "👥"}</span>
+                {jenis}
+              </div>
+            </div>
+            {jenis === "KOLEKTIF" && (
+              <div className="bg-white rounded-xl p-4 shadow-sm md:col-span-2">
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Penanggung Jawab</div>
+                <div className="text-lg font-semibold text-gray-800">{pjNipp} - {pjNama}</div>
+              </div>
+            )}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">NIPP (dari QR)</div>
+              <div className="text-lg font-semibold text-gray-800">{qrData?.nipp}</div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Nama Pertama</div>
+              <div className="text-lg font-semibold text-gray-800">{namaPertama}</div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm md:col-span-2">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Jumlah Kuota</div>
+              <div className="text-2xl font-bold flex items-center" style={{ color: "#406017" }}>
+                <span className="mr-2">🎫</span>
+                {kuota} kupon
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <b>Jenis:</b> {jenis}
-        </div>
-        {jenis === "KOLEKTIF" && (
-          <div>
-            <b>Penanggung Jawab:</b> {pjNipp} - {pjNama}
+
+        {/* Messages (banner kecil di dalam kartu) */}
+        {errorMsg && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border-2 border-red-200">
+            <div className="flex items-start space-x-3">
+              <div className="text-red-500 text-xl mt-0.5">❌</div>
+              <div>
+                <div className="font-semibold text-red-800 mb-1">Terjadi Kesalahan</div>
+                <div className="text-red-700 text-sm">{errorMsg}</div>
+              </div>
+            </div>
           </div>
         )}
-        <div>
-          <b>NIPP (QR):</b> {qrData?.nipp}
-        </div>
-        <div>
-          <b>Nama (pertama):</b> {namaPertama}
-        </div>
-        <div>
-          <b>Jumlah Kuota:</b> {kuota}
-        </div>
-      </div>
 
-      {errorMsg && (
-        <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-          {errorMsg}
-        </div>
-      )}
-      {successMsg && (
-        <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-          {successMsg}
-        </div>
-      )}
+        {successMsg && (
+          <div className="mb-6 p-4 rounded-xl bg-green-50 border-2 border-green-200">
+            <div className="flex items-start space-x-3">
+              <div className="text-green-500 text-xl mt-0.5">✅</div>
+              <div>
+                <div className="font-semibold text-green-800 mb-1">Berhasil!</div>
+                <div className="text-green-700 text-sm">{successMsg}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      <div className="mt-4 flex gap-2">
+        {/* Action Button */}
         <button
-          className={`px-4 py-2 rounded text-white ${
-            submitting ? "bg-green-400" : "bg-green-700"
+          className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 ${
+            submitting
+              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+              : "text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           }`}
+          style={!submitting ? { backgroundColor: "#406017" } : {}}
           onClick={onConfirm}
           disabled={submitting}
         >
-          {submitting ? "MENYIMPAN..." : "KONFIRMASI PENGAMBILAN"}
+          {submitting ? (
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-transparent"></div>
+              <span>MENYIMPAN...</span>
+            </div>
+          ) : (
+            "💾 KONFIRMASI PENGAMBILAN"
+          )}
         </button>
-      </div>
 
-      <details className="mt-3">
-        <summary className="cursor-pointer text-sm text-gray-700">
-          Lihat JSON QR
-        </summary>
-        <pre className="bg-gray-50 border rounded p-2 text-xs overflow-auto">
-          {JSON.stringify(qrData, null, 2)}
-        </pre>
-      </details>
+        {/* QR Data Details */}
+        <details className="mt-6">
+          <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium p-3 bg-gray-50 rounded-xl transition-colors duration-200">
+            📋 Lihat Detail JSON QR
+          </summary>
+          <div className="mt-3 bg-gray-900 rounded-xl p-4 overflow-hidden">
+            <pre className="text-green-400 text-xs overflow-auto font-mono leading-relaxed">
+              {JSON.stringify(qrData, null, 2)}
+            </pre>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
