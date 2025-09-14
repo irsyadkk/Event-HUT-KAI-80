@@ -63,7 +63,7 @@ export const addPickup = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
 
-    if (!ifPickupExist) {
+    if (ifPickupExist) {
       throw makeError(`Pickup ${nipp} Already Exist !`, 400);
     }
 
