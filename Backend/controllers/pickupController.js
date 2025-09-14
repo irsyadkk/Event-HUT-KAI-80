@@ -64,7 +64,7 @@ export const addPickup = async (req, res) => {
     });
 
     if (ifPickupExist) {
-      throw makeError(`Pickup ${nipp} Already Exist !`, 400);
+      throw makeError(`Pickup ${nipp} Already Exist !`, 409);
     }
 
     await Pickups.create(
