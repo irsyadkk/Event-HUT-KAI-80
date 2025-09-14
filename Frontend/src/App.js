@@ -5,6 +5,7 @@ import QRResultPage from "./components/qrResutPage";
 import AdminDesktopPage from "./components/adminDesktoPage";
 import DetailRegisterPage from "./components/detailRegisterPage";
 import LandingPage from "./components/landingPage";
+import QRPickupApp from "./components/qrScan";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/qrresult" element={<QRResultPage />} />
         <Route path="/admindesk" element={<AdminDesktopPage />} />
         <Route path="/detailregister" element={<DetailRegisterPage />} />
+        <Route path="/qrpickup" element={<QRPickupApp />} />
       </Routes>
     </BrowserRouter>
   );

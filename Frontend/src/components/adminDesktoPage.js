@@ -356,6 +356,14 @@ const AdminDesktopPage = () => {
               </div>
             </div>
             <button
+              onClick={() => navigate("/qrpickup")}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800
+                   text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl
+                   transform hover:scale-105 text-sm md:text-base font-medium"
+            >
+              Scan QR Pengambilan
+            </button>
+            <button
               onClick={logout}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
             >
