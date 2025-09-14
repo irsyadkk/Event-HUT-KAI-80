@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import api from "../api";
@@ -31,7 +30,8 @@ export default function QRPickupApp() {
   const canGoScan = useMemo(() => {
     if (!pos) return false;
     if (!jenis) return false;
-    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim())) return false;
+    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim()))
+      return false;
     return true;
   }, [pos, jenis, pjNipp, pjNama]);
 
@@ -71,7 +71,7 @@ export default function QRPickupApp() {
 
     const payload = {
       // timestamp bisa dikosongkan agar server pakai Date.now(); kirim jika mau catat waktu client
-    //   timestamp: new Date(),
+      //   timestamp: new Date(),
       nipp: String(qrData.nipp),
       nama: namaPertama,
       jumlah_kuota: kuota,
@@ -83,22 +83,24 @@ export default function QRPickupApp() {
     };
 
     try {
-      // Jika axios instance belum otomatis menambahkan Authorization header,
-      // aktifkan baris berikut:
-      // const token = localStorage.getItem("token");
-      // const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
       const res = await api.post("/pickup", payload);
-
-      // sukses → reset untuk scan berikutnya
       setSuccessMsg(res?.data?.message || "Konfirmasi tersimpan!");
       setQrData(null);
       setRawText("");
       setStep("scan");
     } catch (err) {
-      // tampilkan pesan dari server bila ada
-      const msg = err?.response?.data?.message || "Gagal menyimpan pickup";
-      setErrorMsg(msg);
+      const status = err?.response?.status;
+      // const serverMsg = err?.response?.data?.message; // tidak dipakai kalau mau pakai pesan frontend
+
+      if (status === 409) {
+        // duplikat NIPP
+        setErrorMsg("NIPP ini sudah melakukan pengambilan.");
+      } else if (status === 400) {
+        // validasi request (field kosong/salah)
+        setErrorMsg("Data tidak valid atau belum lengkap.");
+      } else {
+        setErrorMsg("Gagal menyimpan pickup. Coba lagi.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -161,7 +163,8 @@ function Header() {
         SCAN PENGAMBILAN – Gelang & Kupon
       </h1>
       <p className="text-sm text-gray-600">
-        Flow: Pos → Jenis (Individu/Kolektif & PJ) → Scan QR → Konfirmasi → Simpan (DB)
+        Flow: Pos → Jenis (Individu/Kolektif & PJ) → Scan QR → Konfirmasi →
+        Simpan (DB)
       </p>
     </div>
   );
@@ -376,7 +379,9 @@ function Confirm({
 
       <div className="mt-4 flex gap-2">
         <button
-          className={`px-4 py-2 rounded text-white ${submitting ? "bg-green-400" : "bg-green-700"}`}
+          className={`px-4 py-2 rounded text-white ${
+            submitting ? "bg-green-400" : "bg-green-700"
+          }`}
           onClick={onConfirm}
           disabled={submitting}
         >
