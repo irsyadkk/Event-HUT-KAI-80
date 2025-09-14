@@ -1,5 +1,11 @@
-import db from "../config/Database";
-import Pickups from "../models/pickupModel";
+import db from "../config/Database.js";
+import Pickups from "../models/pickupModel.js";
+
+const makeError = (msg, code = 400) => {
+  const error = new Error(msg);
+  error.statusCode = code;
+  return error;
+};
 
 // ADD PICKUP
 export const addPickup = async (req, res) => {
@@ -16,8 +22,8 @@ export const addPickup = async (req, res) => {
       nama_pj,
       status,
     } = req.body;
+    // Validasi minimal
     if (
-      !timestamp ||
       !nipp ||
       !nama ||
       !jumlah_kuota ||
@@ -25,14 +31,12 @@ export const addPickup = async (req, res) => {
       !pos_pengambilan ||
       !status
     ) {
-      const msg = !timestamp
-        ? "timestamp field cannot be empty !"
-        : !nipp
+      const msg = !nipp
         ? "nipp field cannot be empty !"
         : !nama
         ? "nama field cannot be empty !"
         : !jumlah_kuota
-        ? "jumlah_kuota field cannot be empty !"
+        ? "Status field cannot be empty !"
         : !jenis_pengambilan
         ? "jenis_pengambilan field cannot be empty !"
         : !pos_pengambilan
@@ -41,9 +45,21 @@ export const addPickup = async (req, res) => {
       throw makeError(msg, 400);
     }
 
-    let res = await Pickups.create(
+    if (!["INDIVIDU", "KOLEKTIF"].includes(jenis_pengambilan)) {
+      throw makeError("jenis_pengambilan must be INDIVIDU or KOLEKTIF", 400);
+    }
+
+    if (jenis_pengambilan === "KOLEKTIF" && (!nipp_pj || !nama_pj)) {
+      throw makeError("nipp_pj & nama_pj are required for KOLEKTIF", 400);
+    }
+
+    if (Number.isNaN(Number(jumlah_kuota)) || Number(jumlah_kuota) <= 0) {
+      throw makeError("jumlah_kuota must be a positive number", 400);
+    }
+
+    await Pickups.create(
       {
-        timestamp: timestamp,
+        timestamp: timestamp ?? new Date(),
         nipp: nipp,
         nama: nama,
         jumlah_kuota: jumlah_kuota,
