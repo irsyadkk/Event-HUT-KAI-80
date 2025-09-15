@@ -25,6 +25,7 @@ const AdminDesktopPage = () => {
   const [messageCariPegawai, setMessageCariPegawai] = useState("");
   const [messageTambah, setMessageTambah] = useState("");
   const [orderList, setOrderList] = useState([]);
+  const [pickupList, setPickupList] = useState([]);
   const [quotaValue, setQuotaValue] = useState("");
   const [penetapanValueAdd, setPenetapanValueAdd] = useState("");
   const [quota, setQuota] = useState(0);
@@ -35,6 +36,7 @@ const AdminDesktopPage = () => {
   const [nippAdd, setNippAdd] = useState("");
   const [namaAdd, setNamaAdd] = useState("");
   const [penetapanAdd, setPenetapanAdd] = useState("");
+  const [selectedTable, setSelectedTable] = useState("order");
 
   // ✅ cek token & role admin
   useEffect(() => {
@@ -60,6 +62,15 @@ const AdminDesktopPage = () => {
       setOrderList(res.data.data || []);
     } catch (err) {
       console.error("Gagal mengambil data order :", err);
+    }
+  }, []);
+
+  const getAllPickups = useCallback(async () => {
+    try {
+      const res = await api.get("/pickup");
+      setPickupList(res.data.data || []);
+    } catch (err) {
+      console.error("Gagal mengambil data pickup :", err);
     }
   }, []);
 
@@ -797,131 +808,264 @@ const AdminDesktopPage = () => {
           </div>
         )}
 
-        {/* Orders Table */}
+        {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              Data Peserta Terdaftar
-              <span className="ml-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                {orderList.length} peserta
-              </span>
+              {selectedTable === "order"
+                ? "Data Peserta Terdaftar"
+                : "Data Pickup"}
             </h2>
-            <button
-              onClick={exportExcel}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-medium"
-            >
-              Export Excel (.xlsx)
-            </button>
+            {/* tombol switch table */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedTable("order")}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "order"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Order
+              </button>
+              <button
+                onClick={() => setSelectedTable("pickup")}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "pickup"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Pickup
+              </button>
+            </div>
           </div>
-          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    No
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    NIPP
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    Anggota Keluarga
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    Jumlah Anggota
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    Transportasi
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                    Keberangkatan
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {orderList.length === 0 ? (
+
+          {selectedTable === "order" ? (
+            /* ---------- TABEL ORDER ---------- */
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td
-                      colSpan="4"
-                      className="px-6 py-12 text-center text-gray-500"
-                    >
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                          <svg
-                            className="w-8 h-8 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
-                            ></path>
-                          </svg>
-                        </div>
-                        <p className="font-medium">Belum ada data peserta</p>
-                      </div>
-                    </td>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      No
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      NIPP
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Anggota Keluarga
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Jumlah Anggota
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Transportasi
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Keberangkatan
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Aksi
+                    </th>
                   </tr>
-                ) : (
-                  orderList.map((order, index) => (
-                    <tr
-                      key={order.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                          {order.nipp}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          {order.nama.map((n, nameIndex) => (
-                            <div
-                              key={nameIndex}
-                              className="flex items-center gap-2"
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {orderList.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-6 py-12 text-center text-gray-500"
+                      >
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                              <span className="text-sm text-gray-700">{n}</span>
-                            </div>
-                          ))}
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <p className="font-medium">
+                            Belum ada data peserta !
+                          </p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {order.nama.length ?? "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {order.transportasi ?? "-"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {order.keberangkatan ?? "-"}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => {
-                            navigate("/detailregister", {
-                              state: { nipp: order.nipp },
-                            });
-                          }}
-                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all duration-200 hover:shadow-lg transform hover:scale-105"
-                        >
-                          Detail
-                        </button>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    orderList.map((order, index) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            {order.nipp}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            {order.nama.map((n, nameIndex) => (
+                              <div
+                                key={nameIndex}
+                                className="flex items-center gap-2"
+                              >
+                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span className="text-sm text-gray-700">
+                                  {n}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {order.nama.length ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {order.transportasi ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {order.keberangkatan ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => {
+                              navigate("/detailregister", {
+                                state: { nipp: order.nipp },
+                              });
+                            }}
+                            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all duration-200 hover:shadow-lg transform hover:scale-105"
+                          >
+                            Detail
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            /* ---------- TABEL PICKUP ---------- */
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      No
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Timestamp
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      NIPP
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Nama
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Jumlah Kuota
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Jenis Pengambilan
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Pos Pengambilan
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      NIPP Penanggung Jawab
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Nama Penanggung Jawab
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {pickupList.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-6 py-12 text-center text-gray-500"
+                      >
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <p className="font-medium">Belum ada data pickup !</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    pickupList.map((pickup, index) => (
+                      <tr
+                        key={pickup.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.timestamp ?? "-"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            {pickup.nipp}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.nama ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.jumlah_kuota ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.jenis_pengambilan ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.pos_pengambilan ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.nipp_pj ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.nama_pj ?? "-"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700">
+                          {pickup.status ?? "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
