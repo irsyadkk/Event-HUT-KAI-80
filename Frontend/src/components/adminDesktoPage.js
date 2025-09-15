@@ -169,7 +169,7 @@ const AdminDesktopPage = () => {
     //setIsLoadingTambahPeserta(false);
   };
 
-  const exportExcel = () => {
+  const exportExcelOrder = () => {
     if (!orderList || orderList.length === 0) return;
 
     const data = orderList.map((order, index) => ({
@@ -195,6 +195,38 @@ const AdminDesktopPage = () => {
     });
 
     saveAs(blob, "DataPeserta.xlsx");
+  };
+
+  const exportExcelPickup = () => {
+    if (!pickupList || pickupList.length === 0) return;
+
+    const data = pickupList.map((pickup, index) => ({
+      No: index + 1,
+      Timestamp: pickup.timestamp,
+      NIPP: pickup.nipp,
+      Nama: pickup.nama,
+      "Jumlah Kuota": pickup.jumlah_kuota,
+      "Jenis Pengambilan": pickup.jenis_pengambilan,
+      "Pos Pengambilan": pickup.pos_pengambilan,
+      "NIPP Penanggung Jawab": pickup.nipp_pj,
+      "Nama Penanggung Jawab": pickup.nama_pj,
+      Status: pickup.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Pickup");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, "DataPickup.xlsx");
   };
 
   const handleAddUser = async (e) => {
@@ -329,6 +361,7 @@ const AdminDesktopPage = () => {
   useEffect(() => {
     if (allowed) {
       getAllOrders();
+      getAllPickups();
       getQuota();
     }
   }, [allowed, getAllOrders, getQuota]);
@@ -817,6 +850,21 @@ const AdminDesktopPage = () => {
                 ? "Data Peserta Terdaftar"
                 : "Data Pickup"}
             </h2>
+            {selectedTable === "order" ? (
+              <button
+                onClick={exportExcelOrder}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-x1 shadow-1g transition-all duration-200 hover:shadow-x1 transform hover:scale-105 text-sm font-medium"
+              >
+                Export Data Peserta Terdaftar ke Excel (.xlsx)
+              </button>
+            ) : (
+              <button
+                onClick={exportExcelPickup}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-x1 shadow-1g transition-all duration-200 hover:shadow-x1 transform hover:scale-105 text-sm font-medium"
+              >
+                Export Data Pickup ke Excel (.xlsx)
+              </button>
+            )}
             {/* tombol switch table */}
             <div className="flex gap-3">
               <button
