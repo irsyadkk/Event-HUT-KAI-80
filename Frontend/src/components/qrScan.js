@@ -472,27 +472,33 @@ function StartCombined({
 }
 
 function ScanQR({ onBack, onResult, rawText, setRawText }) {
-  // --- kunci buat cegah double trigger (kamera+barcode sering keluarkan 2x)
-  const scanLockRef = useRef(false);
-  const bufferRef = useRef("");
-  const lastTsRef = useRef(0);
+  const scanLockRef = React.useRef(false);
+  const bufferRef = React.useRef("");
+  const lastTsRef = React.useRef(0);
 
-  // batas jeda antar karakter untuk menganggap ini hasil scanner (cepat)
-  const GAP_LIMIT_MS = 35; // 20–50ms umum untuk scanner
+  // --- state fallback cari order by NIPP
+  const [manualNipp, setManualNipp] = React.useState("");
+  const [lookupLoading, setLookupLoading] = React.useState(false);
+  const [lookupError, setLookupError] = React.useState("");
+
+  // jeda antar char untuk mendeteksi input dari scanner (cepat)
+  const GAP_LIMIT_MS = 35;
 
   const handleDecoded = (text) => {
     if (!text) return;
     if (scanLockRef.current) return;
     scanLockRef.current = true;
     onResult(text);
-    // buka lock setelah sedikit waktu supaya tidak double
-    setTimeout(() => (scanLockRef.current = false), 700);
+    setTimeout(() => (scanLockRef.current = false), 700); // cegah double-trigger
   };
 
-  // ✅ Listener global: tangkap ketikan dari barcode/QR USB (keyboard wedge)
-  useEffect(() => {
+  // Tangkap input dari barcode/QR USB (keyboard wedge)
+  React.useEffect(() => {
     const onKeyDown = (e) => {
-      // kalau Enter/Tab → anggap akhir scan, proses buffer
+      // kalau sedang fokus di input/textarea, biarkan user mengetik manual
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || e.isComposing) return;
+
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
         const txt = bufferRef.current.trim();
@@ -501,15 +507,13 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
         return;
       }
 
-      // hanya ambil karakter “printable”
+      // ambil hanya char printable
       if (e.key.length === 1) {
         const now = Date.now();
         const gap = now - lastTsRef.current;
         lastTsRef.current = now;
 
-        // jika jeda terlalu lama → kemungkinan manusia, mulai buffer baru
-        if (gap > GAP_LIMIT_MS) bufferRef.current = "";
-
+        if (gap > GAP_LIMIT_MS) bufferRef.current = ""; // kemungkinan manusia → reset buffer
         bufferRef.current += e.key;
       }
     };
@@ -518,11 +522,67 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // ENTER di textarea juga memproses (fallback)
+  // ENTER di textarea manual-JSON juga memproses
   const handleTextareaEnter = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleDecoded(rawText);
+    }
+  };
+
+  // pastikan kolom nama dari DB jadi array
+  function ensureNamaArray(namaFromDb) {
+    if (Array.isArray(namaFromDb)) return namaFromDb;
+    if (typeof namaFromDb === "string") {
+      try {
+        const parsed = JSON.parse(namaFromDb);
+        return Array.isArray(parsed) ? parsed : [namaFromDb];
+      } catch {
+        return [namaFromDb];
+      }
+    }
+    return [String(namaFromDb ?? "")].filter(Boolean);
+  }
+
+  async function lookupByNipp() {
+    const nipp = manualNipp.trim();
+    if (!nipp) {
+      setLookupError("NIPP wajib diisi.");
+      return;
+    }
+    setLookupLoading(true);
+    setLookupError("");
+    try {
+      const res = await api.get(`/order/${encodeURIComponent(nipp)}`);
+      const order = res?.data?.data;
+      if (!order) {
+        setLookupError("Order tidak ditemukan.");
+        return;
+      }
+
+      const payload = {
+        nipp: String(order.nipp).trim(),
+        nama: ensureNamaArray(order.nama),
+      };
+
+      // reuse pipeline yang sama dengan kamera/textarea
+      handleDecoded(JSON.stringify(payload));
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 404) setLookupError("Order tidak ditemukan.");
+      else
+        setLookupError(
+          err?.response?.data?.message || "Gagal mengambil order."
+        );
+    } finally {
+      setLookupLoading(false);
+    }
+  }
+
+  const onManualNippKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      lookupByNipp();
     }
   };
 
@@ -570,33 +630,49 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
           />
         </div>
 
-        {/* INPUT MANUAL / BACKUP */}
-        <div className="bg-gray-50 rounded-2xl p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="text-gray-600">📄</div>
+        {/* FALLBACK: Input NIPP → Ambil dari ORDER */}
+        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 mb-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="text-gray-600">🧾</div>
             <h3 className="font-semibold text-gray-800">
-              Alternatif: Input Manual / Barcode
+              Tidak bisa scan? Cari berdasarkan NIPP
             </h3>
           </div>
-          <p className="text-sm text-gray-600 mb-4">
-            Scanner USB akan “mengetik” otomatis ke halaman ini. Biasanya
-            diakhiri Enter/Tab → langsung diproses.
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+            <input
+              className="w-full border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
+              placeholder="Masukkan NIPP"
+              value={manualNipp}
+              onChange={(e) => setManualNipp(e.target.value)}
+              onKeyDown={onManualNippKeyDown}
+            />
+            <button
+              type="button"
+              onClick={lookupByNipp}
+              disabled={lookupLoading}
+              className={`px-5 py-3 rounded-xl font-semibold text-white ${
+                lookupLoading ? "bg-gray-400" : ""
+              }`}
+              style={!lookupLoading ? { backgroundColor: "#406017" } : {}}
+            >
+              {lookupLoading ? "Mencari..." : "Ambil dari ORDER"}
+            </button>
+          </div>
+
+          {lookupError && (
+            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {lookupError}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-500 mt-3">
+            Sistem akan mengambil <em>nipp</em> & <em>nama (array)</em> dari
+            tabel <code>orders</code>, lalu lanjut ke konfirmasi.
           </p>
-          <textarea
-            className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20 font-mono text-sm"
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            onKeyDown={handleTextareaEnter}
-            placeholder='{"nipp":"123456","nama":["John Doe","Jane Smith"]}'
-          />
-          <button
-            className="w-full mt-4 py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
-            style={{ backgroundColor: "#406017" }}
-            onClick={() => handleDecoded(rawText)}
-          >
-            🔄 PROSES DARI TEKS
-          </button>
         </div>
+
+        
       </div>
     </div>
   );
