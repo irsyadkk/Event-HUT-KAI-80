@@ -65,7 +65,7 @@ export const addPickup = async (req, res) => {
     });
 
     if (!ifOrderExist) {
-      throw makeError(`Order ${nipp} Doesn't Exist !`, 410);
+      throw makeError(`Order ${nipp} Doesn't Exist !`, 404);
     }
 
     const ifPickupExist = await Pickups.findOne({
