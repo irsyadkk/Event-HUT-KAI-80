@@ -481,22 +481,64 @@ function StartCombined({
 }
 
 function ScanQR({ onBack, onResult, rawText, setRawText }) {
-  const navigate = useNavigate();
 
-  const manualInputRef = useRef(null);
+  // --- kunci buat cegah double trigger (kamera+barcode sering keluarkan 2x)
+  const scanLockRef = useRef(false);
+  const bufferRef = useRef("");
+  const lastTsRef = useRef(0);
+
+  // batas jeda antar karakter untuk menganggap ini hasil scanner (cepat)
+  const GAP_LIMIT_MS = 35; // 20–50ms umum untuk scanner
+
+  const handleDecoded = (text) => {
+    if (!text) return;
+    if (scanLockRef.current) return;
+    scanLockRef.current = true;
+    onResult(text);
+    // buka lock setelah sedikit waktu supaya tidak double
+    setTimeout(() => (scanLockRef.current = false), 700);
+  };
+
+  // ✅ Listener global: tangkap ketikan dari barcode/QR USB (keyboard wedge)
   useEffect(() => {
-    // fokus otomatis ke textarea ketika komponen mount
-    if (manualInputRef.current) {
-      manualInputRef.current.focus();
-    }
+    const onKeyDown = (e) => {
+      // kalau Enter/Tab → anggap akhir scan, proses buffer
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const txt = bufferRef.current.trim();
+        bufferRef.current = "";
+        if (txt) handleDecoded(txt);
+        return;
+      }
+
+      // hanya ambil karakter “printable”
+      if (e.key.length === 1) {
+        const now = Date.now();
+        const gap = now - lastTsRef.current;
+        lastTsRef.current = now;
+
+        // jika jeda terlalu lama → kemungkinan manusia, mulai buffer baru
+        if (gap > GAP_LIMIT_MS) bufferRef.current = "";
+
+        bufferRef.current += e.key;
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // ENTER di textarea juga memproses (fallback)
+  const handleTextareaEnter = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleDecoded(rawText);
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-      <Scanner
-        onScan={navigate("/", { state: { qrResult: onResult?.[0]?.rawValue } })}
-        onError={(err) => console.error(err)}
-      />
+      {/* HEADER */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -526,51 +568,41 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
         </div>
       </div>
 
+      {/* AREA KAMERA */}
       <div className="p-6">
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200">
-            <div className="flex items-center space-x-3">
-              <div className="text-blue-500">📱</div>
-              <div className="text-sm text-blue-700">
-                <strong>Petunjuk:</strong> Arahkan kamera ke QR code untuk
-                memindai secara otomatis
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="rounded-2xl overflow-hidden border-4 border-gray-200 mb-6 bg-black">
           <Scanner
             onScan={(results) => {
               const code = results?.[0]?.rawValue;
-              if (code) onResult(code);
+              if (code) handleDecoded(code);
             }}
             onError={(err) => console.error(err)}
           />
         </div>
 
+        {/* INPUT MANUAL / BACKUP */}
         <div className="bg-gray-50 rounded-2xl p-6">
           <div className="flex items-center space-x-3 mb-4">
             <div className="text-gray-600">📄</div>
             <h3 className="font-semibold text-gray-800">
-              Alternatif: Input Manual
+              Alternatif: Input Manual / Barcode
             </h3>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            Tidak bisa mengakses kamera? Salin dan tempel JSON QR di bawah ini,
-            lalu klik tombol "PROSES".
+            Scanner USB akan “mengetik” otomatis ke halaman ini. Biasanya
+            diakhiri Enter/Tab → langsung diproses.
           </p>
           <textarea
-            ref={manualInputRef}
             className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20 font-mono text-sm"
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
+            onKeyDown={handleTextareaEnter}
             placeholder='{"nipp":"123456","nama":["John Doe","Jane Smith"]}'
           />
           <button
             className="w-full mt-4 py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5"
             style={{ backgroundColor: "#406017" }}
-            onClick={() => onResult(rawText)}
+            onClick={() => handleDecoded(rawText)}
           >
             🔄 PROSES DARI TEKS
           </button>
