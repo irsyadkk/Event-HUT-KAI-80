@@ -399,20 +399,20 @@ const AdminDesktopPage = () => {
                 </p>
               </div>
             </div>
+            <div className="flex gap-3">
             <button
-              onClick={() => navigate("/qrpickup")}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800
-                   text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl
-                   transform hover:scale-105 text-sm md:text-base font-medium"
-            >
-              Scan QR Pengambilan
-            </button>
-            <button
-              onClick={logout}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-            >
-              Logout
-            </button>
+                onClick={() => navigate("/qrpickup")}
+                className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+              >
+                📱 Scan QR
+              </button>
+              <button
+                onClick={logout}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+              >
+                Logout
+              </button>
+              </div>
           </div>
         </div>
 
@@ -853,14 +853,14 @@ const AdminDesktopPage = () => {
             {selectedTable === "order" ? (
               <button
                 onClick={exportExcelOrder}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-x1 shadow-1g transition-all duration-200 hover:shadow-x1 transform hover:scale-105 text-sm font-medium"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
               >
                 Export Data Peserta Terdaftar ke Excel (.xlsx)
               </button>
             ) : (
               <button
                 onClick={exportExcelPickup}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-x1 shadow-1g transition-all duration-200 hover:shadow-x1 transform hover:scale-105 text-sm font-medium"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
               >
                 Export Data Pickup ke Excel (.xlsx)
               </button>
