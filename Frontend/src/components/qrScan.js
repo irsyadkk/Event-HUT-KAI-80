@@ -329,6 +329,8 @@ function StartCombined({
                 <option>POS 1</option>
                 <option>POS 2</option>
                 <option>POS 3</option>
+                <option>POS 4</option>
+                <option>POS 5</option>
               </select>
             </div>
           </div>
