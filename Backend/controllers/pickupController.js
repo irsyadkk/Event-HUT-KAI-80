@@ -1,5 +1,6 @@
 import db from "../config/Database.js";
 import Pickups from "../models/pickupModel.js";
+import Order from "../models/orderModel.js";
 
 const makeError = (msg, code = 400) => {
   const error = new Error(msg);
@@ -55,6 +56,16 @@ export const addPickup = async (req, res) => {
 
     if (Number.isNaN(Number(jumlah_kuota)) || Number(jumlah_kuota) <= 0) {
       throw makeError("jumlah_kuota must be a positive number", 400);
+    }
+
+    const ifOrderExist = await Order.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!ifOrderExist) {
+      throw makeError(`Order ${nipp} Doesn't Exist !`, 409);
     }
 
     const ifPickupExist = await Pickups.findOne({
