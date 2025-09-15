@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import api from "../api";
+import { useNavigate } from "react-router-dom";
 
 export default function QRPickupApp() {
   const [step, setStep] = useState("start"); // start | scan | confirm
@@ -30,7 +31,8 @@ export default function QRPickupApp() {
   const canGoScan = useMemo(() => {
     if (!pos) return false;
     if (!jenis) return false;
-    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim())) return false;
+    if (jenis === "KOLEKTIF" && (!pjNipp.trim() || !pjNama.trim()))
+      return false;
     return true;
   }, [pos, jenis, pjNipp, pjNama]);
 
@@ -45,7 +47,11 @@ export default function QRPickupApp() {
   function handleQRText(text) {
     try {
       const parsed = JSON.parse(text);
-      if (!parsed?.nipp || !Array.isArray(parsed?.nama) || parsed.nama.length === 0) {
+      if (
+        !parsed?.nipp ||
+        !Array.isArray(parsed?.nama) ||
+        parsed.nama.length === 0
+      ) {
         alert("QR tidak valid. Harus berisi nipp dan array nama.");
         return;
       }
@@ -192,7 +198,12 @@ function PopupNotification({ type, message, onClose }) {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               ) : (
                 <svg
@@ -201,7 +212,12 @@ function PopupNotification({ type, message, onClose }) {
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               )}
             </div>
@@ -222,7 +238,9 @@ function PopupNotification({ type, message, onClose }) {
           <button
             onClick={onClose}
             className={`w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-lg ${
-              type === "success" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+              type === "success"
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {type === "success" ? "✓ OK" : "↻ COBA LAGI"}
@@ -234,8 +252,18 @@ function PopupNotification({ type, message, onClose }) {
           onClick={onClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white hover:bg-opacity-30 transition-all"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -250,7 +278,12 @@ function Header() {
         className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
         style={{ backgroundColor: "#406017" }}
       >
-        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-8 h-8 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -259,7 +292,9 @@ function Header() {
           />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">SCAN PENGAMBILAN</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-2">
+        SCAN PENGAMBILAN
+      </h1>
       <p className="text-lg font-medium text-gray-600 mb-3">Gelang & Kupon</p>
     </div>
   );
@@ -290,7 +325,9 @@ function StartCombined({
               >
                 1
               </div>
-              <h3 className="text-lg font-semibold text-gray-800">Pilih Pos Pengambilan</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Pilih Pos Pengambilan
+              </h3>
             </div>
             <div className="ml-11">
               <select
@@ -314,7 +351,9 @@ function StartCombined({
               >
                 2
               </div>
-              <h3 className="text-lg font-semibold text-gray-800">Pilih Jenis Pengambilan</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Pilih Jenis Pengambilan
+              </h3>
             </div>
             <div className="ml-11">
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -325,7 +364,9 @@ function StartCombined({
                       ? "text-white shadow-lg transform scale-105"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-gray-200"
                   }`}
-                  style={jenis === "INDIVIDU" ? { backgroundColor: "#406017" } : {}}
+                  style={
+                    jenis === "INDIVIDU" ? { backgroundColor: "#406017" } : {}
+                  }
                   onClick={() => setJenis("INDIVIDU")}
                 >
                   <div className="text-center">
@@ -340,7 +381,9 @@ function StartCombined({
                       ? "text-white shadow-lg transform scale-105"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-gray-200"
                   }`}
-                  style={jenis === "KOLEKTIF" ? { backgroundColor: "#406017" } : {}}
+                  style={
+                    jenis === "KOLEKTIF" ? { backgroundColor: "#406017" } : {}
+                  }
                   onClick={() => setJenis("KOLEKTIF")}
                 >
                   <div className="text-center">
@@ -355,7 +398,8 @@ function StartCombined({
                   <div className="flex items-start space-x-3">
                     <div className="text-blue-500 mt-0.5">ℹ️</div>
                     <p className="text-sm text-blue-700">
-                      <strong>Individu:</strong> Pegawai dengan NIPP tersebut mengambil sendiri gelang dan kupon miliknya.
+                      <strong>Individu:</strong> Pegawai dengan NIPP tersebut
+                      mengambil sendiri gelang dan kupon miliknya.
                     </p>
                   </div>
                 </div>
@@ -367,19 +411,26 @@ function StartCombined({
                     <div className="flex items-start space-x-3">
                       <div className="text-orange-500 mt-0.5">⚠️</div>
                       <p className="text-sm text-orange-700">
-                        <strong>Kolektif:</strong> Pegawai dengan NIPP tersebut diminta untuk membantu mengambil kupon rekan-rekannya sebagai perwakilan.
+                        <strong>Kolektif:</strong> Pegawai dengan NIPP tersebut
+                        diminta untuk membantu mengambil kupon rekan-rekannya
+                        sebagai perwakilan.
                       </p>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 rounded-xl p-4 space-y-4">
                     <h4 className="font-medium text-gray-800 flex items-center">
-                      <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: "#406017" }}></span>
+                      <span
+                        className="w-2 h-2 rounded-full mr-2"
+                        style={{ backgroundColor: "#406017" }}
+                      ></span>
                       Data Penanggung Jawab
                     </h4>
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">NIPP/NIPKWT Penanggung Jawab</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          NIPP/NIPKWT Penanggung Jawab
+                        </label>
                         <input
                           className="w-full border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
                           value={pjNipp}
@@ -388,7 +439,9 @@ function StartCombined({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nama Penanggung Jawab</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nama Penanggung Jawab
+                        </label>
                         <input
                           className="w-full border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20"
                           value={pjNama}
@@ -418,7 +471,9 @@ function StartCombined({
           disabled={!canGoScan}
           onClick={goScan}
         >
-          {canGoScan ? "🚀 LANJUT KE SCAN QR" : "⚠️ LENGKAPI DATA TERLEBIH DAHULU"}
+          {canGoScan
+            ? "🚀 LANJUT KE SCAN QR"
+            : "⚠️ LENGKAPI DATA TERLEBIH DAHULU"}
         </button>
       </div>
     </div>
@@ -426,14 +481,38 @@ function StartCombined({
 }
 
 function ScanQR({ onBack, onResult, rawText, setRawText }) {
+  const navigate = useNavigate();
+
+  const manualInputRef = useRef(null);
+  useEffect(() => {
+    // fokus otomatis ke textarea ketika komponen mount
+    if (manualInputRef.current) {
+      manualInputRef.current.focus();
+    }
+  }, []);
+
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <Scanner
+        onScan={navigate("/", { state: { qrResult: onResult?.[0]?.rawValue } })}
+        onError={(err) => console.error(err)}
+      />
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 011-1h2a1 1 0 011 1v1a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 00-1 1H9a1 1 0 00-1-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z" />
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V6a1 1 0 011-1h2a1 1 0 011 1v1a1 1 0 001 1h2a1 1 0 001-1V6a1 1 0 00-1-1h-2a1 1 0 00-1 1v1a1 1 0 00-1 1H9a1 1 0 00-1-1V6a1 1 0 00-1-1H5a1 1 0 00-1 1v1a1 1 0 001 1z"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white">Scan QR Code</h2>
@@ -453,7 +532,8 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
             <div className="flex items-center space-x-3">
               <div className="text-blue-500">📱</div>
               <div className="text-sm text-blue-700">
-                <strong>Petunjuk:</strong> Arahkan kamera ke QR code untuk memindai secara otomatis
+                <strong>Petunjuk:</strong> Arahkan kamera ke QR code untuk
+                memindai secara otomatis
               </div>
             </div>
           </div>
@@ -472,12 +552,16 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
         <div className="bg-gray-50 rounded-2xl p-6">
           <div className="flex items-center space-x-3 mb-4">
             <div className="text-gray-600">📄</div>
-            <h3 className="font-semibold text-gray-800">Alternatif: Input Manual</h3>
+            <h3 className="font-semibold text-gray-800">
+              Alternatif: Input Manual
+            </h3>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            Tidak bisa mengakses kamera? Salin dan tempel JSON QR di bawah ini, lalu klik tombol "PROSES".
+            Tidak bisa mengakses kamera? Salin dan tempel JSON QR di bawah ini,
+            lalu klik tombol "PROSES".
           </p>
           <textarea
+            ref={manualInputRef}
             className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none transition-all duration-200 focus:border-opacity-60 focus:outline-none focus:ring-4 focus:ring-opacity-20 font-mono text-sm"
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
@@ -515,7 +599,9 @@ function Confirm({
     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
       <div
         className="bg-gradient-to-r px-6 py-4"
-        style={{ background: "linear-gradient(135deg, #406017 0%, #5a7c2a 100%)" }}
+        style={{
+          background: "linear-gradient(135deg, #406017 0%, #5a7c2a 100%)",
+        }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -524,7 +610,9 @@ function Confirm({
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">SCAN BERHASIL!</h2>
-              <p className="text-green-100 text-sm">Verifikasi data sebelum konfirmasi</p>
+              <p className="text-green-100 text-sm">
+                Verifikasi data sebelum konfirmasi
+              </p>
             </div>
           </div>
           <button
@@ -540,38 +628,64 @@ function Confirm({
         {/* Data Summary */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-4 flex items-center">
-            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: "#406017" }}></span>
+            <span
+              className="w-2 h-2 rounded-full mr-2"
+              style={{ backgroundColor: "#406017" }}
+            ></span>
             Ringkasan Data
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pos Pengambilan</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                Pos Pengambilan
+              </div>
               <div className="text-lg font-semibold text-gray-800">{pos}</div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Jenis</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                Jenis
+              </div>
               <div className="text-lg font-semibold text-gray-800 flex items-center">
-                <span className="mr-2">{jenis === "INDIVIDU" ? "👤" : "👥"}</span>
+                <span className="mr-2">
+                  {jenis === "INDIVIDU" ? "👤" : "👥"}
+                </span>
                 {jenis}
               </div>
             </div>
             {jenis === "KOLEKTIF" && (
               <div className="bg-white rounded-xl p-4 shadow-sm md:col-span-2">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Penanggung Jawab</div>
-                <div className="text-lg font-semibold text-gray-800">{pjNipp} - {pjNama}</div>
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                  Penanggung Jawab
+                </div>
+                <div className="text-lg font-semibold text-gray-800">
+                  {pjNipp} - {pjNama}
+                </div>
               </div>
             )}
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">NIPP (dari QR)</div>
-              <div className="text-lg font-semibold text-gray-800">{qrData?.nipp}</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                NIPP (dari QR)
+              </div>
+              <div className="text-lg font-semibold text-gray-800">
+                {qrData?.nipp}
+              </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Nama Pertama</div>
-              <div className="text-lg font-semibold text-gray-800">{namaPertama}</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                Nama Pertama
+              </div>
+              <div className="text-lg font-semibold text-gray-800">
+                {namaPertama}
+              </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm md:col-span-2">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Jumlah Kuota</div>
-              <div className="text-2xl font-bold flex items-center" style={{ color: "#406017" }}>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                Jumlah Kuota
+              </div>
+              <div
+                className="text-2xl font-bold flex items-center"
+                style={{ color: "#406017" }}
+              >
                 <span className="mr-2">🎫</span>
                 {kuota} kupon
               </div>
@@ -585,7 +699,9 @@ function Confirm({
             <div className="flex items-start space-x-3">
               <div className="text-red-500 text-xl mt-0.5">❌</div>
               <div>
-                <div className="font-semibold text-red-800 mb-1">Terjadi Kesalahan</div>
+                <div className="font-semibold text-red-800 mb-1">
+                  Terjadi Kesalahan
+                </div>
                 <div className="text-red-700 text-sm">{errorMsg}</div>
               </div>
             </div>
@@ -597,7 +713,9 @@ function Confirm({
             <div className="flex items-start space-x-3">
               <div className="text-green-500 text-xl mt-0.5">✅</div>
               <div>
-                <div className="font-semibold text-green-800 mb-1">Berhasil!</div>
+                <div className="font-semibold text-green-800 mb-1">
+                  Berhasil!
+                </div>
                 <div className="text-green-700 text-sm">{successMsg}</div>
               </div>
             </div>
