@@ -276,12 +276,12 @@ function Header() {
   return (
     <div className="mb-8 text-center">
       <div className="inline-flex items-center justify-center w-120 h-16 mb-4">
-  <img
-    src={LogoKAI}
-    alt="Logo HUT KAI 80"
-    className="h-20 w-auto object-contain"
-  />
-</div>
+        <img
+          src={LogoKAI}
+          alt="Logo HUT KAI 80"
+          className="h-20 w-auto object-contain"
+        />
+      </div>
 
       <h1 className="text-2xl font-bold text-gray-800 mb-2">
         SCAN PENGAMBILAN
@@ -472,7 +472,6 @@ function StartCombined({
 }
 
 function ScanQR({ onBack, onResult, rawText, setRawText }) {
-
   // --- kunci buat cegah double trigger (kamera+barcode sering keluarkan 2x)
   const scanLockRef = useRef(false);
   const bufferRef = useRef("");
