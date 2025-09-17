@@ -60,7 +60,7 @@ export default function PrizeListPage() {
               <th className="p-2">ID</th>
               <th className="p-2">Nama Hadiah</th>
               <th className="p-2">Pemenang (NIPP)</th>
-              <th className="p-2">Status</th>
+              
             </tr>
           </thead>
           <tbody>
@@ -76,7 +76,7 @@ export default function PrizeListPage() {
                   <td className="p-2">{x.id}</td>
                   <td className="p-2">{x.prize}</td>
                   <td className="p-2">{x.pemenang || "-"}</td>
-                  <td className="p-2">{x.status || "-"}</td>
+                  
                 </tr>
               ))
             ) : (
