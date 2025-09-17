@@ -13,7 +13,7 @@ export default function AdminPrizePage() {
   const navigate = useNavigate();
 
   // form tambah hadiah
-  const [newId, setNewId] = useState("");
+  const [newId, setNewId] = useState(""); // (opsional, belum dipakai)
   const [newPrize, setNewPrize] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -43,11 +43,12 @@ export default function AdminPrizePage() {
 
   useEffect(() => {
     fetchList();
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAddPrize = async (e) => {
     e.preventDefault();
-    if ( !newPrize) return alert("ID dan Nama Hadiah wajib diisi.");
+    if (!newPrize) return alert("Nama Hadiah wajib diisi.");
     setLoading(true);
     try {
       await axios.post("/addprize", { prize: newPrize }, { headers });
@@ -142,7 +143,7 @@ export default function AdminPrizePage() {
     try {
       await axios.patch(
         `/prize/${editTarget.id}`,
-        {prize: editInput.trim() },
+        { prize: editInput.trim() },
         { headers }
       );
       await fetchList();
@@ -155,6 +156,7 @@ export default function AdminPrizePage() {
     }
   };
 
+  // Filter pencarian
   const filtered = list.filter(
     (x) =>
       String(x.id).toLowerCase().includes(q.toLowerCase()) ||
@@ -163,208 +165,346 @@ export default function AdminPrizePage() {
       (x.status || "").toLowerCase().includes(q.toLowerCase())
   );
 
+  // Urutkan: belum ada pemenang dulu → lalu sudah ada pemenang; masing-masing ID ASC
+const ordered = [...filtered].sort((a, b) => {
+  const aHasWinner = String(a?.pemenang || "").trim() !== "";
+  const bHasWinner = String(b?.pemenang || "").trim() !== "";
+
+  // Belum ada pemenang dulu (false < true → -1)
+  if (aHasWinner !== bHasWinner) return aHasWinner ? 1 : -1;
+
+  // Kalau sama-sama statusnya, urut ID numeric ASC
+  const aid = Number(a?.id) || 0;
+  const bid = Number(b?.id) || 0;
+  return aid - bid;
+});
+
   return (
-    <div className="p-4 space-y-8">
-      <h1 className="text-2xl font-bold">Admin Hadiah (Admin 1)</h1>
+    <div
+      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"
+      style={{ backgroundColor: "#406017" }}
+    >
+      <div className="p-6 space-y-8 max-w-7xl mx-auto">
+        <div className="text-center py-8">
+          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+            Admin Hadiah
+          </h1>
+          <p className="text-green-100 text-lg">Kelola Hadiah & Pemenang</p>
+        </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => navigate("/prizelist")}
-          className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-        >
-          list prize
-        </button>
-        <button
-          onClick={() => navigate("/verification")}
-          className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-        >
-          verifikasi
-        </button>
-      </div>
-
-      {/* Tambah Hadiah */}
-      <form onSubmit={handleAddPrize} className="space-y-2 border p-4 rounded">
-        <h2 className="font-semibold">Tambah Hadiah</h2>
-        <div className="grid gap-2 md:grid-cols-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="Nama Hadiah"
-            value={newPrize}
-            onChange={(e) => setNewPrize(e.target.value)}
-          />
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
           <button
-            disabled={loading}
-            className="bg-blue-600 text-white rounded px-3 py-2"
+            onClick={() => navigate("/prizelist")}
+            className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl shadow-xl transition-all duration-300 hover:shadow-2xl transform hover:scale-105 text-lg font-semibold border-2 border-white/20 backdrop-blur-sm"
           >
-            {loading ? "Menyimpan..." : "Tambah"}
+            📋 List Prize
+          </button>
+          <button
+            onClick={() => navigate("/verification")}
+            className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl shadow-xl transition-all duration-300 hover:shadow-2xl transform hover:scale-105 text-lg font-semibold border-2 border-white/20 backdrop-blur-sm"
+          >
+            ✅ Verifikasi
           </button>
         </div>
-      </form>
 
-      {/* List Hadiah */}
-      <div className="space-y-2 border p-4 rounded">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Daftar Hadiah</h2>
-          <input
-            className="border p-2 rounded"
-            placeholder="Cari…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+        {/* Tambah Hadiah */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              🎁 Tambah Hadiah Baru
+            </h2>
+          </div>
+          <form onSubmit={handleAddPrize} className="p-6">
+            <div className="grid gap-4 md:grid-cols-2 items-end">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nama Hadiah
+                </label>
+                <input
+                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                  placeholder="Masukkan nama hadiah..."
+                  value={newPrize}
+                  onChange={(e) => setNewPrize(e.target.value)}
+                />
+              </div>
+              <button
+                disabled={loading}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Menyimpan...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">➕ Tambah Hadiah</span>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div className="overflow-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">ID</th>
-                <th className="p-2">Nama Hadiah</th>
-                <th className="p-2">Pemenang (NIPP)</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row) => (
-                <tr key={row.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{row.id}</td>
-                  <td className="p-2">{row.prize}</td>
-                  <td className="p-2">{row.pemenang || "-"}</td>
-                  <td className="p-2">{row.status || "-"}</td>
-                  <td className="p-2 space-x-2">
-                    <button
-                      onClick={() => openWinnerModal(row)}
-                      className="px-2 py-1 rounded bg-green-600 text-white"
-                      disabled={loading}
-                      title={row.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
-                    >
-                      {row.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
-                    </button>
-                    <button
-                      onClick={() => openEditModal(row)}
-                      className="px-2 py-1 rounded bg-indigo-600 text-white"
-                      disabled={loading}
-                      title="Edit nama hadiah"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => clearWinner(row.id)}
-                      className="px-2 py-1 rounded bg-amber-600 text-white"
-                      disabled={loading}
-                      title="Kosongkan pemenang (winnergugur)"
-                    >
-                      Kosongkan
-                    </button>
-                    <button
-                      onClick={() => handleDelete(row.id)}
-                      className="px-2 py-1 rounded bg-red-600 text-white"
-                      disabled={loading}
-                    >
-                      Hapus
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!filtered.length && (
+        {/* List Hadiah */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between flex-wrap gap-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              📊 Daftar Hadiah ({ordered.length})
+            </h2>
+            <div className="relative">
+              <input
+                className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 backdrop-blur-sm placeholder-gray-600 pr-10 min-w-[250px]"
+                placeholder="🔍 Cari hadiah, pemenang..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50/80 backdrop-blur-sm">
                 <tr>
-                  <td colSpan="5" className="p-3 text-center text-gray-500">
-                    Tidak ada data.
-                  </td>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Nama Hadiah
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Pemenang (NIPP)
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Aksi
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white/50 backdrop-blur-sm divide-y divide-gray-200">
+                {ordered.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className={`hover:bg-green-50/50 transition-all duration-200 ${
+                      index % 2 === 0 ? "bg-white/30" : "bg-gray-50/30"
+                    }`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        #{row.id}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                      {row.prize}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {row.pemenang ? (
+                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                          {row.pemenang}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">
+                          Belum ada pemenang
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {row.status ? (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            row.status.toLowerCase().includes("verifikasi")
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {row.status}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => openWinnerModal(row)}
+                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                          disabled={loading}
+                          title={row.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
+                        >
+                          {row.pemenang ? "Ubah" : "Set"}
+                        </button>
+                        <button
+                          onClick={() => openEditModal(row)}
+                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                          disabled={loading}
+                          title="Edit nama hadiah"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => clearWinner(row.id)}
+                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                          disabled={loading}
+                          title="Kosongkan pemenang"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={() => handleDelete(row.id)}
+                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                          disabled={loading}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!ordered.length && (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="text-6xl">📭</div>
+                        <p className="text-gray-500 text-lg font-medium">
+                          Tidak ada data hadiah
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          Mulai dengan menambahkan hadiah baru
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* --- Modal Set/Ubah Pemenang --- */}
+        {showWinnerModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeWinnerModal}
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
+              <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  {activePrize?.pemenang ? "✏️ Ubah Pemenang" : "👤 Set Pemenang"}
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-700 mb-1">
+                    <span className="font-semibold">Hadiah:</span>{" "}
+                    {activePrize?.prize}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">ID:</span> #{activePrize?.id}
+                  </p>
+                </div>
+
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  NIPP Pemenang
+                </label>
+                <input
+                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl transition-all duration-200 bg-white/80 backdrop-blur-sm mb-6"
+                  placeholder="Masukkan NIPP pemenang..."
+                  value={nippInput}
+                  onChange={(e) => setNippInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitWinner()}
+                  autoFocus
+                />
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={closeWinnerModal}
+                    className="px-6 py-2 rounded-xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold transition-all duration-200 hover:bg-gray-50"
+                    disabled={savingWinner}
+                  >
+                    ❌ Batal
+                  </button>
+                  <button
+                    onClick={submitWinner}
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                    disabled={savingWinner}
+                  >
+                    {savingWinner ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Menyimpan…
+                      </span>
+                    ) : (
+                      "💾 Simpan"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- Modal Edit Hadiah --- */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeEditModal}
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  📝 Edit Nama Hadiah
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold">ID Hadiah:</span> #
+                    {editTarget?.id}
+                  </p>
+                </div>
+
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nama Hadiah Baru
+                </label>
+                <input
+                  className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 rounded-xl transition-all duration-200 bg-white/80 backdrop-blur-sm mb-6"
+                  placeholder="Masukkan nama hadiah baru..."
+                  value={editInput}
+                  onChange={(e) => setEditInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitEdit()}
+                  autoFocus
+                />
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={closeEditModal}
+                    className="px-6 py-2 rounded-xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold transition-all duration-200 hover:bg-gray-50"
+                    disabled={savingEdit}
+                  >
+                    ❌ Batal
+                  </button>
+                  <button
+                    onClick={submitEdit}
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                    disabled={savingEdit}
+                  >
+                    {savingEdit ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Menyimpan…
+                      </span>
+                    ) : (
+                      "💾 Simpan"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* --- Modal Set/Ubah Pemenang --- */}
-      {showWinnerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeWinnerModal}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md z-10">
-            <h3 className="text-lg font-semibold mb-2">
-              {activePrize?.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Hadiah: <b>{activePrize?.prize}</b> (ID: {activePrize?.id})
-            </p>
-
-            <label className="block text-sm mb-1">NIPP Pemenang</label>
-            <input
-              className="border rounded w-full p-2 mb-4"
-              placeholder="Masukkan NIPP"
-              value={nippInput}
-              onChange={(e) => setNippInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitWinner()}
-              autoFocus
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={closeWinnerModal}
-                className="px-3 py-2 rounded border"
-                disabled={savingWinner}
-              >
-                Batal
-              </button>
-              <button
-                onClick={submitWinner}
-                className="px-3 py-2 rounded bg-green-600 text-white"
-                disabled={savingWinner}
-              >
-                {savingWinner ? "Menyimpan…" : "Simpan"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- Modal Edit Hadiah --- */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeEditModal}
-          />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md z-10">
-            <h3 className="text-lg font-semibold mb-2">Edit Nama Hadiah</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              ID: {editTarget?.id}
-            </p>
-
-            <label className="block text-sm mb-1">Nama Hadiah Baru</label>
-            <input
-              className="border rounded w-full p-2 mb-4"
-              placeholder="Masukkan nama hadiah baru"
-              value={editInput}
-              onChange={(e) => setEditInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitEdit()}
-              autoFocus
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={closeEditModal}
-                className="px-3 py-2 rounded border"
-                disabled={savingEdit}
-              >
-                Batal
-              </button>
-              <button
-                onClick={submitEdit}
-                className="px-3 py-2 rounded bg-indigo-600 text-white"
-                disabled={savingEdit}
-              >
-                {savingEdit ? "Menyimpan…" : "Simpan"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
