@@ -14,28 +14,13 @@ export const addPrize = async (req, res) => {
   try {
     const { prize } = req.body;
     if (!prize) {
-      const msg = "prize field cannot be empty !"
-        
+      const msg = "prize field cannot be empty !";
       throw makeError(msg, 400);
-    }
-
-    const ifPrizeExist = await Prize.findOne({
-      where: { prize: prize },
-      transaction: t,
-      lock: t.LOCK.UPDATE,
-    });
-
-    if (ifPrizeExist) {
-      throw makeError(
-        `Prize With Name ${ifPrizeExist.prize} Already Exist !`,
-        400
-      );
     }
 
     await Prize.create(
       {
         prize: prize,
-        
       },
       { transaction: t }
     );
@@ -137,8 +122,7 @@ export const editPrizeNameById = async (req, res) => {
     const id = req.params.id;
     const { prize } = req.body;
     if (!prize) {
-      const msg =
-         "prize field cannot be empty !"
+      const msg = "prize field cannot be empty !";
       throw makeError(msg, 400);
     }
 
