@@ -27,7 +27,8 @@ export default function PrizeListPage() {
 
   useEffect(() => {
     fetchData();
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = data.filter(
     (x) =>
@@ -37,22 +38,39 @@ export default function PrizeListPage() {
       (x.status || "").toLowerCase().includes(q.toLowerCase())
   );
 
-  const winnersCount = filtered.filter(x => x.pemenang).length;
+  // Urutkan: SUDAH ada pemenang dulu → lalu yang belum; masing-masing ID ASC
+const ordered = [...filtered].sort((a, b) => {
+  const aHasWinner = String(a?.pemenang || "").trim() !== "";
+  const bHasWinner = String(b?.pemenang || "").trim() !== "";
+
+  // Pemenang dulu (true > false → -1 supaya ke atas)
+  if (aHasWinner !== bHasWinner) return aHasWinner ? -1 : 1;
+
+  // Jika sama-sama statusnya, urut ID ASC
+  const aid = Number(a?.id) || 0;
+  const bid = Number(b?.id) || 0;
+  return aid - bid;
+});
+
+
+  const winnersCount = filtered.filter((x) => x.pemenang).length;
   const totalPrizes = filtered.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{backgroundColor: '#406017'}}>
+    <div
+      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"
+      style={{ backgroundColor: "#406017" }}
+    >
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
-        
         {/* Header Section */}
         <div className="text-center py-8">
           <div className="mb-4">
             <div className="inline-flex items-center justify-center w-20 h-20">
               <img
-                              src={LogoKAI}
-                              alt="Logo HUT KAI 80"
-                              className="h-16 md:h-20 w-auto drop-shadow-lg"
-                            />
+                src={LogoKAI}
+                alt="Logo HUT KAI 80"
+                className="h-16 md:h-20 w-auto drop-shadow-lg"
+              />
             </div>
           </div>
           <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
@@ -77,7 +95,9 @@ export default function PrizeListPage() {
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Sudah Terpilih</p>
+                <p className="text-green-100 text-sm font-medium">
+                  Sudah Terpilih
+                </p>
                 <p className="text-3xl font-bold text-white">{winnersCount}</p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -90,7 +110,9 @@ export default function PrizeListPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-orange-100 text-sm font-medium">Menunggu</p>
-                <p className="text-3xl font-bold text-white">{totalPrizes - winnersCount}</p>
+                <p className="text-3xl font-bold text-white">
+                  {totalPrizes - winnersCount}
+                </p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                 <span className="text-2xl">⏳</span>
@@ -120,7 +142,7 @@ export default function PrizeListPage() {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              🏆 Daftar Lengkap Hadiah ({filtered.length} dari {totalPrizes})
+              🏆 Daftar Lengkap Hadiah ({ordered.length} dari {totalPrizes})
             </h2>
           </div>
 
@@ -133,7 +155,9 @@ export default function PrizeListPage() {
                     <span className="text-2xl">🏆</span>
                   </div>
                 </div>
-                <p className="text-gray-600 text-lg font-medium">Memuat data hadiah...</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  Memuat data hadiah...
+                </p>
                 <p className="text-gray-400 text-sm">Mohon tunggu sebentar</p>
               </div>
             </div>
@@ -154,13 +178,17 @@ export default function PrizeListPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-gray-200">
-                  {filtered.length ? (
-                    filtered.map((x, index) => (
-                      <tr 
-                        key={x.id} 
+                  {ordered.length ? (
+                    ordered.map((x, index) => (
+                      <tr
+                        key={x.id}
                         className={`transition-all duration-300 hover:bg-green-50/70 hover:scale-[1.01] ${
-                          index % 2 === 0 ? 'bg-white/40' : 'bg-gray-50/40'
-                        } ${x.pemenang ? 'border-l-4 border-green-500' : 'border-l-4 border-gray-300'}`}
+                          index % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
+                        } ${
+                          x.pemenang
+                            ? "border-l-4 border-green-500"
+                            : "border-l-4 border-gray-300"
+                        }`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -170,7 +198,9 @@ export default function PrizeListPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div>
-                              <p className="text-gray-900 font-semibold text-lg">{x.prize}</p>
+                              <p className="text-gray-900 font-semibold text-lg">
+                                {x.prize}
+                              </p>
                             </div>
                           </div>
                         </td>
@@ -203,9 +233,13 @@ export default function PrizeListPage() {
                             <span className="text-4xl">📭</span>
                           </div>
                           <div>
-                            <p className="text-gray-500 text-xl font-semibold mb-2">Tidak ada data ditemukan</p>
+                            <p className="text-gray-500 text-xl font-semibold mb-2">
+                              Tidak ada data ditemukan
+                            </p>
                             <p className="text-gray-400 text-sm">
-                              {q ? `Tidak ada hasil untuk pencarian "${q}"` : "Belum ada hadiah yang terdaftar"}
+                              {q
+                                ? `Tidak ada hasil untuk pencarian "${q}"`
+                                : "Belum ada hadiah yang terdaftar"}
                             </p>
                           </div>
                           {q && (
