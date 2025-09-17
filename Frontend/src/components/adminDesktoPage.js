@@ -400,7 +400,13 @@ const AdminDesktopPage = () => {
               </div>
             </div>
             <div className="flex gap-3">
-            <button
+              <button
+                onClick={() => navigate("/adminprize")}
+                className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+              >
+                Undian
+              </button>
+              <button
                 onClick={() => navigate("/qrpickup")}
                 className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
               >
@@ -412,7 +418,7 @@ const AdminDesktopPage = () => {
               >
                 Logout
               </button>
-              </div>
+            </div>
           </div>
         </div>
 

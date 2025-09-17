@@ -6,6 +6,9 @@ import AdminDesktopPage from "./components/adminDesktoPage";
 import DetailRegisterPage from "./components/detailRegisterPage";
 import LandingPage from "./components/landingPage";
 import QRPickupApp from "./components/qrScan";
+import AdminPrizePage from "./components/adminPrizePage";
+import PrizeListPage from "./components/prizeListPage";
+import VerificationPage from "./components/verificationPage";
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
         <Route path="/admindesk" element={<AdminDesktopPage />} />
         <Route path="/detailregister" element={<DetailRegisterPage />} />
         <Route path="/qrpickup" element={<QRPickupApp />} />
+        <Route path="/adminprize" element={<AdminPrizePage />} />
+        <Route path="/prizelist" element={<PrizeListPage />} />
+        <Route path="/verification" element={<VerificationPage />} />
       </Routes>
     </BrowserRouter>
   );
