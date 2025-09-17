@@ -14,10 +14,6 @@ const Prize = db.define(
       type: Sequelize.TEXT,
       allowNull: false,
     },
-    kategori: {
-      type: Sequelize.TEXT,
-      allowNull: false,
-    },
     pemenang: {
       type: Sequelize.BLOB,
       allowNull: true,
