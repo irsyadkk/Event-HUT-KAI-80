@@ -329,6 +329,8 @@ function StartCombined({
                 <option>POS 1</option>
                 <option>POS 2</option>
                 <option>POS 3</option>
+                <option>POS 4</option>
+                <option>POS 5</option>
               </select>
             </div>
           </div>
@@ -656,7 +658,7 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
               }`}
               style={!lookupLoading ? { backgroundColor: "#406017" } : {}}
             >
-              {lookupLoading ? "Mencari..." : "Ambil dari ORDER"}
+              {lookupLoading ? "Mencari..." : "Ambil Kupon"}
             </button>
           </div>
 
@@ -666,10 +668,7 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
             </div>
           )}
 
-          <p className="text-xs text-gray-500 mt-3">
-            Sistem akan mengambil <em>nipp</em> & <em>nama (array)</em> dari
-            tabel <code>orders</code>, lalu lanjut ke konfirmasi.
-          </p>
+          
         </div>
 
         
