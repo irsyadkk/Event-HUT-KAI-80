@@ -47,10 +47,10 @@ export default function AdminPrizePage() {
 
   const handleAddPrize = async (e) => {
     e.preventDefault();
-    if (!newId || !newPrize) return alert("ID dan Nama Hadiah wajib diisi.");
+    if ( !newPrize) return alert("ID dan Nama Hadiah wajib diisi.");
     setLoading(true);
     try {
-      await axios.post("/addprize", { id: newId, prize: newPrize }, { headers });
+      await axios.post("/addprize", { prize: newPrize }, { headers });
       setNewId("");
       setNewPrize("");
       await fetchList();
@@ -186,12 +186,6 @@ export default function AdminPrizePage() {
       <form onSubmit={handleAddPrize} className="space-y-2 border p-4 rounded">
         <h2 className="font-semibold">Tambah Hadiah</h2>
         <div className="grid gap-2 md:grid-cols-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="ID (unik)"
-            value={newId}
-            onChange={(e) => setNewId(e.target.value)}
-          />
           <input
             className="border p-2 rounded"
             placeholder="Nama Hadiah"
