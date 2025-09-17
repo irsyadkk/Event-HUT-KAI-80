@@ -19,6 +19,6 @@ const User = db.define(
   }
 );
 
-db.sync().then(() => console.log("Database synced"));
+db.sync().then(() => console.log("Database users synced"));
 
 export default User;

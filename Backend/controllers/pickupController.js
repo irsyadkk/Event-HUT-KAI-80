@@ -23,7 +23,6 @@ export const addPickup = async (req, res) => {
       nama_pj,
       status,
     } = req.body;
-    // Validasi minimal
     if (
       !nipp ||
       !nama ||
