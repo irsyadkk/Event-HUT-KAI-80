@@ -14,7 +14,9 @@ export const addPrize = async (req, res) => {
   try {
     const { prize } = req.body;
     if (!prize) {
-      throw makeError("prize field cannot be empty !", 400);
+      const msg = "prize field cannot be empty !"
+        
+      throw makeError(msg, 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -33,6 +35,7 @@ export const addPrize = async (req, res) => {
     await Prize.create(
       {
         prize: prize,
+        
       },
       { transaction: t }
     );
@@ -40,7 +43,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} Added !`,
+      message: `Prize ${prize} Added Successfully !`,
     });
   } catch (error) {
     if (!t.finished) {
@@ -134,7 +137,9 @@ export const editPrizeNameById = async (req, res) => {
     const id = req.params.id;
     const { prize } = req.body;
     if (!prize) {
-      throw makeError("prize Field Can't be Empty !", 400);
+      const msg =
+         "prize field cannot be empty !"
+      throw makeError(msg, 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
