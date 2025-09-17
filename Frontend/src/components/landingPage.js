@@ -106,7 +106,7 @@ function LandingPage() {
             ) : (
               <div className="bg-gradient-to-r from-green-400 to-green-600 rounded-xl shadow-xl p-5 text-white">
                 <p className="text-lg font-bold text-center">
-                  REGISTRASI TELAH DIBUKA!
+                  MASA REGITRASI TELAH USAI!
                 </p>
               </div>
             )}
@@ -131,7 +131,7 @@ function LandingPage() {
     }`}
               disabled={timeLeft > 0} // opsional kalau mau tetap disable
             >
-              {timeLeft > 0 ? "⏳ Menunggu Registrasi..." : "MULAI"}
+              {timeLeft > 0 ? "⏳ Menunggu Registrasi..." : "Silahkan Checkin Untuk Melihat Tiket"}
             </button>
           </div>
 
