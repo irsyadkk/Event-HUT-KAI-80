@@ -12,9 +12,12 @@ const makeError = (msg, code = 400) => {
 export const addPrize = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { prize } = req.body;
-    if (!prize) {
-      throw makeError("prize field cannot be empty !", 400);
+    const { prize, kategori } = req.body;
+    if (!prize || !kategori) {
+      const msg = !prize
+        ? "prize field cannot be empty !"
+        : "kategori field cannot be empty !";
+      throw makeError(msg, 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -33,6 +36,7 @@ export const addPrize = async (req, res) => {
     await Prize.create(
       {
         prize: prize,
+        kategori: kategori,
       },
       { transaction: t }
     );
@@ -40,7 +44,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} Added !`,
+      message: `Prize ${prize} Added to ${kategori} !`,
     });
   } catch (error) {
     if (!t.finished) {
@@ -132,9 +136,12 @@ export const editPrizeNameById = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
-    const { prize } = req.body;
-    if (!prize) {
-      throw makeError("prize Field Can't be Empty !", 400);
+    const { prize, kategori } = req.body;
+    if (!prize || !kategori) {
+      const msg = !prize
+        ? "prize field cannot be empty !"
+        : "kategori field cannot be empty !";
+      throw makeError(msg, 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -149,7 +156,7 @@ export const editPrizeNameById = async (req, res) => {
     }
 
     await Prize.update(
-      { prize: prize },
+      { prize: prize, kategori: kategori },
       {
         where: { id: id },
         transaction: t,
@@ -159,7 +166,7 @@ export const editPrizeNameById = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Success Edit Prize With ID ${id} to ${prize} !`,
+      message: `Success Edit Prize With ID ${id} to ${prize} & Kategori ${kategori} !`,
     });
   } catch (error) {
     await t.rollback();
