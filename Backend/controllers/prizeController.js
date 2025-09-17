@@ -264,3 +264,51 @@ export const winnerGugur = async (req, res) => {
     });
   }
 };
+
+// CHANGE WINNER STATUS
+export const changeWinnerStatus = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+    if (!status) {
+      throw makeError("status field cannot be empty !", 400);
+    }
+
+    const ifPrizeExist = await Prize.findOne({
+      where: { id: id },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifPrizeExist) {
+      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+    }
+    if (!ifPrizeExist.pemenang) {
+      throw makeError(
+        `Prize With ${ifPrizeExist.prize} With ID ${id} Doesn't Have a Winner !`
+      );
+    }
+
+    await Prize.update(
+      { status: status },
+      {
+        where: { id: id },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Prize ${ifPrizeExist.prize} With ID ${id} Status Changed to ${status} !`,
+    });
+  } catch (error) {
+    if (!t.finished) {
+      await t.rollback();
+    }
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};

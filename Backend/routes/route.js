@@ -32,6 +32,7 @@ import {
 import {
   addPrize,
   addWinner,
+  changeWinnerStatus,
   deletePrizeById,
   editPrizeNameById,
   getPrize,
@@ -83,5 +84,6 @@ router.delete("/prize/:id", verifyToken, deletePrizeById);
 // WINNER
 router.patch("/addwinner/:id", verifyToken, addWinner);
 router.patch("/winnergugur/:id", verifyToken, winnerGugur);
+router.patch("/changestatus/:id", verifyToken, changeWinnerStatus);
 
 export default router;
