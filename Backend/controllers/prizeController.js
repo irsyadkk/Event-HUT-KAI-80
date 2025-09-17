@@ -12,11 +12,10 @@ const makeError = (msg, code = 400) => {
 export const addPrize = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { prize, kategori } = req.body;
-    if (!prize || !kategori) {
-      const msg = !prize
-        ? "prize field cannot be empty !"
-        : "kategori field cannot be empty !";
+    const { prize } = req.body;
+    if (!prize) {
+      const msg = "prize field cannot be empty !"
+        
       throw makeError(msg, 400);
     }
 
@@ -36,7 +35,7 @@ export const addPrize = async (req, res) => {
     await Prize.create(
       {
         prize: prize,
-        kategori: kategori,
+        
       },
       { transaction: t }
     );
@@ -44,7 +43,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} Added to ${kategori} !`,
+      message: `Prize ${prize} Added Successfully !`,
     });
   } catch (error) {
     if (!t.finished) {
@@ -136,11 +135,10 @@ export const editPrizeNameById = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
-    const { prize, kategori } = req.body;
-    if (!prize || !kategori) {
-      const msg = !prize
-        ? "prize field cannot be empty !"
-        : "kategori field cannot be empty !";
+    const { prize } = req.body;
+    if (!prize) {
+      const msg =
+         "prize field cannot be empty !"
       throw makeError(msg, 400);
     }
 
@@ -156,7 +154,7 @@ export const editPrizeNameById = async (req, res) => {
     }
 
     await Prize.update(
-      { prize: prize, kategori: kategori },
+      { prize: prize },
       {
         where: { id: id },
         transaction: t,
@@ -166,7 +164,7 @@ export const editPrizeNameById = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Success Edit Prize With ID ${id} to ${prize} & Kategori ${kategori} !`,
+      message: `Success Edit Prize With ID ${id} to ${prize} !`,
     });
   } catch (error) {
     await t.rollback();
