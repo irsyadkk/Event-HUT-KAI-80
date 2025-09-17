@@ -12,30 +12,26 @@ const makeError = (msg, code = 400) => {
 export const addPrize = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { id, prize } = req.body;
-    if (!id || !prize) {
-      const msg = !id
-        ? "id field cannot be empty !"
-        : "prize field cannot be empty !";
-      throw makeError(msg, 400);
+    const { prize } = req.body;
+    if (!prize) {
+      throw makeError("prize field cannot be empty !", 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
-      where: { id: id },
+      where: { prize: prize },
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
 
     if (ifPrizeExist) {
       throw makeError(
-        `Prize With ID ${id} Already Exist with Prize ${ifPrizeExist.prize} !`,
+        `Prize With Name ${ifPrizeExist.prize} Already Exist !`,
         400
       );
     }
 
     await Prize.create(
       {
-        id: id,
         prize: prize,
       },
       { transaction: t }
@@ -44,7 +40,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} With ID ${id} Added !`,
+      message: `Prize ${prize} Added !`,
     });
   } catch (error) {
     if (!t.finished) {

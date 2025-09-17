@@ -8,6 +8,7 @@ const Prize = db.define(
       type: Sequelize.INTEGER,
       primaryKey: true,
       allowNull: false,
+      autoIncrement: true,
     },
     prize: {
       type: Sequelize.TEXT,
