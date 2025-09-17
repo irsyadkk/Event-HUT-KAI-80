@@ -120,7 +120,7 @@ export const deletePrizeById = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Success Delete Prize ${prize.prize} With ID ${id} !`,
+      message: `Success Delete Prize ${ifPrizeExist.prize} With ID ${id} !`,
     });
   } catch (error) {
     await t.rollback();
@@ -138,7 +138,7 @@ export const editPrizeNameById = async (req, res) => {
     const id = req.params.id;
     const { prize } = req.body;
     if (!prize) {
-      throw makeError("Prize Field Can't be Empty !", 400);
+      throw makeError("prize Field Can't be Empty !", 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -169,6 +169,97 @@ export const editPrizeNameById = async (req, res) => {
     await t.rollback();
     res.status(error.statusCode || 500).json({
       status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// ADD WINNER
+export const addWinner = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const id = req.params.id;
+    const { winner } = req.body;
+    if (!winner) {
+      throw makeError("winner field cannot be empty !", 400);
+    }
+
+    const ifPickupExist = await Pickups.findOne({
+      where: { nipp: winner },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifPickupExist) {
+      throw makeError(`Pickup With NIPP ${winner} Doesn't Exist !`, 404);
+    }
+
+    const ifPrizeExist = await Prize.findOne({
+      where: { id: id },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifPrizeExist) {
+      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+    }
+
+    await Prize.update(
+      { pemenang: winner, status: "Belum Verifikasi" },
+      {
+        where: { id: id },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Prize ${ifPrizeExist.prize} With ID ${id} Won by ${winner} !`,
+    });
+  } catch (error) {
+    if (!t.finished) {
+      await t.rollback();
+    }
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
+// WINNER GUGUR
+export const winnerGugur = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const id = req.params.id;
+
+    const ifPrizeExist = await Prize.findOne({
+      where: { id: id },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifPrizeExist) {
+      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+    }
+
+    await Prize.update(
+      { pemenang: null, status: null },
+      {
+        where: { id: id },
+        transaction: t,
+      }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Prize ${ifPrizeExist.prize} With ID ${id} Has no Winner !`,
+    });
+  } catch (error) {
+    if (!t.finished) {
+      await t.rollback();
+    }
+    res.status(error.statusCode || 500).json({
+      status: "Error",
       message: error.message,
     });
   }

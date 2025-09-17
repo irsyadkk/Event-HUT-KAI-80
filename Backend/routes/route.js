@@ -29,6 +29,15 @@ import {
   getPickupByNIPP,
   deletePickupByNIPP,
 } from "../controllers/pickupController.js";
+import {
+  addPrize,
+  addWinner,
+  deletePrizeById,
+  editPrizeNameById,
+  getPrize,
+  getPrizeById,
+  winnerGugur,
+} from "../controllers/prizeController.js";
 
 const router = express.Router();
 // REFRESH TOKEN
@@ -63,5 +72,16 @@ router.post("/pickup", verifyToken, addPickup);
 router.get("/pickup", verifyToken, getPickup);
 router.get("/pickup/:nipp", verifyToken, getPickupByNIPP);
 router.delete("/pickup/:nipp", verifyToken, deletePickupByNIPP);
+
+// PRIZE
+router.post("/addprize", verifyToken, addPrize);
+router.get("/prize", verifyToken, getPrize);
+router.get("/prize/:id", verifyToken, getPrizeById);
+router.patch("/prize", verifyToken, editPrizeNameById);
+router.delete("/prize/:id", verifyToken, deletePrizeById);
+
+// WINNER
+router.patch("/addwinner/:id", verifyToken, addWinner);
+router.patch("/winnergugur/:id", verifyToken, winnerGugur);
 
 export default router;
