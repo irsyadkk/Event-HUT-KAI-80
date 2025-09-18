@@ -11,8 +11,10 @@ const useAuthHeaders = () =>
 // helper warna badge status
 const statusBadgeClass = (raw) => {
   const s = String(raw || "").toLowerCase();
-  if (s.includes("diambil")) return "bg-gradient-to-r from-emerald-500 to-green-600 text-white";
-  if (s === "gugur") return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+  if (s.includes("diambil"))
+    return "bg-gradient-to-r from-emerald-500 to-green-600 text-white";
+  if (s === "gugur")
+    return "bg-gradient-to-r from-red-500 to-red-600 text-white";
   return "bg-gradient-to-r from-amber-500 to-orange-500 text-white"; // Belum Verifikasi / lainnya
 };
 
@@ -30,7 +32,11 @@ export default function VerificationPage() {
 
   // Modal konfirmasi dan alert
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmData, setConfirmData] = useState({ message: "", onConfirm: null, type: "confirm" });
+  const [confirmData, setConfirmData] = useState({
+    message: "",
+    onConfirm: null,
+    type: "confirm",
+  });
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "success" });
 
@@ -73,11 +79,23 @@ export default function VerificationPage() {
     setTargetRow(null);
   };
 
+  // Verifikasi -> pilih "diambil di tempat/daop"
   const submitVerify = async (status) => {
     if (!targetRow?.id) return;
+    if (!targetRow?.pemenang) {
+      showAlert(
+        "Baris ini tidak punya NIPP pemenang, tidak bisa verifikasi.",
+        "error"
+      );
+      return;
+    }
     try {
       setVerifying(true);
-      await axios.patch(`/changestatus/${targetRow.id}`, { status }, { headers });
+      await axios.patch(
+        `/changestatus/${targetRow.id}`,
+        { status, nipp: targetRow.pemenang }, // <— WAJIB sertakan nipp
+        { headers }
+      );
       await fetchList();
       showAlert(`Status diubah ke '${status}'.`);
       closeVerifyModal();
@@ -88,12 +106,21 @@ export default function VerificationPage() {
     }
   };
 
-  const changeStatusGugur = async (id) => {
-    if (!id) return;
+  // Gugur
+  const changeStatusGugur = async (row) => {
+    if (!row?.id) return;
+    if (!row?.pemenang) {
+      showAlert("Baris ini tidak punya NIPP pemenang.", "error");
+      return;
+    }
     showConfirm("Tandai pemenang GAGAL? (status akan 'gugur')", async () => {
       try {
         setLoading(true);
-        await axios.patch(`/changestatus/${id}`, { status: "gugur" }, { headers });
+        await axios.patch(
+          `/changestatus/${row.id}`,
+          { status: "gugur", nipp: row.pemenang }, // <— sertakan nipp
+          { headers }
+        );
         await fetchList();
         showAlert("Status diubah ke 'gugur'.");
       } catch (e) {
@@ -104,21 +131,32 @@ export default function VerificationPage() {
     });
   };
 
-  // RESET -> set status ke "Belum Verifikasi"
-  const changeStatusReset = async (id) => {
-    if (!id) return;
-    showConfirm("Setel status hadiah ini menjadi 'Belum Verifikasi'?", async () => {
-      try {
-        setLoading(true);
-        await axios.patch(`/changestatus/${id}`, { status: "Belum Verifikasi" }, { headers });
-        await fetchList();
-        showAlert("Status diubah ke 'Belum Verifikasi'.");
-      } catch (e) {
-        showAlert(e?.response?.data?.message || e.message, "error");
-      } finally {
-        setLoading(false);
+  // Reset -> "Belum Verifikasi"
+  const changeStatusReset = async (row) => {
+    if (!row?.id) return;
+    if (!row?.pemenang) {
+      showAlert("Baris ini tidak punya NIPP pemenang.", "error");
+      return;
+    }
+    showConfirm(
+      "Setel status hadiah ini menjadi 'Belum Verifikasi'?",
+      async () => {
+        try {
+          setLoading(true);
+          await axios.patch(
+            `/changestatus/${row.id}`,
+            { status: "Belum Verifikasi", nipp: row.pemenang }, // <— sertakan nipp
+            { headers }
+          );
+          await fetchList();
+          showAlert("Status diubah ke 'Belum Verifikasi'.");
+        } catch (e) {
+          showAlert(e?.response?.data?.message || e.message, "error");
+        } finally {
+          setLoading(false);
+        }
       }
-    });
+    );
   };
 
   const filtered = list.filter((x) => {
@@ -135,23 +173,34 @@ export default function VerificationPage() {
   const diambilCount = filtered.filter((x) =>
     String(x.status).toLowerCase().includes("diambil")
   ).length;
-  const gugurCount = filtered.filter((x) => String(x.status).toLowerCase() === "gugur").length;
+  const gugurCount = filtered.filter(
+    (x) => String(x.status).toLowerCase() === "gugur"
+  ).length;
   const belumVerifikasiCount = filtered.filter((x) => {
     const s = String(x.status).toLowerCase();
     return s && !s.includes("diambil") && s !== "gugur";
   }).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{ backgroundColor: "#406017" }}>
+    <div
+      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"
+      style={{ backgroundColor: "#406017" }}
+    >
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center py-8">
           <div className="mb-4">
             <div className="inline-flex items-center justify-center w-20 h-20">
-              <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-16 md:h-20 w-auto drop-shadow-lg" />
+              <img
+                src={LogoKAI}
+                alt="Logo HUT KAI 80"
+                className="h-16 md:h-20 w-auto drop-shadow-lg"
+              />
             </div>
           </div>
-          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">Pos Verifikasi</h1>
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Pos Verifikasi
+          </h1>
         </div>
 
         {/* Stats */}
@@ -159,8 +208,12 @@ export default function VerificationPage() {
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Proses</p>
-                <p className="text-3xl font-bold text-white">{filtered.length}</p>
+                <p className="text-blue-100 text-sm font-medium">
+                  Total Proses
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  {filtered.length}
+                </p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                 <span className="text-2xl">📋</span>
@@ -171,7 +224,9 @@ export default function VerificationPage() {
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Berhasil Diambil</p>
+                <p className="text-green-100 text-sm font-medium">
+                  Berhasil Diambil
+                </p>
                 <p className="text-3xl font-bold text-white">{diambilCount}</p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -195,8 +250,12 @@ export default function VerificationPage() {
           <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Belum Verifikasi</p>
-                <p className="text-3xl font-bold text-white">{belumVerifikasiCount}</p>
+                <p className="text-orange-100 text-sm font-medium">
+                  Belum Verifikasi
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  {belumVerifikasiCount}
+                </p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                 <span className="text-2xl">⏳</span>
@@ -230,7 +289,9 @@ export default function VerificationPage() {
                     <span className="text-2xl">✅</span>
                   </div>
                 </div>
-                <p className="text-gray-600 text-lg font-medium">Memuat data verifikasi...</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  Memuat data verifikasi...
+                </p>
                 <p className="text-gray-400 text-sm">Mohon tunggu sebentar</p>
               </div>
             </div>
@@ -271,7 +332,9 @@ export default function VerificationPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-gray-900 font-semibold text-base">{row.prize}</p>
+                          <p className="text-gray-900 font-semibold text-base">
+                            {row.prize}
+                          </p>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {row.pemenang ? (
@@ -286,7 +349,11 @@ export default function VerificationPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold shadow-lg ${statusBadgeClass(row.status)}`}>
+                          <span
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold shadow-lg ${statusBadgeClass(
+                              row.status
+                            )}`}
+                          >
                             {row.status}
                           </span>
                         </td>
@@ -301,7 +368,7 @@ export default function VerificationPage() {
                               Verifikasi
                             </button>
                             <button
-                              onClick={() => changeStatusGugur(row.id)}
+                              onClick={() => changeStatusGugur(row)}
                               disabled={loading}
                               className="px-3 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
                               title="Gagal (Gugur)"
@@ -309,7 +376,7 @@ export default function VerificationPage() {
                               Gugur
                             </button>
                             <button
-                              onClick={() => changeStatusReset(row.id)}
+                              onClick={() => changeStatusReset(row)}
                               disabled={loading}
                               className="px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-600 hover:from-orange-600 hover:to-yellow-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
                               title="Setel status ke 'Belum Verifikasi'"
@@ -328,9 +395,13 @@ export default function VerificationPage() {
                             <span className="text-4xl">📭</span>
                           </div>
                           <div>
-                            <p className="text-gray-500 text-xl font-semibold mb-2">Tidak ada data untuk diproses</p>
+                            <p className="text-gray-500 text-xl font-semibold mb-2">
+                              Tidak ada data untuk diproses
+                            </p>
                             <p className="text-gray-400 text-sm">
-                              {q ? `Tidak ada hasil untuk pencarian "${q}"` : "Belum ada hadiah dengan status yang perlu verifikasi"}
+                              {q
+                                ? `Tidak ada hasil untuk pencarian "${q}"`
+                                : "Belum ada hadiah dengan status yang perlu verifikasi"}
                             </p>
                           </div>
                           {q && (
@@ -354,14 +425,20 @@ export default function VerificationPage() {
         {/* Modal Pilih Jenis "Diambil" */}
         {showVerifyModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeVerifyModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeVerifyModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-emerald-600 to-green-700 px-6 py-4">
-                <h3 className="text-xl font-bold text-white">Pilih Metode Pengambilan</h3>
+                <h3 className="text-xl font-bold text-white">
+                  Pilih Metode Pengambilan
+                </h3>
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-sm text-gray-700">
-                  Hadiah: <b>{targetRow?.prize}</b> &nbsp; (ID: #{targetRow?.id})<br />
+                  Hadiah: <b>{targetRow?.prize}</b> &nbsp; (ID: #{targetRow?.id}
+                  )<br />
                   Pemenang (NIPP): <b>{targetRow?.pemenang || "-"}</b>
                 </p>
 
@@ -399,7 +476,10 @@ export default function VerificationPage() {
         {/* Modal Konfirmasi */}
         {showConfirmModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowConfirmModal(false)}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-orange-600 to-red-700 px-6 py-4">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -408,7 +488,9 @@ export default function VerificationPage() {
                 </h3>
               </div>
               <div className="p-6 space-y-6">
-                <p className="text-gray-700 text-base leading-relaxed">{confirmData.message}</p>
+                <p className="text-gray-700 text-base leading-relaxed">
+                  {confirmData.message}
+                </p>
                 <div className="flex gap-3 justify-end">
                   <button
                     onClick={() => setShowConfirmModal(false)}
@@ -434,22 +516,31 @@ export default function VerificationPage() {
         {/* Modal Alert */}
         {showAlertModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAlertModal(false)} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowAlertModal(false)}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
-              <div className={`px-6 py-4 ${
-                alertData.type === "error" 
-                  ? "bg-gradient-to-r from-red-600 to-red-700" 
-                  : "bg-gradient-to-r from-emerald-600 to-green-700"
-              }`}>
+              <div
+                className={`px-6 py-4 ${
+                  alertData.type === "error"
+                    ? "bg-gradient-to-r from-red-600 to-red-700"
+                    : "bg-gradient-to-r from-emerald-600 to-green-700"
+                }`}
+              >
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <span className="text-2xl">
                     {alertData.type === "error" ? "❌" : "✅"}
                   </span>
-                  {alertData.type === "error" ? "Terjadi Kesalahan" : "Berhasil"}
+                  {alertData.type === "error"
+                    ? "Terjadi Kesalahan"
+                    : "Berhasil"}
                 </h3>
               </div>
               <div className="p-6 space-y-6">
-                <p className="text-gray-700 text-base leading-relaxed">{alertData.message}</p>
+                <p className="text-gray-700 text-base leading-relaxed">
+                  {alertData.message}
+                </p>
                 <div className="flex justify-end">
                   <button
                     onClick={() => setShowAlertModal(false)}

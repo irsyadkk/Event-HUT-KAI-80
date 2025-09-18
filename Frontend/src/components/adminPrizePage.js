@@ -156,6 +156,33 @@ export default function AdminPrizePage() {
     onConfirm: null,
   });
 
+  // --- Winner list (hanya yg sudah terdaftar di tabel winner)
+  const [winnerList, setWinnerList] = useState([]);
+  const [winnerLoading, setWinnerLoading] = useState(false);
+
+  // mapping cepat: nipp -> status
+  const winnerStatusMap = useMemo(() => {
+    const map = new Map();
+    for (const w of winnerList) {
+      const nipp = String(w.winner || w.nipp || "").trim();
+      const status = String(w.status || "").trim();
+      if (nipp) map.set(nipp, status);
+    }
+    return map;
+  }, [winnerList]);
+
+  const fetchWinnerList = async () => {
+    try {
+      setWinnerLoading(true);
+      const res = await axios.get("/winner", { headers });
+      setWinnerList(res?.data?.data || []);
+    } catch (e) {
+      showError(e?.response?.data?.message || e.message);
+    } finally {
+      setWinnerLoading(false);
+    }
+  };
+
   const showSuccess = (message) =>
     setNotification({ show: true, message, type: "success" });
   const showError = (message) =>
@@ -222,6 +249,7 @@ export default function AdminPrizePage() {
 
   useEffect(() => {
     fetchList();
+    fetchWinnerList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -326,16 +354,39 @@ export default function AdminPrizePage() {
   };
   const submitWinner = async () => {
     if (!activePrize?.id) return;
-    if (!nippInput) return showError("NIPP pemenang wajib diisi.");
+    const nipp = String(nippInput || "").trim();
+    if (!nipp) return showError("NIPP pemenang wajib diisi.");
+
+    // validasi: nipp harus ada di tabel winner
+    const inWinner = winnerList.find(
+      (w) => String(w.winner || w.nipp || "").trim() === nipp
+    );
+    if (!inWinner) {
+      return showError(
+        "NIPP tidak terdaftar di tabel winner. Tambahkan di halaman Input Pemenang terlebih dahulu."
+      );
+    }
+
+    const statusFromWinner = String(inWinner.status || "Belum Verifikasi");
+
     setSavingWinner(true);
     try {
+      // 1) set pemenang ke hadiah
       await axios.patch(
         `/addwinner/${activePrize.id}`,
-        { winner: nippInput },
+        { winner: nipp },
         { headers }
       );
+
+      // 2) sinkron status hadiah ke status winner -> SEKARANG HARUS sertakan nipp
+      await axios.patch(
+        `/changestatus/${activePrize.id}`,
+        { status: statusFromWinner, nipp }, // <— tambah nipp di sini
+        { headers }
+      );
+
       await fetchList();
-      showSuccess("Pemenang berhasil diset (status: Belum Verifikasi).");
+      showSuccess(`Pemenang diset ke ${nipp} (status: ${statusFromWinner}).`);
       closeWinnerModal();
     } catch (e) {
       showError(e?.response?.data?.message || e.message);
@@ -702,16 +753,29 @@ export default function AdminPrizePage() {
                   </p>
                 </div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  NIPP Pemenang
+                  Pilih NIPP Pemenang (dari tabel winner)
                 </label>
+
+                {/* input pencarian */}
                 <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl mb-6"
-                  placeholder="Masukkan NIPP pemenang..."
+                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl mb-2"
+                  placeholder="Ketik untuk mencari NIPP…"
                   value={nippInput}
                   onChange={(e) => setNippInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && submitWinner()}
                   autoFocus
                 />
+
+                {/* preview status dari winner terpilih */}
+                {nippInput?.trim() && (
+                  <div className="mb-4 text-sm text-gray-700">
+                    Status di tabel winner:{" "}
+                    <b>
+                      {winnerStatusMap.get(nippInput.trim()) ||
+                        "Belum Verifikasi"}
+                    </b>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={closeWinnerModal}
