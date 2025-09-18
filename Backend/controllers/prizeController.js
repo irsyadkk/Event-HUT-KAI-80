@@ -12,15 +12,18 @@ const makeError = (msg, code = 400) => {
 export const addPrize = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { prize } = req.body;
-    if (!prize) {
-      const msg = "prize field cannot be empty !";
+    const { prize, kategori } = req.body;
+    if (!prize || !kategori) {
+      const msg = !prize
+        ? "prize field cannot be empty !"
+        : "kategori field cannot be empty";
       throw makeError(msg, 400);
     }
 
     await Prize.create(
       {
         prize: prize,
+        kategori: kategori,
       },
       { transaction: t }
     );
@@ -28,7 +31,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} Added Successfully !`,
+      message: `Prize ${prize} Added to ${kategori} Successfully !`,
     });
   } catch (error) {
     if (!t.finished) {
@@ -120,9 +123,11 @@ export const editPrizeNameById = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
-    const { prize } = req.body;
-    if (!prize) {
-      const msg = "prize field cannot be empty !";
+    const { prize, kategori } = req.body;
+    if (!prize || !kategori) {
+      const msg = !prize
+        ? "prize field cannot be empty !"
+        : "kategori field cannot be empty";
       throw makeError(msg, 400);
     }
 
@@ -138,7 +143,7 @@ export const editPrizeNameById = async (req, res) => {
     }
 
     await Prize.update(
-      { prize: prize },
+      { prize: prize, kategori: kategori },
       {
         where: { id: id },
         transaction: t,
