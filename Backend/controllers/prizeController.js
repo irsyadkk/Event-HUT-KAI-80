@@ -192,6 +192,15 @@ export const addWinner = async (req, res) => {
       throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
     }
 
+    const ifNIPPHadWin = await Prize.findOne({
+      where: { pemenang: winner },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (ifNIPPHadWin) {
+      throw makeError(`NIPP ${winner} Already Won a Prize !`);
+    }
+
     await Prize.update(
       { pemenang: winner, status: "Belum Verifikasi" },
       {
