@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 // =================================================================
 // --- [BAGIAN BARU] Komponen Notifikasi & Konfirmasi Kustom ---
@@ -10,7 +12,7 @@ const NotificationPopup = ({ show, message, type, onConfirm, onClose }) => {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    if (show && (type === 'success' || type === 'error')) {
+    if (show && (type === "success" || type === "error")) {
       const timer = setTimeout(() => {
         handleClose();
       }, 3000); // Otomatis hilang setelah 3 detik
@@ -30,34 +32,42 @@ const NotificationPopup = ({ show, message, type, onConfirm, onClose }) => {
   };
 
   const colors = {
-    success: 'from-green-500 to-emerald-600',
-    error: 'from-red-500 to-rose-600',
-    confirm: 'from-gray-700 to-gray-800',
+    success: "from-green-500 to-emerald-600",
+    error: "from-red-500 to-rose-600",
+    confirm: "from-gray-700 to-gray-800",
   };
 
   const icons = {
-    success: '✅',
-    error: '❌',
-    confirm: '🤔',
-  }
+    success: "✅",
+    error: "❌",
+    confirm: "🤔",
+  };
 
-  const animationClass = closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100';
+  const animationClass = closing
+    ? "opacity-0 scale-95"
+    : "opacity-100 scale-100";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden transform transition-all duration-300 ${animationClass}`}>
-        <div className={`bg-gradient-to-r ${colors[type] || colors.confirm} px-6 py-4`}>
+      <div
+        className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden transform transition-all duration-300 ${animationClass}`}
+      >
+        <div
+          className={`bg-gradient-to-r ${
+            colors[type] || colors.confirm
+          } px-6 py-4`}
+        >
           <h3 className="text-xl font-bold text-white flex items-center gap-3">
-            <span>{icons[type] || ''}</span>
-            {type === 'success' && 'Berhasil'}
-            {type === 'error' && 'Terjadi Kesalahan'}
-            {type === 'confirm' && 'Konfirmasi Aksi'}
+            <span>{icons[type] || ""}</span>
+            {type === "success" && "Berhasil"}
+            {type === "error" && "Terjadi Kesalahan"}
+            {type === "confirm" && "Konfirmasi Aksi"}
           </h3>
         </div>
         <div className="p-6">
           <p className="text-gray-700 text-center text-lg mb-6">{message}</p>
           <div className="flex justify-center gap-4">
-            {type === 'confirm' ? (
+            {type === "confirm" ? (
               <>
                 <button
                   onClick={() => {
@@ -89,7 +99,6 @@ const NotificationPopup = ({ show, message, type, onConfirm, onClose }) => {
     </div>
   );
 };
-
 
 // =================================================================
 // --- Komponen Utama Anda ---
@@ -128,17 +137,67 @@ export default function AdminPrizePage() {
   const [savingEdit, setSavingEdit] = useState(false);
 
   // --- Modal Admin Password (untuk hapus / kosongkan)
-  const [adminModal, setAdminModal] = useState({ open: false, action: null, id: null });
+  const [adminModal, setAdminModal] = useState({
+    open: false,
+    action: null,
+    id: null,
+  });
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState("");
-  
-  // --- [BAGIAN BARU] State & Helper untuk Notifikasi Kustom ---
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success', onConfirm: null });
 
-  const showSuccess = (message) => setNotification({ show: true, message, type: 'success' });
-  const showError = (message) => setNotification({ show: true, message, type: 'error' });
-  const showConfirm = (message, onConfirmCallback) => setNotification({ show: true, message, type: 'confirm', onConfirm: onConfirmCallback });
-  const closeNotification = () => setNotification({ show: false, message: '', type: 'success', onConfirm: null });
+  // --- [BAGIAN BARU] State & Helper untuk Notifikasi Kustom ---
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "success",
+    onConfirm: null,
+  });
+
+  const showSuccess = (message) =>
+    setNotification({ show: true, message, type: "success" });
+  const showError = (message) =>
+    setNotification({ show: true, message, type: "error" });
+  const showConfirm = (message, onConfirmCallback) =>
+    setNotification({
+      show: true,
+      message,
+      type: "confirm",
+      onConfirm: onConfirmCallback,
+    });
+  const closeNotification = () =>
+    setNotification({
+      show: false,
+      message: "",
+      type: "success",
+      onConfirm: null,
+    });
+
+  const exportExcelPrize = () => {
+    if (!list || list.length === 0) return;
+
+    const data = list.map((prize, index) => ({
+      Id: prize.id,
+      "Nama Hadiah": prize.prize,
+      Kategori: prize.kategori,
+      Pemenang: prize.pemenang,
+      Status: prize.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Prize");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, "DataPrize.xlsx");
+  };
 
   const fetchList = async () => {
     try {
@@ -204,14 +263,14 @@ export default function AdminPrizePage() {
 
   const handleDelete = (id) => {
     showConfirm(
-        `Yakin ingin menghapus hadiah ID #${id}? Aksi ini tidak dapat dibatalkan.`,
-        () => openAdminModal("delete", id)
+      `Yakin ingin menghapus hadiah ID #${id}? Aksi ini tidak dapat dibatalkan.`,
+      () => openAdminModal("delete", id)
     );
   };
   const clearWinner = (id) => {
     showConfirm(
-        `Yakin ingin mengosongkan pemenang untuk hadiah ID #${id}?`,
-        () => openAdminModal("clear", id)
+      `Yakin ingin mengosongkan pemenang untuk hadiah ID #${id}?`,
+      () => openAdminModal("clear", id)
     );
   };
 
@@ -258,7 +317,11 @@ export default function AdminPrizePage() {
     if (!nippInput) return showError("NIPP pemenang wajib diisi.");
     setSavingWinner(true);
     try {
-      await axios.patch(`/addwinner/${activePrize.id}`, { winner: nippInput }, { headers });
+      await axios.patch(
+        `/addwinner/${activePrize.id}`,
+        { winner: nippInput },
+        { headers }
+      );
       await fetchList();
       showSuccess("Pemenang berhasil diset (status: Belum Verifikasi).");
       closeWinnerModal();
@@ -335,15 +398,20 @@ export default function AdminPrizePage() {
 
   const statusBadge = (sRaw) => {
     const s = String(sRaw || "").toLowerCase();
-    if (s.includes("verifikasi")) return "bg-gradient-to-r from-yellow-500 to-amber-500 text-white";
-    if (s === "gugur") return "bg-gradient-to-r from-red-500 to-red-600 text-white";
-    if (s.includes("diambil")) return "bg-gradient-to-r from-green-500 to-emerald-500 text-white";
+    if (s.includes("verifikasi"))
+      return "bg-gradient-to-r from-yellow-500 to-amber-500 text-white";
+    if (s === "gugur")
+      return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+    if (s.includes("diambil"))
+      return "bg-gradient-to-r from-green-500 to-emerald-500 text-white";
     return "bg-gray-300 text-gray-700";
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{ backgroundColor: "#406017" }}>
-      
+    <div
+      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"
+      style={{ backgroundColor: "#406017" }}
+    >
       <NotificationPopup
         show={notification.show}
         message={notification.message}
@@ -351,14 +419,20 @@ export default function AdminPrizePage() {
         onConfirm={notification.onConfirm}
         onClose={closeNotification}
       />
-      
+
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center py-8">
           <div className="mb-4 inline-flex items-center justify-center w-20 h-20">
-            <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-16 md:h-20 w-auto drop-shadow-lg" />
+            <img
+              src={LogoKAI}
+              alt="Logo HUT KAI 80"
+              className="h-16 md:h-20 w-auto drop-shadow-lg"
+            />
           </div>
-          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">Admin Hadiah</h1>
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Admin Hadiah
+          </h1>
         </div>
 
         {/* Nav */}
@@ -389,19 +463,25 @@ export default function AdminPrizePage() {
           </div>
           <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <p className="text-orange-100 text-sm font-medium">Menunggu</p>
-            <p className="text-3xl font-bold text-white">{totalPrizes - winnersCount}</p>
+            <p className="text-3xl font-bold text-white">
+              {totalPrizes - winnersCount}
+            </p>
           </div>
         </div>
 
         {/* Tambah Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">Tambah Hadiah Baru</h2>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              Tambah Hadiah Baru
+            </h2>
           </div>
           <form onSubmit={handleAddPrize} className="p-6">
             <div className="grid gap-4 md:grid-cols-3 items-end">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Hadiah</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nama Hadiah
+                </label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
                   placeholder="Masukkan nama hadiah..."
@@ -410,7 +490,9 @@ export default function AdminPrizePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori Hadiah</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Kategori Hadiah
+                </label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
                   placeholder="Masukkan kategori hadiah..."
@@ -444,19 +526,39 @@ export default function AdminPrizePage() {
         {/* List Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white">Daftar Lengkap Hadiah ({ordered.length} dari {list.length})</h2>
+            <h2 className="text-2xl font-bold text-white">
+              Daftar Lengkap Hadiah ({ordered.length} dari {list.length})
+            </h2>
           </div>
+          <button
+            onClick={exportExcelPrize}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+          >
+            Export Data Hadiah ke Excel (.xlsx)
+          </button>
 
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-b-2xl">
             <table className="w-full">
               <thead className="bg-gray-50/90 backdrop-blur-sm">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">ID</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Nama Hadiah</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Kategori</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Pemenang (NIPP)</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">Aksi</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Nama Hadiah
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Kategori
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Pemenang (NIPP)
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-gray-200">
@@ -465,14 +567,26 @@ export default function AdminPrizePage() {
                     key={row.id}
                     className={`transition-all duration-300 hover:bg-green-50/70 ${
                       index % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
-                    } ${row.pemenang ? "border-l-4 border-green-500" : "border-l-4 border-gray-300"}`}
+                    } ${
+                      row.pemenang
+                        ? "border-l-4 border-green-500"
+                        : "border-l-4 border-gray-300"
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">#{row.id}</span>
+                      <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                        #{row.id}
+                      </span>
                     </td>
-                    <td className="px-6 py-4"><p className="text-gray-900 font-semibold text-lg">{row.prize}</p></td>
+                    <td className="px-6 py-4">
+                      <p className="text-gray-900 font-semibold text-lg">
+                        {row.prize}
+                      </p>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">{row.kategori || "-"}</span>
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        {row.kategori || "-"}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {row.pemenang ? (
@@ -480,11 +594,17 @@ export default function AdminPrizePage() {
                           {row.pemenang}
                         </span>
                       ) : (
-                        <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">Menunggu Undian</span>
+                        <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">
+                          Menunggu Undian
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${statusBadge(row.status)}`}>
+                      <span
+                        className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${statusBadge(
+                          row.status
+                        )}`}
+                      >
                         {row.status || "-"}
                       </span>
                     </td>
@@ -494,7 +614,9 @@ export default function AdminPrizePage() {
                           onClick={() => openWinnerModal(row)}
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold shadow-md"
                           disabled={loading}
-                          title={row.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
+                          title={
+                            row.pemenang ? "Ubah Pemenang" : "Set Pemenang"
+                          }
                         >
                           {row.pemenang ? "Ubah" : "Set"}
                         </button>
@@ -527,7 +649,12 @@ export default function AdminPrizePage() {
                 ))}
                 {!ordered.length && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center text-gray-500">Tidak ada data ditemukan.</td>
+                    <td
+                      colSpan="6"
+                      className="px-6 py-16 text-center text-gray-500"
+                    >
+                      Tidak ada data ditemukan.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -538,17 +665,30 @@ export default function AdminPrizePage() {
         {/* --- Modal Set/Ubah Pemenang --- */}
         {showWinnerModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeWinnerModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeWinnerModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-                <h3 className="text-xl font-bold text-white">{activePrize?.pemenang ? "✏️ Ubah Pemenang" : "👤 Set Pemenang"}</h3>
+                <h3 className="text-xl font-bold text-white">
+                  {activePrize?.pemenang
+                    ? "✏️ Ubah Pemenang"
+                    : "👤 Set Pemenang"}
+                </h3>
               </div>
               <div className="p-6">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-gray-700 mb-1"><b>Hadiah:</b> {activePrize?.prize}</p>
-                  <p className="text-sm text-gray-600"><b>ID:</b> #{activePrize?.id}</p>
+                  <p className="text-sm text-gray-700 mb-1">
+                    <b>Hadiah:</b> {activePrize?.prize}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <b>ID:</b> #{activePrize?.id}
+                  </p>
                 </div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">NIPP Pemenang</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  NIPP Pemenang
+                </label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl mb-6"
                   placeholder="Masukkan NIPP pemenang..."
@@ -558,8 +698,17 @@ export default function AdminPrizePage() {
                   autoFocus
                 />
                 <div className="flex justify-end gap-3">
-                  <button onClick={closeWinnerModal} className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold">❌ Batal</button>
-                  <button onClick={submitWinner} disabled={savingWinner} className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold disabled:opacity-50">
+                  <button
+                    onClick={closeWinnerModal}
+                    className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold"
+                  >
+                    ❌ Batal
+                  </button>
+                  <button
+                    onClick={submitWinner}
+                    disabled={savingWinner}
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold disabled:opacity-50"
+                  >
                     {savingWinner ? "Menyimpan..." : "💾 Simpan"}
                   </button>
                 </div>
@@ -571,17 +720,24 @@ export default function AdminPrizePage() {
         {/* --- Modal Edit Hadiah & Kategori --- */}
         {showEditModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeEditModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeEditModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
                 <h3 className="text-xl font-bold text-white">📝 Edit Hadiah</h3>
               </div>
               <div className="p-6">
                 <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-gray-700"><b>ID Hadiah:</b> #{editTarget?.id}</p>
+                  <p className="text-sm text-gray-700">
+                    <b>ID Hadiah:</b> #{editTarget?.id}
+                  </p>
                 </div>
 
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Hadiah Baru</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nama Hadiah Baru
+                </label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 rounded-xl mb-4"
                   placeholder="Masukkan nama hadiah baru..."
@@ -591,7 +747,9 @@ export default function AdminPrizePage() {
                   autoFocus
                 />
 
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori Hadiah Baru</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Kategori Hadiah Baru
+                </label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 rounded-xl mb-6"
                   placeholder="Masukkan kategori baru..."
@@ -601,8 +759,17 @@ export default function AdminPrizePage() {
                 />
 
                 <div className="flex justify-end gap-3">
-                  <button onClick={closeEditModal} className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold">❌ Batal</button>
-                  <button onClick={submitEdit} disabled={savingEdit} className="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold disabled:opacity-50">
+                  <button
+                    onClick={closeEditModal}
+                    className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold"
+                  >
+                    ❌ Batal
+                  </button>
+                  <button
+                    onClick={submitEdit}
+                    disabled={savingEdit}
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold disabled:opacity-50"
+                  >
                     {savingEdit ? "Menyimpan..." : "💾 Simpan"}
                   </button>
                 </div>
@@ -614,30 +781,51 @@ export default function AdminPrizePage() {
         {/* --- Modal Password Admin (hapus/kosongkan) --- */}
         {adminModal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeAdminModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeAdminModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
                 <h3 className="text-lg font-bold text-white">
-                  Konfirmasi Admin ({adminModal.action === "delete" ? "Hapus Hadiah" : "Kosongkan Pemenang"})
+                  Konfirmasi Admin (
+                  {adminModal.action === "delete"
+                    ? "Hapus Hadiah"
+                    : "Kosongkan Pemenang"}
+                  )
                 </h3>
               </div>
               <div className="p-6 space-y-3">
                 <p className="text-sm text-gray-700">
-                  Masukkan password admin untuk melanjutkan aksi <b>{adminModal.action}</b>.
+                  Masukkan password admin untuk melanjutkan aksi{" "}
+                  <b>{adminModal.action}</b>.
                 </p>
                 <input
                   type="password"
                   className="w-full border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 p-3 rounded-xl"
                   placeholder="Password admin"
                   value={adminInput}
-                  onChange={(e) => { setAdminInput(e.target.value); setAdminError(""); }}
+                  onChange={(e) => {
+                    setAdminInput(e.target.value);
+                    setAdminError("");
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && submitAdminModal()}
                   autoFocus
                 />
-                {adminError && <p className="text-sm text-red-600">{adminError}</p>}
+                {adminError && (
+                  <p className="text-sm text-red-600">{adminError}</p>
+                )}
                 <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={closeAdminModal} className="px-4 py-2 rounded-xl border-2 border-gray-300 font-semibold">Batal</button>
-                  <button onClick={submitAdminModal} className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold">
+                  <button
+                    onClick={closeAdminModal}
+                    className="px-4 py-2 rounded-xl border-2 border-gray-300 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={submitAdminModal}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold"
+                  >
                     Lanjutkan
                   </button>
                 </div>
@@ -645,7 +833,6 @@ export default function AdminPrizePage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
