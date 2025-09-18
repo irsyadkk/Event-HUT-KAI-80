@@ -167,18 +167,22 @@ export default function AdminPrizePage() {
   );
 
   // Urutkan: belum ada pemenang dulu → lalu sudah ada pemenang; masing-masing ID ASC
-const ordered = [...filtered].sort((a, b) => {
-  const aHasWinner = String(a?.pemenang || "").trim() !== "";
-  const bHasWinner = String(b?.pemenang || "").trim() !== "";
+  const ordered = [...filtered].sort((a, b) => {
+    const aHasWinner = String(a?.pemenang || "").trim() !== "";
+    const bHasWinner = String(b?.pemenang || "").trim() !== "";
 
-  // Belum ada pemenang dulu (false < true → -1)
-  if (aHasWinner !== bHasWinner) return aHasWinner ? 1 : -1;
+    // Belum ada pemenang dulu (false < true → -1)
+    if (aHasWinner !== bHasWinner) return aHasWinner ? 1 : -1;
 
-  // Kalau sama-sama statusnya, urut ID numeric ASC
-  const aid = Number(a?.id) || 0;
-  const bid = Number(b?.id) || 0;
-  return aid - bid;
-});
+    // Kalau sama-sama statusnya, urut ID numeric ASC
+    const aid = Number(a?.id) || 0;
+    const bid = Number(b?.id) || 0;
+    return aid - bid;
+  });
+
+  // Stats calculation
+  const winnersCount = filtered.filter((x) => x.pemenang).length;
+  const totalPrizes = filtered.length;
 
   return (
     <div
@@ -186,19 +190,23 @@ const ordered = [...filtered].sort((a, b) => {
       style={{ backgroundColor: "#406017" }}
     >
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
+        {/* Header Section */}
         <div className="text-center py-8">
-          <div className="inline-flex items-center justify-center w-20 h-20">
-                        <img
-                                        src={LogoKAI}
-                                        alt="Logo HUT KAI 80"
-                                        className="h-16 md:h-20 w-auto drop-shadow-lg"
-                                      />
-                      </div>
-          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+          <div className="mb-4">
+            <div className="inline-flex items-center justify-center w-20 h-20">
+              <img
+                src={LogoKAI}
+                alt="Logo HUT KAI 80"
+                className="h-16 md:h-20 w-auto drop-shadow-lg"
+              />
+            </div>
+          </div>
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
             Admin Hadiah
           </h1>
         </div>
 
+        {/* Navigation Buttons */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
           <button
             onClick={() => navigate("/prizelist")}
@@ -214,10 +222,53 @@ const ordered = [...filtered].sort((a, b) => {
           </button>
         </div>
 
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-2xl border border-white/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total Hadiah</p>
+                <p className="text-3xl font-bold text-white">{totalPrizes}</p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl">🎁</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">
+                  Sudah Terpilih
+                </p>
+                <p className="text-3xl font-bold text-white">{winnersCount}</p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl">👑</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl border border-white/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Menunggu</p>
+                <p className="text-3xl font-bold text-white">
+                  {totalPrizes - winnersCount}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl">⏳</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Tambah Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               🎁 Tambah Hadiah Baru
             </h2>
           </div>
@@ -239,37 +290,48 @@ const ordered = [...filtered].sort((a, b) => {
                 className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 justify-center">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Menyimpan...
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">➕ Tambah Hadiah</span>
+                  <span className="flex items-center gap-2 justify-center">
+                    ➕ Tambah Hadiah
+                  </span>
                 )}
               </button>
             </div>
           </form>
         </div>
 
-        {/* List Hadiah */}
+        {/* Search & Filter Section */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              📊 Daftar Hadiah ({ordered.length})
+              Pencarian & Filter
             </h2>
             <div className="relative">
               <input
-                className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 backdrop-blur-sm placeholder-gray-600 pr-10 min-w-[250px]"
-                placeholder="🔍 Cari hadiah, pemenang..."
+                className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 backdrop-blur-sm placeholder-gray-600 pr-4 min-w-[300px] text-sm"
+                placeholder="🔍 Cari berdasarkan ID, hadiah, pemenang, atau status..."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
             </div>
           </div>
+        </div>
+
+        {/* List Hadiah */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              🏆 Daftar Lengkap Hadiah ({ordered.length} dari {list.length})
+            </h2>
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50/80 backdrop-blur-sm">
+              <thead className="bg-gray-50/90 backdrop-blur-sm">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
                     ID
@@ -288,49 +350,69 @@ const ordered = [...filtered].sort((a, b) => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white/50 backdrop-blur-sm divide-y divide-gray-200">
+              <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-gray-200">
                 {ordered.map((row, index) => (
                   <tr
                     key={row.id}
-                    className={`hover:bg-green-50/50 transition-all duration-200 ${
-                      index % 2 === 0 ? "bg-white/30" : "bg-gray-50/30"
+                    className={`transition-all duration-300 hover:bg-green-50/70 hover:scale-[1.01] ${
+                      index % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
+                    } ${
+                      row.pemenang
+                        ? "border-l-4 border-green-500"
+                        : "border-l-4 border-gray-300"
                     }`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                         #{row.id}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                      {row.prize}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className="text-gray-900 font-semibold text-lg">
+                            {row.prize}
+                          </p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {row.pemenang ? (
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                          {row.pemenang}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                              {row.pemenang}
+                            </span>
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-gray-400 italic">
-                          Belum ada pemenang
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">
+                              Menunggu Undian
+                            </span>
+                          </div>
+                        </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {row.status ? (
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${
                             row.status.toLowerCase().includes("verifikasi")
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-green-100 text-green-800"
+                              ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-white"
+                              : "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
                           }`}
                         >
                           {row.status}
                         </span>
                       ) : (
-                        <span className="text-gray-400 italic">-</span>
+                        <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">
+                          -
+                        </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => openWinnerModal(row)}
@@ -369,15 +451,29 @@ const ordered = [...filtered].sort((a, b) => {
                 ))}
                 {!ordered.length && (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="text-6xl">📭</div>
-                        <p className="text-gray-500 text-lg font-medium">
-                          Tidak ada data hadiah
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          Mulai dengan menambahkan hadiah baru
-                        </p>
+                    <td colSpan="5" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="w-24 h-24 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center shadow-xl">
+                          <span className="text-4xl">📭</span>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xl font-semibold mb-2">
+                            Tidak ada data ditemukan
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {q
+                              ? `Tidak ada hasil untuk pencarian "${q}"`
+                              : "Belum ada hadiah yang terdaftar"}
+                          </p>
+                        </div>
+                        {q && (
+                          <button
+                            onClick={() => setQ("")}
+                            className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                          >
+                            🔄 Reset Pencarian
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
