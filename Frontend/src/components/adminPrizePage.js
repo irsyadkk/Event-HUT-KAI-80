@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { io } from "socket.io-client";
+import { BASE_URL } from "../utils";
 
 // =================================================================
 // --- [BAGIAN BARU] Komponen Notifikasi & Konfirmasi Kustom ---
@@ -122,6 +124,7 @@ export default function AdminPrizePage() {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState([]);
   const [q, setQ] = useState("");
+   // data realtime via socket
 
   // --- Modal Set Pemenang
   const [showWinnerModal, setShowWinnerModal] = useState(false);
@@ -207,6 +210,15 @@ export default function AdminPrizePage() {
       showError(e?.response?.data?.message || e.message);
     }
   };
+  
+  useEffect(() => {
+    const socket = io(BASE_URL);
+    socket.on("PRIZE_UPDATE", (rows) => {
+      setList(rows || []);
+      setLoading(false);
+    });
+    return () => socket.disconnect();
+  }, []);
 
   useEffect(() => {
     fetchList();
