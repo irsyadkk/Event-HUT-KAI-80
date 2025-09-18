@@ -124,7 +124,7 @@ export default function AdminPrizePage() {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState([]);
   const [q, setQ] = useState("");
-   // data realtime via socket
+  // data realtime via socket
 
   // --- Modal Set Pemenang
   const [showWinnerModal, setShowWinnerModal] = useState(false);
@@ -210,7 +210,7 @@ export default function AdminPrizePage() {
       showError(e?.response?.data?.message || e.message);
     }
   };
-  
+
   useEffect(() => {
     const socket = io(BASE_URL);
     socket.on("PRIZE_UPDATE", (rows) => {
@@ -446,6 +446,12 @@ export default function AdminPrizePage() {
 
         {/* Nav */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <button
+            onClick={() => navigate("/winnerinput")}
+            className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl shadow-xl transition-all duration-300 hover:shadow-2xl transform hover:scale-105 text-lg font-semibold border-2 border-white/20 backdrop-blur-sm"
+          >
+            Input Pemenang Undian
+          </button>
           <button
             onClick={() => navigate("/prizelist")}
             className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl shadow-xl transition-all duration-300 hover:shadow-2xl transform hover:scale-105 text-lg font-semibold border-2 border-white/20 backdrop-blur-sm"
