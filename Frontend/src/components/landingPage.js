@@ -201,13 +201,13 @@ function LandingPage() {
             </div>
             <button
               onClick={() => {
-                navigate("/prizelist");
+                navigate("/winnerdisplay");
               }}
               className={`w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
     transition-all duration-300 transform bg-pink-500 text-white
        `}
             >
-              LIHAT DORPRES !!!
+              LIHAT PEMENANG UNDIAN
             </button>
           </div>
         </div>
