@@ -12,16 +12,10 @@ const useAuthHeaders = () =>
 // helper: kelas warna chip berdasarkan status
 const badgeClassesByStatus = (statusRaw) => {
   const s = String(statusRaw || "").toLowerCase();
-  if (s === "diambil di tempat" || s === "diambil di daop") {
-    return "bg-green-600 text-white"; // hijau
-  }
-  if (s === "gugur") {
-    return "bg-red-600 text-white"; // merah
-  }
-  if (s.includes("verifikasi")) {
-    return "bg-amber-500 text-white"; // kuning utk 'Belum Verifikasi'
-  }
-  return "bg-gray-400 text-white"; // default
+  if (s === "diambil di tempat" || s === "diambil di daop") return "bg-green-600 text-white";
+  if (s === "gugur") return "bg-red-600 text-white";
+  if (s.includes("verifikasi")) return "bg-amber-500 text-white";
+  return "bg-gray-400 text-white";
 };
 
 export default function PrizeListPage() {
@@ -43,7 +37,7 @@ export default function PrizeListPage() {
   // --- Initial fetch (fallback)
   const fetchData = async () => {
     try {
-      const res = await axios.get("/prize");
+      const res = await axios.get("/prize", { headers }); // pakai headers
       setData(res?.data?.data || []);
     } catch (e) {
       alert(e?.response?.data?.message || e.message);
@@ -56,25 +50,35 @@ export default function PrizeListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Group: 1 baris per kategori, winners = [{nipp, status}]
+  // --- Group: 1 baris per kategori (SEMUA kategori muncul), winners = [{nipp, status}]
   const groupedRows = useMemo(() => {
-    const groups = new Map(); // kategori -> [{nipp, status}, ...]
+    const catMap = new Map(); // kategori -> winners[]
+
+    // 1) Pastikan semua kategori terdaftar (termasuk yang belum ada pemenang)
     for (const row of data) {
-      const kategori = (row?.kategori || "").trim();
-      const nipp = (row?.pemenang || "").trim();
-      const status = (row?.status || "").trim();
-      if (!kategori || !nipp) continue; // tampilkan hanya yg punya pemenang & kategori
-      if (!groups.has(kategori)) groups.set(kategori, []);
-      groups.get(kategori).push({ nipp, status });
+      const kategoriRaw = (row?.kategori ?? "").trim();
+      const kategori = kategoriRaw || "Tanpa Kategori";
+      if (!catMap.has(kategori)) catMap.set(kategori, []);
     }
 
-    // ke array
-    let arr = Array.from(groups.entries()).map(([kategori, winners]) => ({
+    // 2) Isi pemenang (jika ada)
+    for (const row of data) {
+      const kategoriRaw = (row?.kategori ?? "").trim();
+      const kategori = kategoriRaw || "Tanpa Kategori";
+      const nipp = (row?.pemenang || "").trim();
+      const status = (row?.status || "").trim();
+      if (nipp) {
+        catMap.get(kategori).push({ nipp, status });
+      }
+    }
+
+    // 3) ke array
+    let arr = Array.from(catMap.entries()).map(([kategori, winners]) => ({
       kategori,
       winners,
     }));
 
-    // search: kategori / nipp / status
+    // 4) search: cocokkan kategori / nipp / status
     const s = q.toLowerCase();
     if (s) {
       arr = arr.filter(
@@ -88,7 +92,7 @@ export default function PrizeListPage() {
       );
     }
 
-    // urut kategori A-Z
+    // 5) urut kategori A-Z
     arr.sort((a, b) => a.kategori.localeCompare(b.kategori, "id"));
     return arr;
   }, [data, q]);
@@ -96,7 +100,7 @@ export default function PrizeListPage() {
   // --- Stats
   const totalPrizes = data.length;
   const totalWinners = data.filter((x) => (x?.pemenang || "").trim()).length;
-  const totalCategoriesWithWinners = groupedRows.length;
+  const totalCategoriesWithWinners = groupedRows.filter((g) => g.winners.length > 0).length;
 
   return (
     <div
@@ -130,10 +134,13 @@ export default function PrizeListPage() {
           </div>
           <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <p className="text-orange-100 text-sm font-medium">
-              Kategori dengan Pemenang
+              Kategori (yang tampil)
             </p>
             <p className="text-3xl font-bold text-white">
-              {totalCategoriesWithWinners}
+              {groupedRows.length}
+            </p>
+            <p className="text-white/80 text-xs mt-1">
+              {totalCategoriesWithWinners} kategori sudah punya pemenang
             </p>
           </div>
         </div>
@@ -221,20 +228,25 @@ export default function PrizeListPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            {/* chip NIPP berwarna berdasarkan status */}
-                            <div className="flex flex-wrap gap-2">
-                              {row.winners.map((w, i) => (
-                                <span
-                                  key={`${row.kategori}-${w.nipp}-${i}`}
-                                  className={`px-3 py-1 rounded-full text-xs font-bold shadow ${badgeClassesByStatus(
-                                    w.status
-                                  )}`}
-                                  title={w.status || "status tidak tersedia"}
-                                >
-                                  {w.nipp}
-                                </span>
-                              ))}
-                            </div>
+                            {row.winners.length ? (
+                              <div className="flex flex-wrap gap-2">
+                                {row.winners.map((w, i) => (
+                                  <span
+                                    key={`${row.kategori}-${w.nipp}-${i}`}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold shadow ${badgeClassesByStatus(
+                                      w.status
+                                    )}`}
+                                    title={w.status || "status tidak tersedia"}
+                                  >
+                                    {w.nipp}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 italic">
+                                Belum ada pemenang
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -244,11 +256,7 @@ export default function PrizeListPage() {
                           <div className="flex flex-col items-center gap-4">
                             <div className="text-5xl">📭</div>
                             <p className="text-gray-500 text-lg font-medium">
-                              Belum ada pemenang yang tercatat.
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                              Pemenang akan muncul per kategori setelah admin
-                              menetapkan pemenang.
+                              Tidak ada kategori untuk ditampilkan.
                             </p>
                           </div>
                         </td>
