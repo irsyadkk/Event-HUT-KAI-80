@@ -8,6 +8,14 @@ const useAuthHeaders = () =>
     return { Authorization: `Bearer ${token}` };
   }, []);
 
+// helper warna badge status
+const statusBadgeClass = (raw) => {
+  const s = String(raw || "").toLowerCase();
+  if (s.includes("diambil")) return "bg-gradient-to-r from-emerald-500 to-green-600 text-white";
+  if (s === "gugur") return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+  return "bg-gradient-to-r from-amber-500 to-orange-500 text-white"; // Belum Verifikasi / lainnya
+};
+
 export default function VerificationPage() {
   const headers = useAuthHeaders();
 
@@ -15,12 +23,17 @@ export default function VerificationPage() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
 
+  // modal verifikasi (pilih jenis "diambil")
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [targetRow, setTargetRow] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+
   const fetchList = async () => {
     try {
       setLoading(true);
       const res = await axios.get("/prize", { headers });
       const all = res?.data?.data || [];
-      // hanya tampilkan yang statusnya terisi (truthy string)
+      // hanya tampilkan yang statusnya terisi
       const withStatus = all.filter((x) => (x.status || "").trim().length > 0);
       setList(withStatus);
     } catch (e) {
@@ -32,20 +45,41 @@ export default function VerificationPage() {
 
   useEffect(() => {
     fetchList();
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const changeStatus = async (id, status) => {
-    if (!id) return;
-    if (
-      status === "gugur" &&
-      !window.confirm("Tandai pemenang GAGAL? (status akan 'gugur')")
-    )
-      return;
+  const openVerifyModal = (row) => {
+    setTargetRow(row);
+    setShowVerifyModal(true);
+  };
+  const closeVerifyModal = () => {
+    setShowVerifyModal(false);
+    setTargetRow(null);
+  };
+
+  const submitVerify = async (status) => {
+    if (!targetRow?.id) return;
     try {
-      setLoading(true);
-      await axios.patch(`/changestatus/${id}`, { status }, { headers });
+      setVerifying(true);
+      await axios.patch(`/changestatus/${targetRow.id}`, { status }, { headers });
       await fetchList();
       alert(`Status diubah ke '${status}'.`);
+      closeVerifyModal();
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const changeStatusGugur = async (id) => {
+    if (!id) return;
+    if (!window.confirm("Tandai pemenang GAGAL? (status akan 'gugur')")) return;
+    try {
+      setLoading(true);
+      await axios.patch(`/changestatus/${id}`, { status: "gugur" }, { headers });
+      await fetchList();
+      alert("Status diubah ke 'gugur'.");
     } catch (e) {
       alert(e?.response?.data?.message || e.message);
     } finally {
@@ -78,32 +112,30 @@ export default function VerificationPage() {
     );
   });
 
-  // Statistics
-  const diambilCount = filtered.filter(x => x.status === "diambil").length;
-  const gugurCount = filtered.filter(x => x.status === "gugur").length;
-  const belumVerifikasiCount = filtered.filter(x => x.status && x.status !== "diambil" && x.status !== "gugur").length;
+  // Statistik (dua status baru dihitung sebagai "diambil")
+  const diambilCount = filtered.filter((x) =>
+    String(x.status).toLowerCase().includes("diambil")
+  ).length;
+  const gugurCount = filtered.filter((x) => String(x.status).toLowerCase() === "gugur").length;
+  const belumVerifikasiCount = filtered.filter((x) => {
+    const s = String(x.status).toLowerCase();
+    return s && !s.includes("diambil") && s !== "gugur";
+  }).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{backgroundColor: '#406017'}}>
+    <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{ backgroundColor: "#406017" }}>
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
-        
-        {/* Header Section */}
+        {/* Header */}
         <div className="text-center py-8">
           <div className="mb-4">
             <div className="inline-flex items-center justify-center w-20 h-20">
-                          <img
-                                          src={LogoKAI}
-                                          alt="Logo HUT KAI 80"
-                                          className="h-16 md:h-20 w-auto drop-shadow-lg"
-                                        />
+              <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-16 md:h-20 w-auto drop-shadow-lg" />
             </div>
           </div>
-          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            Pos Verifikasi
-          </h1>
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">Pos Verifikasi</h1>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between">
@@ -179,9 +211,7 @@ export default function VerificationPage() {
                     Loading...
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    🔄 Refresh
-                  </span>
+                  <span className="flex items-center gap-2">🔄 Refresh</span>
                 )}
               </button>
             </div>
@@ -225,10 +255,10 @@ export default function VerificationPage() {
                 <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-gray-200">
                   {filtered.length ? (
                     filtered.map((row, index) => (
-                      <tr 
-                        key={row.id} 
+                      <tr
+                        key={row.id}
                         className={`transition-all duration-300 hover:bg-green-50/70 hover:scale-[1.01] ${
-                          index % 2 === 0 ? 'bg-white/40' : 'bg-gray-50/40'
+                          index % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
                         }`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -237,19 +267,13 @@ export default function VerificationPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <p className="text-gray-900 font-semibold text-base">{row.prize}</p>
-                            </div>
-                          </div>
+                          <p className="text-gray-900 font-semibold text-base">{row.prize}</p>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {row.pemenang ? (
-                            <div className="flex items-center gap-2">
-                              <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                                {row.pemenang}
-                              </span>
-                            </div>
+                            <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                              {row.pemenang}
+                            </span>
                           ) : (
                             <span className="text-gray-400 italic flex items-center gap-2">
                               <span className="text-xl">❓</span>
@@ -258,31 +282,22 @@ export default function VerificationPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold shadow-lg ${
-                            row.status === "diambil"
-                              ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
-                              : row.status === "gugur"
-                              ? "bg-gradient-to-r from-red-500 to-red-600 text-white"
-                              : "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
-                          }`}>
-                            <span className="text-lg">
-                              {row.status === "diambil" ? "" : row.status === "gugur" ? "" : ""}
-                            </span>
+                          <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold shadow-lg ${statusBadgeClass(row.status)}`}>
                             {row.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-wrap gap-2">
                             <button
-                              onClick={() => changeStatus(row.id, "diambil")}
+                              onClick={() => openVerifyModal(row)}
                               disabled={loading}
                               className="px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
-                              title="Verifikasi Berhasil (Diambil)"
+                              title="Verifikasi: pilih jenis diambil"
                             >
                               Verifikasi
                             </button>
                             <button
-                              onClick={() => changeStatus(row.id, "gugur")}
+                              onClick={() => changeStatusGugur(row.id)}
                               disabled={loading}
                               className="px-3 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
                               title="Gagal (Gugur)"
@@ -332,12 +347,55 @@ export default function VerificationPage() {
           )}
         </div>
 
+        {/* Modal Pilih Jenis "Diambil" */}
+        {showVerifyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeVerifyModal} />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
+              <div className="bg-gradient-to-r from-emerald-600 to-green-700 px-6 py-4">
+                <h3 className="text-xl font-bold text-white">Pilih Metode Pengambilan</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-700">
+                  Hadiah: <b>{targetRow?.prize}</b> &nbsp; (ID: #{targetRow?.id})<br />
+                  Pemenang (NIPP): <b>{targetRow?.pemenang || "-"}</b>
+                </p>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <button
+                    onClick={() => submitVerify("diambil di tempat")}
+                    disabled={verifying}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                  >
+                    {verifying ? "Memproses..." : "✅ Diambil di Tempat"}
+                  </button>
+                  <button
+                    onClick={() => submitVerify("diambil di daop")}
+                    disabled={verifying}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                  >
+                    {verifying ? "Memproses..." : "🚚 Diambil di Daop"}
+                  </button>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeVerifyModal}
+                    disabled={verifying}
+                    className="mt-2 px-4 py-2 rounded-xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold transition-all duration-200"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Footer Info */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              💡 Petunjuk Verifikasi
-            </h3>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">💡 Petunjuk Verifikasi</h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -347,28 +405,22 @@ export default function VerificationPage() {
                   <h4 className="font-semibold text-green-800">Verifikasi</h4>
                 </div>
                 <p className="text-green-700 text-sm">
-                  Gunakan tombol ini ketika pemenang berhasil memverifikasi identitas dan mengambil hadiah.
+                  Setelah validasi KMF manual, pilih jenis pengambilan: <b>di tempat</b> atau <b>di daop</b>.
                 </p>
               </div>
-              
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">❌</span>
                   <h4 className="font-semibold text-red-800">Gugur</h4>
                 </div>
-                <p className="text-red-700 text-sm">
-                  Tandai sebagai gugur jika pemenang tidak dapat memverifikasi atau tidak memenuhi syarat.
-                </p>
+                <p className="text-red-700 text-sm">Tandai sebagai gugur jika pemenang tidak memenuhi syarat.</p>
               </div>
-
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl">🗑️</span>
                   <h4 className="font-semibold text-amber-800">Kosongkan</h4>
                 </div>
-                <p className="text-amber-700 text-sm">
-                  Menghapus pemenang dan mengosongkan status. Hadiah kembali ke status awal untuk diundi ulang.
-                </p>
+                <p className="text-amber-700 text-sm">Menghapus pemenang & status untuk diundi ulang.</p>
               </div>
             </div>
           </div>
