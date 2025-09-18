@@ -93,6 +93,53 @@ export const getWinnerByNipp = async (req, res) => {
   }
 };
 
+// EDIT WINNER BY NIPP
+export const editWinnerByNipp = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const { nippchange, status } = req.body;
+    if (!nippchange || !status) {
+      const msg = !nippchange
+        ? "nippchange field cannot be empty !"
+        : "status field cannot be empty";
+      throw makeError(msg, 400);
+    }
+
+    const winner = await Winner.findOne({
+      where: {
+        nipp: nipp,
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      },
+    });
+    if (!winner) {
+      throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
+    }
+
+    await Winner.update(
+      {
+        nipp: nippchange,
+        status: status,
+      },
+      {
+        where: { nipp: nipp },
+        transaction: t,
+      }
+    );
+
+    res.status(200).json({
+      status: "Success",
+      message: "Winner Updated",
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
 // DELETE WINNER BY NIPP
 export const deleteWinnerByNipp = async (req, res) => {
   const t = await db.transaction();

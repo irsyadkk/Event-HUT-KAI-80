@@ -31,7 +31,6 @@ import {
 } from "../controllers/pickupController.js";
 import {
   addPrize,
-  addWinner,
   addWinnerToPrize,
   changeWinnerStatus,
   deletePrizeById,
@@ -40,7 +39,13 @@ import {
   getPrizeById,
   winnerGugur,
 } from "../controllers/prizeController.js";
-import { addWinner } from "../controllers/winnerController.js";
+import {
+  addWinner,
+  deleteWinnerByNipp,
+  editWinnerByNipp,
+  getWinner,
+  getWinnerByNipp,
+} from "../controllers/winnerController.js";
 
 const router = express.Router();
 // REFRESH TOKEN
@@ -90,4 +95,8 @@ router.patch("/changestatus/:id", verifyToken, changeWinnerStatus);
 
 // WINNER
 router.post("/winner", verifyToken, addWinner);
+router.get("/winner", verifyToken, getWinner);
+router.get("/winner/:nipp", verifyToken, getWinnerByNipp);
+router.put("/winner/:nipp", verifyToken, editWinnerByNipp);
+router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
 export default router;
