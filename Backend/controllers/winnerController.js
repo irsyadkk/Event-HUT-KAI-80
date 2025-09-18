@@ -27,6 +27,15 @@ export const addWinner = async (req, res) => {
       throw makeError(`NIPP ${winner} Doesn't Exist in orders Table !`);
     }
 
+    const ifWinnerExist = await Winner.findOne({
+      where: { nipp: winner },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (ifWinnerExist) {
+      throw makeError(`NIPP ${winner} Already Exist in winners Table !`);
+    }
+
     await Winner.create(
       {
         nipp: winner,
