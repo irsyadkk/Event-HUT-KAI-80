@@ -191,30 +191,15 @@ export default function VerificationPage() {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              🎯 Daftar Hadiah Siap Diproses ({filtered.length})
+              Daftar Hadiah Siap Diproses ({filtered.length})
             </h2>
             <div className="flex gap-3">
               <input
                 className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 backdrop-blur-sm placeholder-gray-600 min-w-[300px]"
-                placeholder="🔍 Cari ID, nama, pemenang, atau status..."
+                placeholder="🔍 Cari.."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
-              <button
-                onClick={fetchList}
-                disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 min-w-[120px]"
-                title="Refresh data"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Loading...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">🔄 Refresh</span>
-                )}
-              </button>
             </div>
           </div>
 
@@ -308,7 +293,7 @@ export default function VerificationPage() {
                             <button
                               onClick={() => changeStatusReset(row.id)}
                               disabled={loading}
-                              className="px-3 py-2 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                              className="px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-600 hover:from-orange-600 hover:to-yellow-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50"
                               title="Setel status ke 'Belum Verifikasi'"
                             >
                               Reset
@@ -392,43 +377,6 @@ export default function VerificationPage() {
             </div>
           </div>
         )}
-
-        {/* Footer Info */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">💡 Petunjuk Verifikasi</h3>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">✅</span>
-                  <h4 className="font-semibold text-green-800">Verifikasi</h4>
-                </div>
-                <p className="text-green-700 text-sm">
-                  Setelah validasi KMF manual, pilih jenis pengambilan: <b>di tempat</b> atau <b>di daop</b>.
-                </p>
-              </div>
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">❌</span>
-                  <h4 className="font-semibold text-red-800">Gugur</h4>
-                </div>
-                <p className="text-red-700 text-sm">Tandai sebagai gugur jika pemenang tidak memenuhi syarat.</p>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">🔁</span>
-                  <h4 className="font-semibold text-amber-800">Reset</h4>
-                </div>
-                <p className="text-amber-700 text-sm">
-                  Mengubah status menjadi <b>Belum Verifikasi</b> tanpa menghapus pemenang. Cocok bila perlu verifikasi ulang.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );

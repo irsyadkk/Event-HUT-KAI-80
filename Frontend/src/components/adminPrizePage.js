@@ -283,7 +283,7 @@ export default function AdminPrizePage() {
         {/* Tambah Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">🎁 Tambah Hadiah Baru</h2>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">Tambah Hadiah Baru</h2>
           </div>
           <form onSubmit={handleAddPrize} className="p-6">
             <div className="grid gap-4 md:grid-cols-3 items-end">
@@ -300,7 +300,7 @@ export default function AdminPrizePage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori Hadiah</label>
                 <input
                   className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
-                  placeholder="Mis. Utama, Hiburan, dsb."
+                  placeholder="Masukkan kategori hadiah..."
                   value={newKategori}
                   onChange={(e) => setNewKategori(e.target.value)}
                 />
@@ -321,7 +321,7 @@ export default function AdminPrizePage() {
             <h2 className="text-xl font-bold text-white">Pencarian & Filter</h2>
             <input
               className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 min-w-[300px] text-sm"
-              placeholder="🔍 Cari ID, hadiah, kategori, pemenang, atau status..."
+              placeholder="🔍 Cari.."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -331,7 +331,7 @@ export default function AdminPrizePage() {
         {/* List Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white">🏆 Daftar Lengkap Hadiah ({ordered.length} dari {list.length})</h2>
+            <h2 className="text-2xl font-bold text-white">Daftar Lengkap Hadiah ({ordered.length} dari {list.length})</h2>
           </div>
 
           <div className="overflow-x-auto">

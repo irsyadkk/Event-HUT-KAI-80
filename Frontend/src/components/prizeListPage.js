@@ -209,7 +209,7 @@ export default function PrizeListPage() {
         </div>
 
         {/* Stats - Compact */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 shadow-lg border border-white/20">
             <p className="text-blue-100 text-xs font-medium">Total Hadiah</p>
             <p className="text-lg md:text-xl font-bold text-white">{totalPrizes}</p>
@@ -217,13 +217,6 @@ export default function PrizeListPage() {
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg p-3 shadow-lg border border-white/20">
             <p className="text-green-100 text-xs font-medium">Total Pemenang</p>
             <p className="text-lg md:text-xl font-bold text-white">{totalWinners}</p>
-          </div>
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg p-3 shadow-lg border border-white/20">
-            <p className="text-orange-100 text-xs font-medium">Kategori Tampil</p>
-            <p className="text-lg md:text-xl font-bold text-white">{groupedRows.length}</p>
-            <p className="text-white/80 text-xs mt-1">
-              {totalCategoriesWithWinners} sudah punya pemenang
-            </p>
           </div>
         </div>
 
@@ -233,7 +226,7 @@ export default function PrizeListPage() {
             <h2 className="text-base font-bold text-white">Pencarian</h2>
             <input
               className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-2 rounded-lg bg-white/90 backdrop-blur-sm placeholder-gray-600 min-w-[200px] text-sm"
-              placeholder="🔍 Cari kategori, NIPP, atau status…"
+              placeholder="🔍 Cari.."
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -280,19 +273,19 @@ export default function PrizeListPage() {
             {/* Kolom Kiri */}
             <TableComponent 
               dataRows={splitData.leftColumn} 
-              title="🏆 Kolom 1" 
+              title="Tabel 1" 
             />
             
             {/* Kolom Tengah */}
             <TableComponent 
               dataRows={splitData.middleColumn} 
-              title="🏆 Kolom 2" 
+              title="Tabel 2" 
             />
             
             {/* Kolom Kanan */}
             <TableComponent 
               dataRows={splitData.rightColumn} 
-              title="🏆 Kolom 3" 
+              title="Tabel 3" 
             />
           </div>
         )}
