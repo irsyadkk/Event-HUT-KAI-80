@@ -1,8 +1,11 @@
+import { io } from "socket.io-client";
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 
+
 const useAuthHeaders = () =>
+  
   useMemo(() => {
     const token = localStorage.getItem("token");
     return { Authorization: `Bearer ${token}` };
@@ -13,6 +16,17 @@ export default function PrizeListPage() {
   const [data, setData] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const socket = io("http://localhost:5000"); // atau alamat VM/LoadBalancer
+
+  socket.on("PRIZE_UPDATE", (rows) => {
+    setData(rows);
+    setLoading(false);
+  });
+
+  return () => socket.disconnect();
+}, []);
 
   const fetchData = async () => {
     try {

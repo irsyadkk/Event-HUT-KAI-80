@@ -3,10 +3,14 @@ import cors from "cors";
 import router from "./routes/route.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import { Server } from "socket.io";
+import http from "http";
+import { Client as PGClient } from "pg"; // untuk LISTEN/NOTIFY Postgres
 
 dotenv.config();
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split("|") || [];
 const app = express();
+const server = http.createServer(app); // gunakan http server
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -22,7 +26,35 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-app.get("/", (req, res) => res.render("index"));
+app.get("/", (req, res) => res.send("API running")); // gunakan res.send bukan res.render jika tidak pakai view engine
 app.use(router);
 
-app.listen(5000, () => console.log("Server connected"));
+/* === Tambahkan Socket.IO === */
+const io = new Server(server, { cors: { origin: ALLOWED_ORIGINS, credentials: true } });
+
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+  socket.on("disconnect", () => console.log("Client disconnected:", socket.id));
+});
+
+/* === Koneksi ke Postgres untuk LISTEN/NOTIFY === */
+const pgClient = new PGClient({
+  user: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  port: 5432,
+});
+await pgClient.connect();
+await pgClient.query("LISTEN prize_changes");
+
+pgClient.on("notification", async (msg) => {
+  if (msg.channel === "prize_changes") {
+    // ambil data terbaru dan broadcast
+    const { rows } = await pgClient.query("SELECT * FROM prizes ORDER BY id");
+    io.emit("PRIZE_UPDATE", rows);
+  }
+});
+
+/* === Start Server === */
+server.listen(5000, () => console.log("Server + WebSocket running on port 5000"));
