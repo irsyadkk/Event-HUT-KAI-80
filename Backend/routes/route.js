@@ -83,7 +83,7 @@ router.delete("/pickup/:nipp", verifyToken, deletePickupByNIPP);
 
 // PRIZE
 router.post("/addprize", verifyToken, addPrize);
-router.get("/prize", getPrize);
+router.get("/prize", verifyToken, getPrize);
 router.get("/prize/:id", verifyToken, getPrizeById);
 router.patch("/prize/:id", verifyToken, editPrizeNameById);
 router.delete("/prize/:id", verifyToken, deletePrizeById);
@@ -95,7 +95,7 @@ router.patch("/changestatus/:id", verifyToken, changeWinnerStatus);
 
 // WINNER
 router.post("/winner", verifyToken, addWinner);
-router.get("/winner", verifyToken, getWinner);
+router.get("/winner", getWinner);
 router.get("/winner/:nipp", verifyToken, getWinnerByNipp);
 router.put("/winner/:nipp", verifyToken, editWinnerByNipp);
 router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
