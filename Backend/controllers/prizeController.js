@@ -180,7 +180,7 @@ export const addWinner = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (!ifPickupExist) {
-      throw makeError(`Pickup With NIPP ${winner} Doesn't Exist !`, 404);
+      throw makeError(`Pickup Dengan NIPP ${winner} Tidak Ada !`, 404);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -189,7 +189,7 @@ export const addWinner = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (!ifPrizeExist) {
-      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+      throw makeError(`Hadiah dengan ID ${id} Tidak Ada !`, 400);
     }
 
     const ifNIPPHadWin = await Prize.findOne({
@@ -198,7 +198,7 @@ export const addWinner = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (ifNIPPHadWin) {
-      throw makeError(`NIPP ${winner} Already Won a Prize !`);
+      throw makeError(`NIPP ${winner} Sudah Pernah Menang !`);
     }
 
     await Prize.update(
@@ -237,7 +237,7 @@ export const winnerGugur = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (!ifPrizeExist) {
-      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+      throw makeError(`Hadiah dengan ID ${id} Tidak Ada !`, 400);
     }
 
     await Prize.update(
@@ -280,11 +280,11 @@ export const changeWinnerStatus = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (!ifPrizeExist) {
-      throw makeError(`Prize With ID ${id} Doesn't Exist !`, 400);
+      throw makeError(`Hadiah dengan ID ${id} Tidak Ada !`, 400);
     }
     if (!ifPrizeExist.pemenang) {
       throw makeError(
-        `Prize With ${ifPrizeExist.prize} With ID ${id} Doesn't Have a Winner !`
+        `Hadiah ${ifPrizeExist.prize} dengan ID ${id} Tidak Punya Pemenang !`
       );
     }
 

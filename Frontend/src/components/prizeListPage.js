@@ -2,6 +2,7 @@ import { io } from "socket.io-client";
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
+import { BASE_URL } from "../utils";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -12,7 +13,8 @@ const useAuthHeaders = () =>
 // helper: kelas warna chip berdasarkan status
 const badgeClassesByStatus = (statusRaw) => {
   const s = String(statusRaw || "").toLowerCase();
-  if (s === "diambil di tempat" || s === "diambil di daop") return "bg-green-600 text-white";
+  if (s === "diambil di tempat" || s === "diambil di daop")
+    return "bg-green-600 text-white";
   if (s === "gugur") return "bg-red-600 text-white";
   if (s.includes("verifikasi")) return "bg-amber-500 text-white";
   return "bg-gray-400 text-white";
@@ -26,7 +28,7 @@ export default function PrizeListPage() {
 
   // --- Socket realtime update
   useEffect(() => {
-    const socket = io("http://localhost:5000"); // sesuaikan URL backendmu
+    const socket = io(BASE_URL);
     socket.on("PRIZE_UPDATE", (rows) => {
       setData(rows || []);
       setLoading(false);
@@ -103,14 +105,16 @@ export default function PrizeListPage() {
     return {
       leftColumn: groupedRows.slice(0, itemsPerColumn),
       middleColumn: groupedRows.slice(itemsPerColumn, itemsPerColumn * 2),
-      rightColumn: groupedRows.slice(itemsPerColumn * 2)
+      rightColumn: groupedRows.slice(itemsPerColumn * 2),
     };
   }, [groupedRows]);
 
   // --- Stats
   const totalPrizes = data.length;
   const totalWinners = data.filter((x) => (x?.pemenang || "").trim()).length;
-  const totalCategoriesWithWinners = groupedRows.filter((g) => g.winners.length > 0).length;
+  const totalCategoriesWithWinners = groupedRows.filter(
+    (g) => g.winners.length > 0
+  ).length;
 
   // Component untuk render tabel
   const TableComponent = ({ dataRows, title }) => (
@@ -120,7 +124,7 @@ export default function PrizeListPage() {
           {title} ({dataRows.length})
         </h3>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50/90 backdrop-blur-sm">
@@ -212,11 +216,15 @@ export default function PrizeListPage() {
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 shadow-lg border border-white/20">
             <p className="text-blue-100 text-xs font-medium">Total Hadiah</p>
-            <p className="text-lg md:text-xl font-bold text-white">{totalPrizes}</p>
+            <p className="text-lg md:text-xl font-bold text-white">
+              {totalPrizes}
+            </p>
           </div>
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg p-3 shadow-lg border border-white/20">
             <p className="text-green-100 text-xs font-medium">Total Pemenang</p>
-            <p className="text-lg md:text-xl font-bold text-white">{totalWinners}</p>
+            <p className="text-lg md:text-xl font-bold text-white">
+              {totalWinners}
+            </p>
           </div>
         </div>
 
@@ -271,22 +279,13 @@ export default function PrizeListPage() {
         ) : (
           <div className="flex flex-col xl:flex-row gap-4">
             {/* Kolom Kiri */}
-            <TableComponent 
-              dataRows={splitData.leftColumn} 
-              title="Tabel 1" 
-            />
-            
+            <TableComponent dataRows={splitData.leftColumn} title="Tabel 1" />
+
             {/* Kolom Tengah */}
-            <TableComponent 
-              dataRows={splitData.middleColumn} 
-              title="Tabel 2" 
-            />
-            
+            <TableComponent dataRows={splitData.middleColumn} title="Tabel 2" />
+
             {/* Kolom Kanan */}
-            <TableComponent 
-              dataRows={splitData.rightColumn} 
-              title="Tabel 3" 
-            />
+            <TableComponent dataRows={splitData.rightColumn} title="Tabel 3" />
           </div>
         )}
 

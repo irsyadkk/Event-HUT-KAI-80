@@ -383,11 +383,11 @@ export default function AdminPrizePage() {
   );
 
   // Urutkan berdasarkan ID
-const ordered = [...filtered].sort((a, b) => {
-  const aid = Number(a?.id) || 0;
-  const bid = Number(b?.id) || 0;
-  return aid - bid;
-});
+  const ordered = [...filtered].sort((a, b) => {
+    const aid = Number(a?.id) || 0;
+    const bid = Number(b?.id) || 0;
+    return aid - bid;
+  });
 
   // Stats
   const winnersCount = filtered.filter((x) => x.pemenang).length;
@@ -522,17 +522,17 @@ const ordered = [...filtered].sort((a, b) => {
 
         {/* List Hadiah */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-  <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-    <h2 className="text-2xl font-bold text-white">
-      Daftar Lengkap Hadiah ({ordered.length} dari {list.length})
-    </h2>
-    <button
-      onClick={exportExcelPrize}
-      className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold flex items-center gap-2"
-    >
-      Export Data Hadiah ke Excel (.xlsx)
-    </button>
-  </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
+            <h2 className="text-2xl font-bold text-white">
+              Daftar Lengkap Hadiah ({ordered.length} dari {list.length})
+            </h2>
+            <button
+              onClick={exportExcelPrize}
+              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold flex items-center gap-2"
+            >
+              Export Data Hadiah ke Excel (.xlsx)
+            </button>
+          </div>
 
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-b-2xl">
             <table className="w-full">
