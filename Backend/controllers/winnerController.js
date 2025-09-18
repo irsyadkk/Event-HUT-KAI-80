@@ -29,7 +29,7 @@ export const addWinner = async (req, res) => {
 
     await Winner.create(
       {
-        winner: winner,
+        nipp: winner,
         status: "Belum Verifikasi",
       },
       { transaction: t }
