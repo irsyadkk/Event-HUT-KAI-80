@@ -3,6 +3,97 @@ import axios from "../api";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 
+// =================================================================
+// --- [BAGIAN BARU] Komponen Notifikasi & Konfirmasi Kustom ---
+// =================================================================
+const NotificationPopup = ({ show, message, type, onConfirm, onClose }) => {
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (show && (type === 'success' || type === 'error')) {
+      const timer = setTimeout(() => {
+        handleClose();
+      }, 3000); // Otomatis hilang setelah 3 detik
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, type]);
+
+  if (!show) return null;
+
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(() => {
+      onClose();
+      setClosing(false);
+    }, 300); // Durasi animasi fade-out
+  };
+
+  const colors = {
+    success: 'from-green-500 to-emerald-600',
+    error: 'from-red-500 to-rose-600',
+    confirm: 'from-gray-700 to-gray-800',
+  };
+
+  const icons = {
+    success: '✅',
+    error: '❌',
+    confirm: '🤔',
+  }
+
+  const animationClass = closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden transform transition-all duration-300 ${animationClass}`}>
+        <div className={`bg-gradient-to-r ${colors[type] || colors.confirm} px-6 py-4`}>
+          <h3 className="text-xl font-bold text-white flex items-center gap-3">
+            <span>{icons[type] || ''}</span>
+            {type === 'success' && 'Berhasil'}
+            {type === 'error' && 'Terjadi Kesalahan'}
+            {type === 'confirm' && 'Konfirmasi Aksi'}
+          </h3>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-700 text-center text-lg mb-6">{message}</p>
+          <div className="flex justify-center gap-4">
+            {type === 'confirm' ? (
+              <>
+                <button
+                  onClick={() => {
+                    if (onConfirm) onConfirm();
+                    handleClose();
+                  }}
+                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+                >
+                  Ya, Lanjutkan
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-2 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Batal
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleClose}
+                className="px-8 py-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold shadow-md hover:scale-105 transition-transform"
+              >
+                Tutup
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// =================================================================
+// --- Komponen Utama Anda ---
+// =================================================================
 const useAuthHeaders = () =>
   useMemo(() => {
     const token = localStorage.getItem("token");
@@ -16,7 +107,6 @@ export default function AdminPrizePage() {
   const navigate = useNavigate();
 
   // form tambah hadiah
-  const [newId, setNewId] = useState(""); // (opsional)
   const [newPrize, setNewPrize] = useState("");
   const [newKategori, setNewKategori] = useState("");
 
@@ -41,13 +131,21 @@ export default function AdminPrizePage() {
   const [adminModal, setAdminModal] = useState({ open: false, action: null, id: null });
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState("");
+  
+  // --- [BAGIAN BARU] State & Helper untuk Notifikasi Kustom ---
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success', onConfirm: null });
+
+  const showSuccess = (message) => setNotification({ show: true, message, type: 'success' });
+  const showError = (message) => setNotification({ show: true, message, type: 'error' });
+  const showConfirm = (message, onConfirmCallback) => setNotification({ show: true, message, type: 'confirm', onConfirm: onConfirmCallback });
+  const closeNotification = () => setNotification({ show: false, message: '', type: 'success', onConfirm: null });
 
   const fetchList = async () => {
     try {
       const res = await axios.get("/prize", { headers });
       setList(res?.data?.data || []);
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     }
   };
 
@@ -59,7 +157,7 @@ export default function AdminPrizePage() {
   const handleAddPrize = async (e) => {
     e.preventDefault();
     if (!newPrize?.trim() || !newKategori?.trim())
-      return alert("Nama Hadiah dan Kategori wajib diisi.");
+      return showError("Nama Hadiah dan Kategori wajib diisi.");
     setLoading(true);
     try {
       await axios.post(
@@ -67,13 +165,12 @@ export default function AdminPrizePage() {
         { prize: newPrize.trim(), kategori: newKategori.trim() },
         { headers }
       );
-      setNewId("");
       setNewPrize("");
       setNewKategori("");
       await fetchList();
-      alert("Hadiah berhasil ditambahkan.");
+      showSuccess("Hadiah berhasil ditambahkan.");
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
@@ -92,7 +189,7 @@ export default function AdminPrizePage() {
   };
   const submitAdminModal = async () => {
     if (!ADMIN_PASS) {
-      alert("ENV REACT_APP_ADMIN_NIPP belum di-set.");
+      showError("ENV REACT_APP_ADMIN_NIPP belum di-set.");
       return;
     }
     if (adminInput !== ADMIN_PASS) {
@@ -105,34 +202,41 @@ export default function AdminPrizePage() {
     if (action === "clear") await performClearWinner(id);
   };
 
-  // (sekarang tombol akan memanggil openAdminModal, bukan langsung eksekusi)
-  const handleDelete = (id) => openAdminModal("delete", id);
-  const clearWinner = (id) => openAdminModal("clear", id);
+  const handleDelete = (id) => {
+    showConfirm(
+        `Yakin ingin menghapus hadiah ID #${id}? Aksi ini tidak dapat dibatalkan.`,
+        () => openAdminModal("delete", id)
+    );
+  };
+  const clearWinner = (id) => {
+    showConfirm(
+        `Yakin ingin mengosongkan pemenang untuk hadiah ID #${id}?`,
+        () => openAdminModal("clear", id)
+    );
+  };
 
   // aksi asli setelah password benar
   const performDelete = async (id) => {
-    if (!window.confirm(`Hapus hadiah ID ${id}?`)) return;
     setLoading(true);
     try {
       await axios.delete(`/prize/${id}`, { headers });
       await fetchList();
-      alert("Hadiah dihapus.");
+      showSuccess("Hadiah dihapus.");
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
   };
 
   const performClearWinner = async (id) => {
-    if (!window.confirm("Kosongkan pemenang untuk hadiah ini?")) return;
     setLoading(true);
     try {
       await axios.patch(`/winnergugur/${id}`, {}, { headers });
       await fetchList();
-      alert("Pemenang dikosongkan.");
+      showSuccess("Pemenang dikosongkan.");
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
@@ -151,15 +255,15 @@ export default function AdminPrizePage() {
   };
   const submitWinner = async () => {
     if (!activePrize?.id) return;
-    if (!nippInput) return alert("NIPP pemenang wajib diisi.");
+    if (!nippInput) return showError("NIPP pemenang wajib diisi.");
     setSavingWinner(true);
     try {
       await axios.patch(`/addwinner/${activePrize.id}`, { winner: nippInput }, { headers });
       await fetchList();
-      alert("Pemenang berhasil diset (status: Belum Verifikasi).");
+      showSuccess("Pemenang berhasil diset (status: Belum Verifikasi).");
       closeWinnerModal();
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     } finally {
       setSavingWinner(false);
     }
@@ -181,12 +285,12 @@ export default function AdminPrizePage() {
   const submitEdit = async () => {
     if (!editTarget?.id) return;
     if (!editInput?.trim() || !editKategori?.trim())
-      return alert("Nama hadiah dan kategori wajib diisi.");
+      return showError("Nama hadiah dan kategori wajib diisi.");
     if (
       editInput.trim() === (editTarget.prize || "") &&
       editKategori.trim() === (editTarget.kategori || "")
     ) {
-      return alert("Tidak ada perubahan.");
+      return closeEditModal();
     }
     setSavingEdit(true);
     try {
@@ -196,10 +300,10 @@ export default function AdminPrizePage() {
         { headers }
       );
       await fetchList();
-      alert("Hadiah berhasil diubah.");
+      showSuccess("Hadiah berhasil diubah.");
       closeEditModal();
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showError(e?.response?.data?.message || e.message);
     } finally {
       setSavingEdit(false);
     }
@@ -239,6 +343,15 @@ export default function AdminPrizePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900" style={{ backgroundColor: "#406017" }}>
+      
+      <NotificationPopup
+        show={notification.show}
+        message={notification.message}
+        type={notification.type}
+        onConfirm={notification.onConfirm}
+        onClose={closeNotification}
+      />
+      
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center py-8">
@@ -307,7 +420,7 @@ export default function AdminPrizePage() {
               </div>
               <button
                 disabled={loading}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg"
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg disabled:opacity-50"
               >
                 {loading ? "Menyimpan..." : "➕ Tambah Hadiah"}
               </button>
@@ -437,7 +550,7 @@ export default function AdminPrizePage() {
                 </div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">NIPP Pemenang</label>
                 <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 p-3 rounded-xl mb-6"
+                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl mb-6"
                   placeholder="Masukkan NIPP pemenang..."
                   value={nippInput}
                   onChange={(e) => setNippInput(e.target.value)}
@@ -445,9 +558,9 @@ export default function AdminPrizePage() {
                   autoFocus
                 />
                 <div className="flex justify-end gap-3">
-                  <button onClick={closeWinnerModal} className="px-6 py-2 rounded-xl border-2 border-gray-300">❌ Batal</button>
-                  <button onClick={submitWinner} className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white">
-                    💾 Simpan
+                  <button onClick={closeWinnerModal} className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold">❌ Batal</button>
+                  <button onClick={submitWinner} disabled={savingWinner} className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold disabled:opacity-50">
+                    {savingWinner ? "Menyimpan..." : "💾 Simpan"}
                   </button>
                 </div>
               </div>
@@ -470,7 +583,7 @@ export default function AdminPrizePage() {
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Hadiah Baru</label>
                 <input
-                  className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 p-3 rounded-xl mb-4"
+                  className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 rounded-xl mb-4"
                   placeholder="Masukkan nama hadiah baru..."
                   value={editInput}
                   onChange={(e) => setEditInput(e.target.value)}
@@ -480,7 +593,7 @@ export default function AdminPrizePage() {
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori Hadiah Baru</label>
                 <input
-                  className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 p-3 rounded-xl mb-6"
+                  className="w-full border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 p-3 rounded-xl mb-6"
                   placeholder="Masukkan kategori baru..."
                   value={editKategori}
                   onChange={(e) => setEditKategori(e.target.value)}
@@ -488,9 +601,9 @@ export default function AdminPrizePage() {
                 />
 
                 <div className="flex justify-end gap-3">
-                  <button onClick={closeEditModal} className="px-6 py-2 rounded-xl border-2 border-gray-300">❌ Batal</button>
-                  <button onClick={submitEdit} className="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
-                    💾 Simpan
+                  <button onClick={closeEditModal} className="px-6 py-2 rounded-xl border-2 border-gray-300 font-semibold">❌ Batal</button>
+                  <button onClick={submitEdit} disabled={savingEdit} className="px-6 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold disabled:opacity-50">
+                    {savingEdit ? "Menyimpan..." : "💾 Simpan"}
                   </button>
                 </div>
               </div>
@@ -514,7 +627,7 @@ export default function AdminPrizePage() {
                 </p>
                 <input
                   type="password"
-                  className="w-full border-2 border-gray-300 focus:border-red-500 focus:ring-2 p-3 rounded-xl"
+                  className="w-full border-2 border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 p-3 rounded-xl"
                   placeholder="Password admin"
                   value={adminInput}
                   onChange={(e) => { setAdminInput(e.target.value); setAdminError(""); }}
@@ -523,8 +636,8 @@ export default function AdminPrizePage() {
                 />
                 {adminError && <p className="text-sm text-red-600">{adminError}</p>}
                 <div className="flex justify-end gap-2 pt-2">
-                  <button onClick={closeAdminModal} className="px-4 py-2 rounded-xl border-2 border-gray-300">Batal</button>
-                  <button onClick={submitAdminModal} className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white">
+                  <button onClick={closeAdminModal} className="px-4 py-2 rounded-xl border-2 border-gray-300 font-semibold">Batal</button>
+                  <button onClick={submitAdminModal} className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold">
                     Lanjutkan
                   </button>
                 </div>
