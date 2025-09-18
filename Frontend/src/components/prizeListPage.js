@@ -12,7 +12,7 @@ const useAuthHeaders = () =>
 // helper: kelas warna chip berdasarkan status
 const badgeClassesByStatus = (statusRaw) => {
   const s = String(statusRaw || "").toLowerCase();
-  if (s === "diambil") {
+  if (s === "diambil di tempat" || s === "diambil di daop") {
     return "bg-green-600 text-white"; // hijau
   }
   if (s === "gugur") {
