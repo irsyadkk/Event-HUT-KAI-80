@@ -32,6 +32,7 @@ import {
 import {
   addPrize,
   addWinner,
+  addWinnerToPrize,
   changeWinnerStatus,
   deletePrizeById,
   editPrizeNameById,
@@ -39,6 +40,7 @@ import {
   getPrizeById,
   winnerGugur,
 } from "../controllers/prizeController.js";
+import { addWinner } from "../controllers/winnerController.js";
 
 const router = express.Router();
 // REFRESH TOKEN
@@ -81,9 +83,11 @@ router.get("/prize/:id", verifyToken, getPrizeById);
 router.patch("/prize/:id", verifyToken, editPrizeNameById);
 router.delete("/prize/:id", verifyToken, deletePrizeById);
 
-// WINNER
-router.patch("/addwinner/:id", verifyToken, addWinner);
+// WINNER TO A PRIZE
+router.patch("/addwinner/:id", verifyToken, addWinnerToPrize);
 router.patch("/winnergugur/:id", verifyToken, winnerGugur);
 router.patch("/changestatus/:id", verifyToken, changeWinnerStatus);
 
+// WINNER
+router.post("/winner", verifyToken, addWinner);
 export default router;

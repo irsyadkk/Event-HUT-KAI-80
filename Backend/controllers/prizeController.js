@@ -166,7 +166,7 @@ export const editPrizeNameById = async (req, res) => {
 };
 
 // ADD WINNER
-export const addWinner = async (req, res) => {
+export const addWinnerToPrize = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;

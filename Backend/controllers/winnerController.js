@@ -1,4 +1,5 @@
 import db from "../config/Database.js";
+import Order from "../models/orderModel.js";
 import Pickups from "../models/pickupModel.js";
 import Winner from "../models/winnersModel.js";
 
@@ -17,13 +18,13 @@ export const addWinner = async (req, res) => {
       throw makeError("winner field cannot be empty", 400);
     }
 
-    const ifPickupExist = await Pickups.findOne({
+    const ifOrderExist = await Order.findOne({
       where: { nipp: winner },
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
-    if (!ifPickupExist) {
-      throw makeError(`NIPP ${winner} Doesn't Exist in pickups Table !`);
+    if (!ifOrderExist) {
+      throw makeError(`NIPP ${winner} Doesn't Exist in orders Table !`);
     }
 
     await Winner.create(
