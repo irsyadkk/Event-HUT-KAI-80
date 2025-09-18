@@ -131,7 +131,9 @@ function LandingPage() {
     }`}
               disabled={timeLeft > 0} // opsional kalau mau tetap disable
             >
-              {timeLeft > 0 ? "⏳ Menunggu Registrasi..." : "Silahkan Checkin Untuk Melihat Tiket"}
+              {timeLeft > 0
+                ? "⏳ Menunggu Registrasi..."
+                : "Silahkan Checkin Untuk Melihat Tiket"}
             </button>
           </div>
 
@@ -197,6 +199,16 @@ function LandingPage() {
                 </li>
               </ol>
             </div>
+            <button
+              onClick={() => {
+                navigate("/prizelist");
+              }}
+              className={`w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
+    transition-all duration-300 transform bg-pink-500 text-white
+       `}
+            >
+              LIHAT DORPRES !!!
+            </button>
           </div>
         </div>
       </div>

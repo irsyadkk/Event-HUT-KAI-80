@@ -43,7 +43,7 @@ export default function PrizeListPage() {
   // --- Initial fetch (fallback)
   const fetchData = async () => {
     try {
-      const res = await axios.get("/prize", { headers });
+      const res = await axios.get("/prize");
       setData(res?.data?.data || []);
     } catch (e) {
       alert(e?.response?.data?.message || e.message);
@@ -186,7 +186,9 @@ export default function PrizeListPage() {
                     <span className="text-2xl">🏆</span>
                   </div>
                 </div>
-                <p className="text-gray-600 text-lg font-medium">Memuat data…</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  Memuat data…
+                </p>
               </div>
             </div>
           ) : (
