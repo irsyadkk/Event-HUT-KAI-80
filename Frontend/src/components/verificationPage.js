@@ -217,7 +217,7 @@ export default function VerificationPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-b-2xl">
               <table className="w-full">
                 <thead className="bg-gray-50/90 backdrop-blur-sm">
                   <tr>

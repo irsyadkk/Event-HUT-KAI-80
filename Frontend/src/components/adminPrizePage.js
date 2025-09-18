@@ -334,7 +334,7 @@ export default function AdminPrizePage() {
             <h2 className="text-2xl font-bold text-white">Daftar Lengkap Hadiah ({ordered.length} dari {list.length})</h2>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-b-2xl">
             <table className="w-full">
               <thead className="bg-gray-50/90 backdrop-blur-sm">
                 <tr>
