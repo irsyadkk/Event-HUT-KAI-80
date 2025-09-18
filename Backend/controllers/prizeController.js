@@ -1,6 +1,7 @@
 import db from "../config/Database.js";
 import Pickups from "../models/pickupModel.js";
 import Prize from "../models/prizeModel.js";
+import Winner from "../models/winnersModel.js";
 
 const makeError = (msg, code = 400) => {
   const error = new Error(msg);
@@ -174,13 +175,13 @@ export const addWinner = async (req, res) => {
       throw makeError("winner field cannot be empty !", 400);
     }
 
-    const ifPickupExist = await Pickups.findOne({
+    const ifWinnerExist = await Winner.findOne({
       where: { nipp: winner },
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
-    if (!ifPickupExist) {
-      throw makeError(`Pickup Dengan NIPP ${winner} Tidak Ada !`, 404);
+    if (!ifWinnerExist) {
+      throw makeError(`Winner Dengan NIPP ${winner} Tidak Ada !`, 404);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -205,6 +206,14 @@ export const addWinner = async (req, res) => {
       { pemenang: winner, status: "Belum Verifikasi" },
       {
         where: { id: id },
+        transaction: t,
+      }
+    );
+
+    await Winner.update(
+      { status: "Belum Verifikasi" },
+      {
+        where: { nipp: winner },
         transaction: t,
       }
     );
@@ -269,9 +278,12 @@ export const changeWinnerStatus = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
-    const { status } = req.body;
-    if (!status) {
-      throw makeError("status field cannot be empty !", 400);
+    const { status, nipp } = req.body;
+    if (!status || !nipp) {
+      const msg = !status
+        ? "status field cannot be empty !"
+        : "nipp field cannot be empty";
+      throw makeError(msg, 400);
     }
 
     const ifPrizeExist = await Prize.findOne({
@@ -296,10 +308,18 @@ export const changeWinnerStatus = async (req, res) => {
       }
     );
 
+    await Winner.update(
+      { status: status },
+      {
+        where: { nipp: nipp },
+        transaction: t,
+      }
+    );
+
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${ifPrizeExist.prize} With ID ${id} Status Changed to ${status} !`,
+      message: `Prize ${ifPrizeExist.prize} With ID ${id} and Winner with NIPP ${nipp} Status Changed to ${status} !`,
     });
   } catch (error) {
     if (!t.finished) {

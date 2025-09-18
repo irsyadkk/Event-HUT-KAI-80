@@ -1,4 +1,5 @@
 import db from "../config/Database.js";
+import Pickups from "../models/pickupModel.js";
 import Winner from "../models/winnersModel.js";
 
 const makeError = (msg, code = 400) => {
@@ -16,7 +17,7 @@ export const addWinner = async (req, res) => {
       throw makeError("winner field cannot be empty", 400);
     }
 
-    const ifPickupExist = await Winner.findOne({
+    const ifPickupExist = await Pickups.findOne({
       where: { nipp: winner },
       transaction: t,
       lock: t.LOCK.UPDATE,
@@ -82,6 +83,36 @@ export const getWinnerByNipp = async (req, res) => {
       status: "Success",
       message: "Winner Retrieved",
       data: prize,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// DELETE WINNER BY NIPP
+export const deleteWinnerByNipp = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const winner = await Winner.findOne({
+      where: {
+        nipp: nipp,
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      },
+    });
+    if (!winner) {
+      throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
+    }
+
+    await Winner.destroy({ where: { nipp: nipp }, transaction: t });
+
+    res.status(200).json({
+      status: "Success",
+      message: "Winner Deleted",
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
