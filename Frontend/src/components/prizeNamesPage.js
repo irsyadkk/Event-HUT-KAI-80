@@ -45,50 +45,64 @@ export default function PrizeNamesPage() {
     );
   }, [data, q]);
 
+  // Hitung kolom dan baris berdasarkan ukuran layar
+  const { gridData, columns, rows } = useMemo(() => {
+    const totalItems = list.length;
+    if (totalItems === 0) return { gridData: [], columns: 0, rows: 0 };
+
+    // Tetap menggunakan 10 kolom
+    let cols = 10;
+
+    const rows = Math.ceil(totalItems / cols);
+
+    // Susun data dalam format grid
+    const gridData = [];
+    for (let row = 0; row < rows; row++) {
+      const rowData = [];
+      for (let col = 0; col < cols; col++) {
+        const index = row * cols + col;
+        if (index < totalItems) {
+          rowData.push(list[index]);
+        } else {
+          rowData.push(null); // empty cell
+        }
+      }
+      gridData.push(rowData);
+    }
+
+    return { gridData, columns: cols, rows };
+  }, [list]);
+
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"
+      className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900 overflow-hidden"
       style={{ backgroundColor: "#406017" }}
     >
-      <div className="p-6 space-y-8 max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center py-8">
-          <div className="mb-4 inline-flex items-center justify-center w-20 h-20">
+      <div className="h-screen flex flex-col p-2 space-y-2">
+        {/* Header - Minimal */}
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-3">
             <img
               src={LogoKAI}
               alt="Logo HUT KAI 80"
-              className="h-16 md:h-20 w-auto drop-shadow-lg"
+              className="h-8 w-auto"
             />
+            <h1 className="text-xl font-bold text-white">
+              Daftar Hadiah ({list.length})
+            </h1>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
-            Daftar Hadiah
-          </h1>
-          
+          <input
+            className="border border-white/30 focus:border-white focus:ring-1 focus:ring-white/50 px-3 py-1 rounded-lg bg-white/90 w-60 text-sm"
+            placeholder="🔍 Cari hadiah..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
         </div>
 
-        {/* Search */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between flex-wrap gap-4">
-            <h2 className="text-xl font-bold text-white">Pencarian</h2>
-            <input
-              className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 min-w-[280px] text-sm"
-              placeholder="🔍 Cari nama hadiah…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* List */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white">
-              Hadiah ({list.length})
-            </h2>
-          </div>
-
+        {/* Grid Display - Mengisi hampir seluruh layar */}
+        <div className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-white/30 overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center">
+            <div className="h-full flex items-center justify-center">
               <div className="inline-flex flex-col items-center gap-4">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
@@ -100,56 +114,62 @@ export default function PrizeNamesPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              {/* batasi tinggi + header sticky */}
-              <div className="max-h-[60vh] overflow-y-auto rounded-b-2xl">
-                <table className="w-full">
-                  <thead className="sticky top-0 z-10 bg-gray-50/90 backdrop-blur-sm">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
-                        Hadiah
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white/60 backdrop-blur-sm divide-y divide-gray-200">
-                    {list.length ? (
-                      list.map((row, idx) => (
-                        <tr
-                          key={`${row.id}-${idx}`}
-                          className={`transition-all duration-200 ${
-                            idx % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
-                          }`}
-                        >
-                          <td className="px-6 py-4">
-                            <span className="text-gray-900 font-semibold">
-                              {row.prize}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="px-6 py-12 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="text-5xl">📭</div>
-                            <p className="text-gray-500 text-lg font-medium">
-                              Tidak ada hadiah ditemukan
-                            </p>
-                            {q && (
-                              <button
-                                onClick={() => setQ("")}
-                                className="mt-2 px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium shadow-lg transition-all"
-                              >
-                                🔄 Reset Pencarian
-                              </button>
+            <div className="h-full p-2">
+              {list.length ? (
+                <div className="h-full">
+                  {/* Grid Table */}
+                  <div className="grid gap-1 h-full" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+                    {gridData.map((rowData, rowIndex) => (
+                      <div 
+                        key={rowIndex}
+                        className="grid gap-1"
+                        style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                      >
+                        {rowData.map((item, colIndex) => (
+                          <div
+                            key={`${rowIndex}-${colIndex}`}
+                            className={`
+                              border border-gray-200 rounded p-2 text-center
+                              transition-all duration-200 flex items-center justify-center
+                              ${item ? 
+                                (rowIndex % 2 === 0 ? 
+                                  colIndex % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/80'
+                                  : colIndex % 2 === 0 ? 'bg-gray-50/80' : 'bg-white/80'
+                                ) 
+                                : 'bg-transparent border-transparent'
+                              }
+                              ${item ? 'hover:bg-green-50/90 hover:shadow-md cursor-pointer' : ''}
+                            `}
+                          >
+                            {item && (
+                              <span className="text-gray-900 font-semibold text-base leading-tight break-words">
+                                {item.prize}
+                              </span>
                             )}
                           </div>
-                        </td>
-                      </tr>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-5xl">📭</div>
+                    <p className="text-gray-500 text-lg font-medium">
+                      Tidak ada hadiah ditemukan
+                    </p>
+                    {q && (
+                      <button
+                        onClick={() => setQ("")}
+                        className="mt-2 px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium shadow-lg transition-all"
+                      >
+                        🔄 Reset Pencarian
+                      </button>
                     )}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
