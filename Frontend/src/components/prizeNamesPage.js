@@ -9,7 +9,7 @@ export default function PrizeNamesPage() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Realtime updates
+  // Realtime updates (socket)
   useEffect(() => {
     const socket = io(BASE_URL);
     socket.on("PRIZE_UPDATE", (rows) => {
@@ -23,6 +23,7 @@ export default function PrizeNamesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // gunakan /prize agar ada field kategori
         const res = await axios.get("/prizename");
         setData(res?.data?.data || []);
       } catch (e) {
@@ -34,44 +35,40 @@ export default function PrizeNamesPage() {
     fetchData();
   }, []);
 
-  // Filter + sort (A-Z)
-  const list = useMemo(() => {
+  // Kategori unik + filter + sort (A–Z)
+  const categories = useMemo(() => {
+    const map = new Map(); // key: lower(kategori), val: original label
+    for (const row of data || []) {
+      const raw = String(row?.kategori || "").trim();
+      if (!raw) continue;
+      const key = raw.toLowerCase();
+      if (!map.has(key)) map.set(key, raw);
+    }
+    const all = Array.from(map.values());
     const s = q.toLowerCase();
-    const filtered = (data || []).filter((x) =>
-      String(x?.prize || "").toLowerCase().includes(s)
-    );
-    return filtered.sort((a, b) =>
-      String(a?.prize || "").localeCompare(String(b?.prize || ""), "id")
-    );
+    const filtered = s ? all.filter((k) => k.toLowerCase().includes(s)) : all;
+    return filtered.sort((a, b) => a.localeCompare(b, "id"));
   }, [data, q]);
 
-  // Hitung kolom dan baris berdasarkan ukuran layar
+  // Susun grid 10 kolom
   const { gridData, columns, rows } = useMemo(() => {
-    const totalItems = list.length;
+    const totalItems = categories.length;
     if (totalItems === 0) return { gridData: [], columns: 0, rows: 0 };
 
-    // Tetap menggunakan 10 kolom
-    let cols = 10;
+    const cols = 10; // tetap 10 kolom
+    const rowsCount = Math.ceil(totalItems / cols);
 
-    const rows = Math.ceil(totalItems / cols);
-
-    // Susun data dalam format grid
-    const gridData = [];
-    for (let row = 0; row < rows; row++) {
+    const grid = [];
+    for (let r = 0; r < rowsCount; r++) {
       const rowData = [];
-      for (let col = 0; col < cols; col++) {
-        const index = row * cols + col;
-        if (index < totalItems) {
-          rowData.push(list[index]);
-        } else {
-          rowData.push(null); // empty cell
-        }
+      for (let c = 0; c < cols; c++) {
+        const index = r * cols + c;
+        rowData.push(index < totalItems ? categories[index] : null);
       }
-      gridData.push(rowData);
+      grid.push(rowData);
     }
-
-    return { gridData, columns: cols, rows };
-  }, [list]);
+    return { gridData: grid, columns: cols, rows: rowsCount };
+  }, [categories]);
 
   return (
     <div
@@ -82,45 +79,41 @@ export default function PrizeNamesPage() {
         {/* Header - Minimal */}
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-3">
-            <img
-              src={LogoKAI}
-              alt="Logo HUT KAI 80"
-              className="h-8 w-auto"
-            />
+            <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-8 w-auto" />
             <h1 className="text-xl font-bold text-white">
-              Daftar Hadiah ({list.length})
+              Daftar Kategori Hadiah ({categories.length})
             </h1>
           </div>
           <input
             className="border border-white/30 focus:border-white focus:ring-1 focus:ring-white/50 px-3 py-1 rounded-lg bg-white/90 w-60 text-sm"
-            placeholder="🔍 Cari hadiah..."
+            placeholder="🔍 Cari kategori..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
 
-        {/* Grid Display - Mengisi hampir seluruh layar */}
+        {/* Grid Display */}
         <div className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-white/30 overflow-hidden">
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <div className="inline-flex flex-col items-center gap-4">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    
-                  </div>
                 </div>
                 <p className="text-gray-600 text-lg font-medium">Memuat data…</p>
               </div>
             </div>
           ) : (
             <div className="h-full p-2">
-              {list.length ? (
+              {categories.length ? (
                 <div className="h-full">
                   {/* Grid Table */}
-                  <div className="grid gap-1 h-full" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+                  <div
+                    className="grid gap-1 h-full"
+                    style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}
+                  >
                     {gridData.map((rowData, rowIndex) => (
-                      <div 
+                      <div
                         key={rowIndex}
                         className="grid gap-1"
                         style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
@@ -131,19 +124,23 @@ export default function PrizeNamesPage() {
                             className={`
                               border border-gray-200 rounded p-2 text-center
                               transition-all duration-200 flex items-center justify-center
-                              ${item ? 
-                                (rowIndex % 2 === 0 ? 
-                                  colIndex % 2 === 0 ? 'bg-white/80' : 'bg-gray-50/80'
-                                  : colIndex % 2 === 0 ? 'bg-gray-50/80' : 'bg-white/80'
-                                ) 
-                                : 'bg-transparent border-transparent'
+                              ${
+                                item
+                                  ? rowIndex % 2 === 0
+                                    ? colIndex % 2 === 0
+                                      ? "bg-white/80"
+                                      : "bg-gray-50/80"
+                                    : colIndex % 2 === 0
+                                    ? "bg-gray-50/80"
+                                    : "bg-white/80"
+                                  : "bg-transparent border-transparent"
                               }
-                              ${item ? 'hover:bg-green-50/90 hover:shadow-md cursor-pointer' : ''}
+                              ${item ? "hover:bg-green-50/90 hover:shadow-md cursor-default" : ""}
                             `}
                           >
                             {item && (
                               <span className="text-gray-900 font-semibold text-base leading-tight break-words">
-                                {item.prize}
+                                {item}
                               </span>
                             )}
                           </div>
@@ -157,7 +154,7 @@ export default function PrizeNamesPage() {
                   <div className="flex flex-col items-center gap-3">
                     <div className="text-5xl">📭</div>
                     <p className="text-gray-500 text-lg font-medium">
-                      Tidak ada hadiah ditemukan
+                      Tidak ada kategori ditemukan
                     </p>
                     {q && (
                       <button

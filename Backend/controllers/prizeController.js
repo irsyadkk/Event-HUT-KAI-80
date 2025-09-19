@@ -65,7 +65,7 @@ export const getPrize = async (req, res) => {
 // GET PRIZE NAME
 export const getPrizeName = async (req, res) => {
   try {
-    const prizes = await Prize.findAll({ attributes: ["prize"] });
+    const prizes = await Prize.findAll({ attributes: ["kategori"] });
     res.status(200).json({
       status: "Success",
       message: "Prizes Retrieved",
