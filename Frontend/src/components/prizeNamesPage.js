@@ -11,7 +11,7 @@ export default function PrizeNamesPage() {
 
   // Realtime updates
   useEffect(() => {
-    const socket = io(BASE_URL || "http://localhost:5000");
+    const socket = io(BASE_URL);
     socket.on("PRIZE_UPDATE", (rows) => {
       setData(rows || []);
       setLoading(false);
@@ -61,7 +61,7 @@ export default function PrizeNamesPage() {
             />
           </div>
           <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
-            Daftar Nama Hadiah
+            Daftar Hadiah
           </h1>
           
         </div>
