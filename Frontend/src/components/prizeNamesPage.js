@@ -50,12 +50,12 @@ export default function PrizeNamesPage() {
     return filtered.sort((a, b) => a.localeCompare(b, "id"));
   }, [data, q]);
 
-  // Susun grid 10 kolom
+  // Susun grid 9 kolom
   const { gridData, columns, rows } = useMemo(() => {
     const totalItems = categories.length;
     if (totalItems === 0) return { gridData: [], columns: 0, rows: 0 };
 
-    const cols = 10; // tetap 10 kolom
+    const cols = 9; // jumlah kolom
     const rowsCount = Math.ceil(totalItems / cols);
 
     const grid = [];
