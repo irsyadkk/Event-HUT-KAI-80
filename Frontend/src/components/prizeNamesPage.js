@@ -23,7 +23,7 @@ export default function PrizeNamesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("/prize");
+        const res = await axios.get("/prizename");
         setData(res?.data?.data || []);
       } catch (e) {
         alert(e?.response?.data?.message || e.message);
@@ -63,7 +63,7 @@ export default function PrizeNamesPage() {
           <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
             Daftar Nama Hadiah
           </h1>
-          <p className="text-green-100">Tanpa menampilkan nomor ID hadiah</p>
+          
         </div>
 
         {/* Search */}
@@ -83,7 +83,7 @@ export default function PrizeNamesPage() {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
             <h2 className="text-2xl font-bold text-white">
-              🎁 Nama Hadiah ({list.length})
+              Hadiah ({list.length})
             </h2>
           </div>
 
@@ -93,7 +93,7 @@ export default function PrizeNamesPage() {
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl">🎁</span>
+                    
                   </div>
                 </div>
                 <p className="text-gray-600 text-lg font-medium">Memuat data…</p>
@@ -107,7 +107,7 @@ export default function PrizeNamesPage() {
                   <thead className="sticky top-0 z-10 bg-gray-50/90 backdrop-blur-sm">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-200">
-                        Nama Hadiah
+                        Hadiah
                       </th>
                     </tr>
                   </thead>
