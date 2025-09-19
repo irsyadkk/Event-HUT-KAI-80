@@ -20,6 +20,27 @@ const badgeClass = (raw) => {
   return "bg-gray-400 text-white";
 };
 
+// Komponen popup custom
+function Popup({ show, onClose, title, message }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
+        <h3 className="text-xl font-bold text-gray-800 mb-3">{title}</h3>
+        <p className="text-gray-600 mb-6">{message}</p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-all"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WinnerInputPage() {
   const navigate = useNavigate();
   const headers = useAuthHeaders();
@@ -29,13 +50,24 @@ export default function WinnerInputPage() {
   const [q, setQ] = useState("");
   const [allowed, setAllowed] = useState(false);
 
+  // state popup
+  const [popup, setPopup] = useState({
+    show: false,
+    title: "",
+    message: "",
+  });
+
+  const showPopup = (title, message) => {
+    setPopup({ show: true, title, message });
+  };
+
   const fetchWinners = async () => {
     try {
       setLoading(true);
       const res = await axios.get("/winner", { headers });
       setList(res?.data?.data || []);
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showPopup("Error", e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
@@ -63,16 +95,20 @@ export default function WinnerInputPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!nipp?.trim()) return alert("Masukkan NIPP pemenang.");
+    if (!nipp?.trim())
+      return showPopup("Peringatan", "Masukkan NIPP pemenang.");
     try {
       setLoading(true);
       // backend akan set status "Belum Verifikasi" otomatis
       await axios.post("/winner", { winner: nipp.trim() }, { headers });
       setNipp("");
       await fetchWinners();
-      alert("Pemenang ditambahkan (status: Belum Verifikasi).");
+      showPopup(
+        "Berhasil",
+        "Pemenang berhasil ditambahkan (status: Belum Verifikasi)."
+      );
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      showPopup("Error", e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
@@ -110,10 +146,7 @@ export default function WinnerInputPage() {
           <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
             Input Pemenang Undian
           </h1>
-          <p className="text-green-100">
-            Tambah NIPP pemenang ke tabel <b>winner</b> (status otomatis{" "}
-            <i>Belum Verifikasi</i>).
-          </p>
+
           <button
             onClick={() => navigate("/winnerdisplay")}
             className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
@@ -209,6 +242,14 @@ export default function WinnerInputPage() {
           </div>
         </div>
       </div>
+
+      {/* Popup */}
+      <Popup
+        show={popup.show}
+        onClose={() => setPopup({ ...popup, show: false })}
+        title={popup.title}
+        message={popup.message}
+      />
     </div>
   );
 }
