@@ -20,21 +20,47 @@ const badgeClass = (raw) => {
   return "bg-gray-400 text-white";
 };
 
-// Komponen popup custom
-function Popup({ show, onClose, title, message }) {
+// Komponen popup modern (mengadopsi style dari VerificationPage)
+function Popup({ show, onClose, title, message, type = "success" }) {
   if (!show) return null;
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fadeIn">
-        <h3 className="text-xl font-bold text-gray-800 mb-3">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-all"
-          >
-            OK
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
+        <div
+          className={`px-6 py-4 ${
+            type === "error"
+              ? "bg-gradient-to-r from-red-600 to-red-700"
+              : "bg-gradient-to-r from-emerald-600 to-green-700"
+          }`}
+        >
+          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <span className="text-2xl">
+              {type === "error" ? "❌" : "✅"}
+            </span>
+            {title}
+          </h3>
+        </div>
+        <div className="p-6 space-y-6">
+          <p className="text-gray-700 text-base leading-relaxed">
+            {message}
+          </p>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className={`px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-white ${
+                type === "error"
+                  ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                  : "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+              }`}
+            >
+              OK
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -50,15 +76,16 @@ export default function WinnerInputPage() {
   const [q, setQ] = useState("");
   const [allowed, setAllowed] = useState(false);
 
-  // state popup
+  // state popup - diperbaharui untuk mendukung type
   const [popup, setPopup] = useState({
     show: false,
     title: "",
     message: "",
+    type: "success",
   });
 
-  const showPopup = (title, message) => {
-    setPopup({ show: true, title, message });
+  const showPopup = (title, message, type = "success") => {
+    setPopup({ show: true, title, message, type });
   };
 
   const fetchWinners = async () => {
@@ -67,7 +94,7 @@ export default function WinnerInputPage() {
       const res = await axios.get("/winner", { headers });
       setList(res?.data?.data || []);
     } catch (e) {
-      showPopup("Error", e?.response?.data?.message || e.message);
+      showPopup("Terjadi Kesalahan", e?.response?.data?.message || e.message, "error");
     } finally {
       setLoading(false);
     }
@@ -96,7 +123,7 @@ export default function WinnerInputPage() {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!nipp?.trim())
-      return showPopup("Peringatan", "Masukkan NIPP pemenang.");
+      return showPopup("Peringatan", "Masukkan NIPP pemenang.", "error");
     try {
       setLoading(true);
       // backend akan set status "Belum Verifikasi" otomatis
@@ -105,10 +132,11 @@ export default function WinnerInputPage() {
       await fetchWinners();
       showPopup(
         "Berhasil",
-        "Pemenang berhasil ditambahkan (status: Belum Verifikasi)."
+        "Pemenang berhasil ditambahkan (status: Belum Verifikasi).",
+        "success"
       );
     } catch (e) {
-      showPopup("Error", e?.response?.data?.message || e.message);
+      showPopup("Terjadi Kesalahan", e?.response?.data?.message || e.message, "error");
     } finally {
       setLoading(false);
     }
@@ -243,12 +271,13 @@ export default function WinnerInputPage() {
         </div>
       </div>
 
-      {/* Popup */}
+      {/* Popup Modern */}
       <Popup
         show={popup.show}
         onClose={() => setPopup({ ...popup, show: false })}
         title={popup.title}
         message={popup.message}
+        type={popup.type}
       />
     </div>
   );
