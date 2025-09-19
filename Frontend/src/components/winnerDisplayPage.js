@@ -25,6 +25,7 @@ export default function WinnerDisplayPage() {
   const [list, setList] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [time, setTime] = useState(new Date());
 
   const fetchWinners = async () => {
     try {
@@ -50,6 +51,14 @@ export default function WinnerDisplayPage() {
   useEffect(() => {
     fetchWinners();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update jam realtime
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const filtered = list.filter((w) => {
@@ -94,66 +103,40 @@ export default function WinnerDisplayPage() {
               alt="Logo HUT KAI 80"
               className="h-16 md:h-20 w-auto drop-shadow-lg"
             />
-          </div>
+          </div>  
           <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
             Pemenang Terpilih
           </h1>
-          <p className="text-green-100">
-            Hanya menampilkan NIPP pemenang, warna sesuai status.
-          </p>
-        </div>
-
-        {/* Pencarian & Statistik */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2 bg-white/95 rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-              <h2 className="text-lg font-bold text-white">Pencarian</h2>
-            </div>
-            <div className="p-4">
-              <input
-                className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl bg-white/90"
-                placeholder="🔍 Cari NIPP / status…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-green-100 text-sm font-medium">Total</p>
-            <p className="text-3xl font-bold text-white">{stats.total}</p>
-          </div>
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-orange-100 text-sm font-medium">
-              Belum Verifikasi
-            </p>
-            <p className="text-3xl font-bold text-white">{stats.belum}</p>
-          </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-green-100 text-sm font-medium">Diambil</p>
-            <p className="text-3xl font-bold text-white">{stats.diambil}</p>
-          </div>
-          <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-red-100 text-sm font-medium">Gugur</p>
-            <p className="text-3xl font-bold text-white">{stats.gugur}</p>
-          </div>
         </div>
 
         {/* Legend */}
         <div className="bg-white/95 rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="px-6 py-3 bg-white/60 text-sm text-gray-700 flex flex-wrap gap-4">
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-green-600" /> Diambil
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-500" /> Belum
-              Verifikasi
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-600" /> Gugur
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-gray-400" /> Lainnya
-            </span>
+          <div className="px-6 py-3 bg-white/60 text-sm text-gray-700 flex items-center justify-between">
+            {/* Keterangan Legend */}
+            <div className="flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full bg-green-600" /> Diambil
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full bg-amber-500" /> Belum
+                Verifikasi
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full bg-red-600" /> Gugur
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full bg-gray-400" /> Lainnya
+              </span>
+            </div>
+
+            {/* Jam realtime */}
+            <div className="text-xl font-bold text-gray-800">
+              {time.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </div>
           </div>
         </div>
 
