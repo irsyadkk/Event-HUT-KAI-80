@@ -37,6 +37,7 @@ import {
   editPrizeNameById,
   getPrize,
   getPrizeById,
+  getPrizeName,
   winnerGugur,
 } from "../controllers/prizeController.js";
 import {
@@ -84,6 +85,7 @@ router.delete("/pickup/:nipp", verifyToken, deletePickupByNIPP);
 // PRIZE
 router.post("/addprize", verifyToken, addPrize);
 router.get("/prize", verifyToken, getPrize);
+router.get("/prizename", getPrizeName);
 router.get("/prize/:id", verifyToken, getPrizeById);
 router.patch("/prize/:id", verifyToken, editPrizeNameById);
 router.delete("/prize/:id", verifyToken, deletePrizeById);
