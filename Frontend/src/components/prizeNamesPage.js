@@ -81,12 +81,12 @@ export default function PrizeNamesPage() {
           <div className="flex items-center gap-3">
             <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-8 w-auto" />
             <h1 className="text-xl font-bold text-white">
-              Daftar Kategori Hadiah ({categories.length})
+              Daftar Hadiah ({categories.length})
             </h1>
           </div>
           <input
             className="border border-white/30 focus:border-white focus:ring-1 focus:ring-white/50 px-3 py-1 rounded-lg bg-white/90 w-60 text-sm"
-            placeholder="🔍 Cari kategori..."
+            placeholder="🔍 Cari hadiah..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
