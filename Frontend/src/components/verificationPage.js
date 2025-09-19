@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
+import { ADMIN_NIPP } from "../utils";
+import { useNavigate } from "react-router-dom";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -20,6 +22,9 @@ const statusBadgeClass = (raw) => {
 
 export default function VerificationPage() {
   const headers = useAuthHeaders();
+  const navigate = useNavigate();
+
+  const [allowed, setAllowed] = useState(false);
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,6 +54,21 @@ export default function VerificationPage() {
     setAlertData({ message, type });
     setShowAlertModal(true);
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    try {
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const fetchList = async () => {
     try {
@@ -180,6 +200,8 @@ export default function VerificationPage() {
     const s = String(x.status).toLowerCase();
     return s && !s.includes("diambil") && s !== "gugur";
   }).length;
+
+  if (!allowed) return null;
 
   return (
     <div

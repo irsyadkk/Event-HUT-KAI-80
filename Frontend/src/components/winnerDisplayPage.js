@@ -40,7 +40,7 @@ export default function WinnerDisplayPage() {
 
   useEffect(() => {
     const socket = io(BASE_URL);
-    socket.on("PRIZE_UPDATE", (rows) => {
+    socket.on("WINNER_UPDATE", (rows) => {
       setList(rows || []);
       setLoading(false);
     });

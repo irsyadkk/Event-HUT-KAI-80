@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ADMIN_NIPP } from "../utils";
-import api from "../api"; // gunakan instance axios terpusat
+import api from "../api";
 
 const DetailRegisterPage = () => {
   const navigate = useNavigate();

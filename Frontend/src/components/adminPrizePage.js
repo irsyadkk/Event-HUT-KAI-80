@@ -5,7 +5,7 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { io } from "socket.io-client";
-import { BASE_URL } from "../utils";
+import { ADMIN_NIPP, BASE_URL } from "../utils";
 
 // =================================================================
 // --- [BAGIAN BARU] Komponen Notifikasi & Konfirmasi Kustom ---
@@ -159,6 +159,22 @@ export default function AdminPrizePage() {
   // --- Winner list (hanya yg sudah terdaftar di tabel winner)
   const [winnerList, setWinnerList] = useState([]);
   const [winnerLoading, setWinnerLoading] = useState(false);
+
+  const [allowed, setAllowed] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    try {
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
   // mapping cepat: nipp -> status
   const winnerStatusMap = useMemo(() => {
@@ -466,6 +482,8 @@ export default function AdminPrizePage() {
       return "bg-gradient-to-r from-green-500 to-emerald-500 text-white";
     return "bg-gray-300 text-gray-700";
   };
+
+  if (!allowed) return null;
 
   return (
     <div

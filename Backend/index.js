@@ -5,12 +5,12 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { Server } from "socket.io";
 import http from "http";
-import { Client as PGClient } from "pg"; // untuk LISTEN/NOTIFY Postgres
+import { Client as PGClient } from "pg";
 
 dotenv.config();
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split("|") || [];
 const app = express();
-const server = http.createServer(app); // gunakan http server
+const server = http.createServer(app);
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -30,7 +30,9 @@ app.get("/", (req, res) => res.send("API running")); // gunakan res.send bukan r
 app.use(router);
 
 /* === Tambahkan Socket.IO === */
-const io = new Server(server, { cors: { origin: ALLOWED_ORIGINS, credentials: true } });
+const io = new Server(server, {
+  cors: { origin: ALLOWED_ORIGINS, credentials: true },
+});
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
@@ -47,14 +49,26 @@ const pgClient = new PGClient({
 });
 await pgClient.connect();
 await pgClient.query("LISTEN prize_changes");
+await pgClient.query("LISTEN winners_changes");
 
 pgClient.on("notification", async (msg) => {
-  if (msg.channel === "prize_changes") {
-    // ambil data terbaru dan broadcast
-    const { rows } = await pgClient.query("SELECT * FROM prizes ORDER BY id");
-    io.emit("PRIZE_UPDATE", rows);
+  switch (msg.channel) {
+    case "prize_changes": {
+      const { rows } = await pgClient.query("SELECT * FROM prizes ORDER BY id");
+      io.emit("PRIZE_UPDATE", rows);
+      break;
+    }
+    case "winners_changes": {
+      const { rows } = await pgClient.query(
+        "SELECT * FROM winners ORDER BY nipp"
+      );
+      io.emit("WINNER_UPDATE", rows);
+      break;
+    }
   }
 });
 
 /* === Start Server === */
-server.listen(5000, () => console.log("Server + WebSocket running on port 5000"));
+server.listen(5000, () =>
+  console.log("Server + WebSocket running on port 5000")
+);

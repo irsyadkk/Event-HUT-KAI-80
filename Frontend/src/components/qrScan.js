@@ -3,9 +3,14 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master-01.png";
+import { ADMIN_NIPP } from "../utils";
 
 export default function QRPickupApp() {
+  const navigate = useNavigate();
+
   const [step, setStep] = useState("start"); // start | scan | confirm
+
+  const [allowed, setAllowed] = useState(false);
 
   // Start page state (digabung jadi satu halaman)
   const [pos, setPos] = useState("POS 1");
@@ -19,6 +24,21 @@ export default function QRPickupApp() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    try {
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const kuota = useMemo(
     () => (Array.isArray(qrData?.nama) ? qrData.nama.length : 0),
@@ -111,6 +131,8 @@ export default function QRPickupApp() {
     setErrorMsg("");
     setSuccessMsg("");
   };
+
+  if (!allowed) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">
@@ -667,11 +689,7 @@ function ScanQR({ onBack, onResult, rawText, setRawText }) {
               {lookupError}
             </div>
           )}
-
-          
         </div>
-
-        
       </div>
     </div>
   );

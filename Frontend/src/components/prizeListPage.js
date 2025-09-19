@@ -2,7 +2,8 @@ import { io } from "socket.io-client";
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { BASE_URL } from "../utils";
+import { BASE_URL, ADMIN_NIPP } from "../utils";
+import { useNavigate } from "react-router-dom";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -21,10 +22,27 @@ const badgeClassesByStatus = (statusRaw) => {
 };
 
 export default function PrizeListPage() {
+  const navigate = useNavigate();
   const headers = useAuthHeaders();
   const [data, setData] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    try {
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
   // --- Socket realtime update
   useEffect(() => {
@@ -42,7 +60,7 @@ export default function PrizeListPage() {
       const res = await axios.get("/prize", { headers }); // pakai headers
       setData(res?.data?.data || []);
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      console.log(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
@@ -191,6 +209,8 @@ export default function PrizeListPage() {
       </div>
     </div>
   );
+
+  if (!allowed) return null;
 
   return (
     <div

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
+import { ADMIN_NIPP } from "../utils";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -26,6 +27,7 @@ export default function WinnerInputPage() {
   const [loading, setLoading] = useState(false);
   const [list, setList] = useState([]);
   const [q, setQ] = useState("");
+  const [allowed, setAllowed] = useState(false);
 
   const fetchWinners = async () => {
     try {
@@ -38,6 +40,21 @@ export default function WinnerInputPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
+      navigate("/");
+      return;
+    }
+    try {
+      if (nipp !== ADMIN_NIPP) navigate("/");
+      else setAllowed(true);
+    } catch {
+      navigate("/");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchWinners();
@@ -72,6 +89,8 @@ export default function WinnerInputPage() {
         .includes(s)
     );
   });
+
+  if (!allowed) return null;
 
   return (
     <div
