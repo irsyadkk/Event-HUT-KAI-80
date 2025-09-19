@@ -209,6 +209,16 @@ function LandingPage() {
             >
               LIHAT PEMENANG UNDIAN
             </button>
+            <button
+              onClick={() => {
+                navigate("/prizenames");
+              }}
+              className={`w-full py-5 px-8 rounded-2xl font-extrabold text-2xl shadow-2xl 
+    transition-all duration-300 transform bg-pink-500 text-white
+       `}
+            >
+              LIHAT DAFTAR HADIAH
+            </button>
           </div>
         </div>
       </div>
