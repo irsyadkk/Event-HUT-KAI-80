@@ -144,6 +144,7 @@ export default function AdminPrizePage() {
     open: false,
     action: null,
     id: null,
+    payload: null,
   });
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState("");
@@ -302,6 +303,17 @@ export default function AdminPrizePage() {
     setAdminInput("");
     setAdminError("");
   };
+  // minta password admin dulu sebelum lakukan aksi tertentu
+  const requireAdmin = (action, payloadOrId = null) => {
+    if (action === "winner" || action === "edit") {
+      setAdminModal({ open: true, action, id: null, payload: payloadOrId });
+    } else {
+      setAdminModal({ open: true, action, id: payloadOrId, payload: null });
+    }
+    setAdminInput("");
+    setAdminError("");
+  };
+
   const submitAdminModal = async () => {
     if (!ADMIN_PASS) {
       showError("ENV REACT_APP_ADMIN_NIPP belum di-set.");
@@ -311,10 +323,21 @@ export default function AdminPrizePage() {
       setAdminError("Password admin salah.");
       return;
     }
-    const { action, id } = adminModal;
+
+    const { action, id, payload } = adminModal;
     closeAdminModal();
-    if (action === "delete") await performDelete(id);
-    if (action === "clear") await performClearWinner(id);
+
+    if (action === "delete") {
+      await performDelete(id);
+    } else if (action === "clear") {
+      await performClearWinner(id);
+    } else if (action === "winner") {
+      // buka modal Set/Ubah Pemenang setelah password benar
+      openWinnerModal(payload);
+    } else if (action === "edit") {
+      // buka modal Edit Hadiah setelah password benar
+      openEditModal(payload);
+    }
   };
 
   const handleDelete = (id) => {
@@ -695,7 +718,7 @@ export default function AdminPrizePage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => openWinnerModal(row)}
+                          onClick={() => requireAdmin("winner", row)}
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold shadow-md"
                           disabled={loading}
                           title={
@@ -704,14 +727,16 @@ export default function AdminPrizePage() {
                         >
                           {row.pemenang ? "Ubah" : "Set"}
                         </button>
+
                         <button
-                          onClick={() => openEditModal(row)}
+                          onClick={() => requireAdmin("edit", row)}
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-semibold shadow-md"
                           disabled={loading}
                           title="Edit hadiah & kategori"
                         >
                           Edit
                         </button>
+
                         <button
                           onClick={() => clearWinner(row.id)}
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold shadow-md"
@@ -885,11 +910,14 @@ export default function AdminPrizePage() {
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
                 <h3 className="text-lg font-bold text-white">
-                  Konfirmasi Admin (
-                  {adminModal.action === "delete"
-                    ? "Hapus Hadiah"
-                    : "Kosongkan Pemenang"}
-                  )
+                  {adminModal.action === "delete" &&
+                    "Konfirmasi Admin (Hapus Hadiah)"}
+                  {adminModal.action === "clear" &&
+                    "Konfirmasi Admin (Kosongkan Pemenang)"}
+                  {adminModal.action === "winner" &&
+                    "Konfirmasi Admin (Set/Ubah Pemenang)"}
+                  {adminModal.action === "edit" &&
+                    "Konfirmasi Admin (Edit Hadiah)"}
                 </h3>
               </div>
               <div className="p-6 space-y-3">
