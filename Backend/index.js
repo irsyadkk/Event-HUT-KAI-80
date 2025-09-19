@@ -58,7 +58,7 @@ pgClient.on("notification", async (msg) => {
       io.emit("PRIZE_UPDATE", rows);
       break;
     }
-    case "winners_changes": {
+    case "winner_changes": {
       const { rows } = await pgClient.query(
         "SELECT * FROM winners ORDER BY nipp"
       );
