@@ -100,7 +100,9 @@ export default function PrizeNamesPage() {
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
                 </div>
-                <p className="text-gray-600 text-lg font-medium">Memuat data…</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  Memuat data…
+                </p>
               </div>
             </div>
           ) : (
@@ -116,30 +118,40 @@ export default function PrizeNamesPage() {
                       <div
                         key={rowIndex}
                         className="grid gap-1"
-                        style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                        style={{
+                          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                        }}
                       >
                         {rowData.map((item, colIndex) => (
                           <div
                             key={`${rowIndex}-${colIndex}`}
                             className={`
-                              border border-gray-200 rounded p-2 text-center
-                              transition-all duration-200 flex items-center justify-center
-                              ${
-                                item
-                                  ? rowIndex % 2 === 0
-                                    ? colIndex % 2 === 0
-                                      ? "bg-white/80"
-                                      : "bg-gray-50/80"
-                                    : colIndex % 2 === 0
-                                    ? "bg-gray-50/80"
-                                    : "bg-white/80"
-                                  : "bg-transparent border-transparent"
-                              }
-                              ${item ? "hover:bg-green-50/90 hover:shadow-md cursor-default" : ""}
-                            `}
+    border border-gray-200 rounded p-2 text-center
+    transition-all duration-200 flex items-center justify-center
+    ${
+      item
+        ? (() => {
+            // daftar warna meriah
+            const colors = [
+              "bg-pink-300",
+              "bg-yellow-300",
+              "bg-green-300",
+              "bg-blue-300",
+              "bg-purple-300",
+              "bg-orange-300",
+              "bg-teal-300",
+            ];
+            // pilih warna berdasarkan index baris + kolom biar variatif
+            const idx = (rowIndex + colIndex) % colors.length;
+            return colors[idx];
+          })()
+        : "bg-transparent border-transparent"
+    }
+    ${item ? "hover:bg-green-200/80 hover:shadow-md cursor-default" : ""}
+  `}
                           >
                             {item && (
-                              <span className="text-gray-900 font-semibold text-base leading-tight break-words">
+                              <span className="text-gray-900 font-bold text-2xl leading-tight break-words">
                                 {item}
                               </span>
                             )}
