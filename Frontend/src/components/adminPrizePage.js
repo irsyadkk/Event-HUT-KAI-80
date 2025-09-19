@@ -718,7 +718,11 @@ export default function AdminPrizePage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => requireAdmin("winner", row)}
+                          onClick={() =>
+                            row.pemenang
+                              ? requireAdmin("winner", row)
+                              : openWinnerModal(row)
+                          }
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold shadow-md"
                           disabled={loading}
                           title={
@@ -915,7 +919,9 @@ export default function AdminPrizePage() {
                   {adminModal.action === "clear" &&
                     "Konfirmasi Admin (Kosongkan Pemenang)"}
                   {adminModal.action === "winner" &&
-                    "Konfirmasi Admin (Set/Ubah Pemenang)"}
+                    (adminModal?.payload?.pemenang
+                      ? "Konfirmasi Admin (Ubah Pemenang)"
+                      : "Konfirmasi Admin (Set Pemenang)")}
                   {adminModal.action === "edit" &&
                     "Konfirmasi Admin (Edit Hadiah)"}
                 </h3>
