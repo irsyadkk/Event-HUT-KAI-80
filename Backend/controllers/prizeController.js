@@ -62,6 +62,23 @@ export const getPrize = async (req, res) => {
   }
 };
 
+// GET PRIZE NAME
+export const getPrizeName = async (req, res) => {
+  try {
+    const prizes = await Prize.findAll({ attributes: ["prize"] });
+    res.status(200).json({
+      status: "Success",
+      message: "Prizes Retrieved",
+      data: prizes,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
 // GET PRIZE BY ID
 export const getPrizeById = async (req, res) => {
   try {
