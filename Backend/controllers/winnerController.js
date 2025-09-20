@@ -195,7 +195,7 @@ export const deleteWinnerByNipp = async (req, res) => {
       lock: t.LOCK.UPDATE,
     });
     if (isHasPrize) {
-      throw makeError(`NIPP ${oldNipp} Already has a Prize !`, 400);
+      throw makeError(`NIPP ${nipp} Already has a Prize !`, 400);
     }
 
     await Winner.destroy({ where: { nipp }, transaction: t });
