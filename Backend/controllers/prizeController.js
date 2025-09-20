@@ -121,6 +121,7 @@ export const deletePrizeById = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
+    const nipp = req.body;
     const ifPrizeExist = await Prize.findOne({
       where: {
         id: id,
@@ -132,7 +133,20 @@ export const deletePrizeById = async (req, res) => {
       throw makeError("Prize Not Found !", 404);
     }
 
+    const ifWinnerExist = await Winner.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifWinnerExist) {
+      throw makeError(`NIPP ${nipp} Not Found in winners Table !`, 404);
+    }
+
     await Prize.destroy({ where: { id: id }, transaction: t });
+    await Winner.update(
+      { status: "Belum Verifikasi" },
+      { where: { nipp: nipp }, transaction: t }
+    );
 
     await t.commit();
     res.status(200).json({
