@@ -62,7 +62,7 @@ pgClient.on("notification", async (msg) => {
       const { rows: readyRows } = await pgClient.query(`
         SELECT *
         FROM prizes
-        WHERE status IN ('Belum Verifikasi','diambil di daop')
+        WHERE status IN ('Belum Verifikasi','diambil di daop', 'diambil di tempat')
         ORDER BY id
       `);
       io.emit("PRIZE_READY_UPDATE", readyRows);
