@@ -189,6 +189,15 @@ export const deleteWinnerByNipp = async (req, res) => {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
     }
 
+    const isHasPrize = await Prize.findOne({
+      where: { pemenang: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (isHasPrize) {
+      throw makeError(`NIPP ${oldNipp} Already has a Prize !`, 400);
+    }
+
     await Winner.destroy({ where: { nipp }, transaction: t });
 
     await t.commit();
