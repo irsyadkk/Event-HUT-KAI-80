@@ -118,6 +118,7 @@ export default function AdminPrizePage() {
   const navigate = useNavigate();
 
   // form tambah hadiah
+  const [newId, setNewId] = useState("");
   const [newPrize, setNewPrize] = useState("");
   const [newKategori, setNewKategori] = useState("");
 
@@ -271,15 +272,31 @@ export default function AdminPrizePage() {
 
   const handleAddPrize = async (e) => {
     e.preventDefault();
-    if (!newPrize?.trim() || !newKategori?.trim())
-      return showError("Nama Hadiah dan Kategori wajib diisi.");
+
+    if (!newId?.trim() || !newPrize?.trim() || !newKategori?.trim()) {
+      return showError("ID, Nama Hadiah, dan Kategori wajib diisi.");
+    }
+
+    // pastikan angka positif
+    const idNum = Number(newId);
+    if (!Number.isInteger(idNum) || idNum <= 0) {
+      return showError("ID harus berupa angka bulat positif.");
+    }
+
+    // cek duplikasi ID di list saat ini (cegah error BE)
+    const duplicate = (list || []).some((x) => Number(x?.id) === idNum);
+    if (duplicate) {
+      return showError(`ID #${idNum} sudah ada. Gunakan ID lain.`);
+    }
+
     setLoading(true);
     try {
       await axios.post(
         "/addprize",
-        { prize: newPrize.trim(), kategori: newKategori.trim() },
+        { id: idNum, prize: newPrize.trim(), kategori: newKategori.trim() }, // ⬅️ kirim id
         { headers }
       );
+      setNewId("");
       setNewPrize("");
       setNewKategori("");
       await fetchList();
@@ -561,7 +578,26 @@ export default function AdminPrizePage() {
             </h2>
           </div>
           <form onSubmit={handleAddPrize} className="p-6">
-            <div className="grid gap-4 md:grid-cols-3 items-end">
+            {/* ubah ke 4 kolom di layar md ke atas */}
+            <div className="grid gap-4 md:grid-cols-4 items-end">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  ID Hadiah
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
+                  placeholder="Masukkan ID, contoh: 101"
+                  value={newId}
+                  onChange={(e) => {
+                    // opsional: hanya digit
+                    const val = e.target.value.replace(/[^\d]/g, "");
+                    setNewId(val);
+                  }}
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Nama Hadiah
@@ -573,6 +609,7 @@ export default function AdminPrizePage() {
                   onChange={(e) => setNewPrize(e.target.value)}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Kategori Hadiah
@@ -584,6 +621,7 @@ export default function AdminPrizePage() {
                   onChange={(e) => setNewKategori(e.target.value)}
                 />
               </div>
+
               <button
                 disabled={loading}
                 className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg disabled:opacity-50"

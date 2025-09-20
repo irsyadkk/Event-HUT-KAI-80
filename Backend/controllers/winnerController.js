@@ -78,103 +78,122 @@ export const getWinner = async (req, res) => {
 };
 
 // GET WINNER BY NIPP
+// GET WINNER BY NIPP
 export const getWinnerByNipp = async (req, res) => {
   try {
     const nipp = req.params.nipp;
-    const winner = await Winner.findOne({
-      where: {
-        nipp: nipp,
-      },
-    });
+    const winner = await Winner.findOne({ where: { nipp } });
     if (!winner) {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
     }
     res.status(200).json({
       status: "Success",
       message: "Winner Retrieved",
-      data: prize,
+      data: winner, // <— sebelumnya 'prize' (typo)
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      status: "Error...",
-      message: error.message,
-    });
+    res
+      .status(error.statusCode || 500)
+      .json({ status: "Error...", message: error.message });
   }
 };
 
 // EDIT WINNER BY NIPP
+// EDIT WINNER BY NIPP (only NIPP, validate against orders)
 export const editWinnerByNipp = async (req, res) => {
   const t = await db.transaction();
   try {
     const nipp = req.params.nipp;
-    const { nippchange, status } = req.body;
-    if (!nippchange || !status) {
-      const msg = !nippchange
-        ? "nippchange field cannot be empty !"
-        : "status field cannot be empty";
-      throw makeError(msg, 400);
+    const { nippchange } = req.body;
+
+    if (!nippchange) {
+      throw makeError("nippchange field cannot be empty !", 400);
     }
 
+    // Pastikan pemenang asal ada
     const winner = await Winner.findOne({
-      where: {
-        nipp: nipp,
-        transaction: t,
-        lock: t.LOCK.UPDATE,
-      },
+      where: { nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
     });
     if (!winner) {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
     }
 
+    const newNipp = String(nippchange).trim();
+    const oldNipp = String(nipp).trim();
+    if (newNipp === oldNipp) {
+      await t.commit();
+      return res.status(200).json({
+        status: "Success",
+        message: "NIPP is the same, nothing to update.",
+      });
+    }
+
+    // 1) Validasi: NIPP baru harus ada di tabel orders
+    const orderExists = await Order.findOne({
+      where: { nipp: newNipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!orderExists) {
+      throw makeError(`NIPP ${newNipp} doesn't exist in orders table !`, 400);
+    }
+
+    // 2) Validasi: NIPP baru belum terdaftar di tabel winners
+    const duplicateWinner = await Winner.findOne({
+      where: { nipp: newNipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (duplicateWinner) {
+      throw makeError(`NIPP ${newNipp} already exists in winners table !`, 400);
+    }
+
+    // 3) Update hanya kolom nipp
     await Winner.update(
-      {
-        nipp: nippchange,
-        status: status,
-      },
-      {
-        where: { nipp: nipp },
-        transaction: t,
-      }
+      { nipp: newNipp },
+      { where: { nipp: oldNipp }, transaction: t }
     );
 
+    await t.commit();
     res.status(200).json({
       status: "Success",
-      message: "Winner Updated",
+      message: `Winner NIPP changed from ${oldNipp} to ${newNipp}`,
     });
   } catch (error) {
+    if (!t.finished) await t.rollback();
     res.status(error.statusCode || 500).json({
-      status: "Error...",
+      status: "Error",
       message: error.message,
     });
   }
 };
 
 // DELETE WINNER BY NIPP
+// DELETE WINNER BY NIPP
 export const deleteWinnerByNipp = async (req, res) => {
   const t = await db.transaction();
   try {
     const nipp = req.params.nipp;
+
     const winner = await Winner.findOne({
-      where: {
-        nipp: nipp,
-        transaction: t,
-        lock: t.LOCK.UPDATE,
-      },
+      where: { nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE, // atau lock: true
     });
     if (!winner) {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
     }
 
-    await Winner.destroy({ where: { nipp: nipp }, transaction: t });
+    await Winner.destroy({ where: { nipp }, transaction: t });
 
-    res.status(200).json({
-      status: "Success",
-      message: "Winner Deleted",
-    });
+    await t.commit(); // <— tambahkan commit
+    res.status(200).json({ status: "Success", message: "Winner Deleted" });
   } catch (error) {
-    res.status(error.statusCode || 500).json({
-      status: "Error...",
-      message: error.message,
-    });
+    if (!t.finished) await t.rollback();
+    res
+      .status(error.statusCode || 500)
+      .json({ status: "Error...", message: error.message });
   }
 };
