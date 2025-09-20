@@ -23,6 +23,15 @@ export const addPrize = async (req, res) => {
       throw makeError(msg, 400);
     }
 
+    const ifPrizeExist = await Prize.findOne({
+      where: { id: id },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (ifPrizeExist) {
+      throw makeError(`Prize with ID ${id} Already Exist`, 400);
+    }
+
     await Prize.create(
       {
         id: id,
