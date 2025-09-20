@@ -23,7 +23,7 @@ const badgeClass = (raw) => {
 // Komponen popup modern (mengadopsi style dari VerificationPage)
 function Popup({ show, onClose, title, message, type = "success" }) {
   if (!show) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -142,6 +142,16 @@ export default function WinnerInputPage() {
     }
   };
 
+  // Hitung jumlah NIPP unik dari list winners
+  const totalNipp = useMemo(() => {
+    const set = new Set();
+    for (const w of list) {
+      const id = String(w.winner ?? w.nipp ?? "").trim();
+      if (id) set.add(id);
+    }
+    return set.size;
+  }, [list]);
+
   const filtered = list.filter((w) => {
     const s = q.toLowerCase();
     return (
@@ -211,7 +221,9 @@ export default function WinnerInputPage() {
         {/* Pencarian & Tabel Winners */}
         <div className="bg-white/95 rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
-            <h2 className="text-xl font-bold text-white">Daftar Pemenang</h2>
+            <h2 className="text-xl font-bold text-white uppercase">
+              DAFTAR PEMENANG ({totalNipp})
+            </h2>
             <input
               className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 min-w-[280px]"
               placeholder="🔍 Cari NIPP / status…"

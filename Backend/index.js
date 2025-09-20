@@ -49,7 +49,7 @@ const pgClient = new PGClient({
 });
 await pgClient.connect();
 await pgClient.query("LISTEN prize_changes");
-await pgClient.query("LISTEN winners_changes");
+await pgClient.query("LISTEN winner_changes");
 
 pgClient.on("notification", async (msg) => {
   switch (msg.channel) {
