@@ -10,7 +10,7 @@ const useAuthHeaders = () =>
     return { Authorization: `Bearer ${token}` };
   }, []);
 
-// === Password admin dari env
+// Password admin dari env
 const ADMIN_PASS = process.env.REACT_APP_ADMIN_PASSWORD;
 
 // helper warna badge status
@@ -26,6 +26,7 @@ const badgeClass = (raw) => {
 /** Popup sederhana (OK) */
 function Popup({ show, onClose, title, message, type = "success" }) {
   if (!show) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -229,9 +230,9 @@ export default function WinnerInputPage() {
 
   // modal password admin
   const [adminModal, setAdminModal] = useState({
-    open: false,
+    open: false,       // boolean
     action: null,      // 'edit' | 'delete'
-    payload: null,     // row (untuk edit) atau nipp (untuk delete)
+    payload: null,     // row (edit) atau nipp (delete)
   });
 
   // Auth guard (ADMIN_NIPP)
@@ -342,7 +343,7 @@ export default function WinnerInputPage() {
       );
       setShowEdit(false);
     } catch (e) {
-      // BE kirim error kalau NIPP baru tidak ada di orders / sudah dipakai di winners
+      // BE akan error kalau NIPP baru tidak ada di orders / sudah dipakai di winners
       showPopup(
         "Terjadi Kesalahan",
         e?.response?.data?.message || e.message,

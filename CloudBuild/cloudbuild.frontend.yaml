@@ -24,8 +24,9 @@ steps:
         npm run build
     dir: "Frontend"
     env:
-      - REACT_APP_ADMIN_NIPP=${_REACT_APP_ADMIN_NIPP} # inject dari trigger
-      - REACT_APP_API_URL=${_REACT_APP_API_URL}
+      - 'REACT_APP_ADMIN_PASSWORD=${_REACT_APP_ADMIN_PASSWORD}'  
+      - 'REACT_APP_ADMIN_NIPP=${_REACT_APP_ADMIN_NIPP}'         
+      - 'REACT_APP_API_URL=${_REACT_APP_API_URL}'
     volumes:
       - name: "npm-cache"
         path: /root/.npm
@@ -44,4 +45,5 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 substitutions:
-  _REACT_APP_ADMIN_NIPP: "" # default kosong, isi di trigger
+  _REACT_APP_ADMIN_PASSWORD: ""   
+  _REACT_APP_ADMIN_NIPP: ""       
