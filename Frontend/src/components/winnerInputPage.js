@@ -3,6 +3,8 @@ import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
 import { ADMIN_NIPP } from "../utils";
+import { io } from "socket.io-client";
+import { BASE_URL } from "../utils";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -266,6 +268,15 @@ export default function WinnerInputPage() {
       setLoading(false);
     }
   };
+
+    useEffect(() => {
+    const socket = io(BASE_URL);
+    socket.on("WINNER_UPDATE", (rows) => {
+      setList(rows || []);
+      setLoading(false);
+    });
+    return () => socket.disconnect();
+  }, []);
 
   useEffect(() => {
     fetchWinners();
