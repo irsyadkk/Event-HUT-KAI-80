@@ -268,6 +268,7 @@ export const winnerGugur = async (req, res) => {
   const t = await db.transaction();
   try {
     const id = req.params.id;
+    const nipp = req.body;
 
     const ifPrizeExist = await Prize.findOne({
       where: { id: id },
@@ -278,12 +279,28 @@ export const winnerGugur = async (req, res) => {
       throw makeError(`Hadiah dengan ID ${id} Tidak Ada !`, 400);
     }
 
+    const ifWinnerExist = await Winner.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!ifWinnerExist) {
+      throw makeError(`NIPP ${nipp} Not Found in winners table !`, 404);
+    }
+
     await Prize.update(
       { pemenang: null, status: null },
       {
         where: { id: id },
         transaction: t,
       }
+    );
+
+    await Winner.update(
+      {
+        status: "Belum Verifikasi",
+      },
+      { where: { nipp: nipp }, transaction: t }
     );
 
     await t.commit();
