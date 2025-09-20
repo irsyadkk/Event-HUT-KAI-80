@@ -45,14 +45,20 @@ const NotificationPopup = ({ show, message, type, onConfirm, onClose }) => {
     confirm: "🤔",
   };
 
-  const animationClass = closing ? "opacity-0 scale-95" : "opacity-100 scale-100";
+  const animationClass = closing
+    ? "opacity-0 scale-95"
+    : "opacity-100 scale-100";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div
         className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden transform transition-all duration-300 ${animationClass}`}
       >
-        <div className={`bg-gradient-to-r ${colors[type] || colors.confirm} px-6 py-4`}>
+        <div
+          className={`bg-gradient-to-r ${
+            colors[type] || colors.confirm
+          } px-6 py-4`}
+        >
           <h3 className="text-xl font-bold text-white flex items-center gap-3">
             <span>{icons[type] || ""}</span>
             {type === "success" && "Berhasil"}
@@ -227,7 +233,10 @@ export default function AdminPrizePage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Prize");
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
     const blob = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
@@ -370,7 +379,8 @@ export default function AdminPrizePage() {
         headers,
         data: { nipp: nippToSend }, // body via config.data
       });
-      await fetchList();
+      await Promise.all([fetchList(), fetchWinnerList()]);
+
       showSuccess(
         `Hadiah #${row.id} dihapus. Status NIPP ${nippToSend} direset ke "Belum Verifikasi".`
       );
@@ -404,7 +414,8 @@ export default function AdminPrizePage() {
         { nipp: nippToSend }, // wajib kirim nipp
         { headers }
       );
-      await fetchList();
+      await Promise.all([fetchList(), fetchWinnerList()]);
+
       showSuccess(
         `Pemenang hadiah #${row.id} dikosongkan. Status NIPP ${nippToSend} direset ke "Belum Verifikasi".`
       );
@@ -432,7 +443,6 @@ export default function AdminPrizePage() {
     const nipp = String(nippInput || "").trim();
     if (!nipp) return showError("NIPP pemenang wajib diisi.");
 
-    // validasi: nipp harus ada di tabel winner
     const inWinner = winnerList.find(
       (w) => String(w.winner || w.nipp || "").trim() === nipp
     );
@@ -442,26 +452,19 @@ export default function AdminPrizePage() {
       );
     }
 
-    const statusFromWinner = String(inWinner.status || "Belum Verifikasi");
-
     setSavingWinner(true);
     try {
-      // 1) set pemenang ke hadiah
+      // CUKUP ini saja — BE sudah set dua-duanya ke "Belum Verifikasi"
       await axios.patch(
         `/addwinner/${activePrize.id}`,
         { winner: nipp },
         { headers }
       );
 
-      // 2) sinkron status hadiah ke status winner (kirim nipp)
-      await axios.patch(
-        `/changestatus/${activePrize.id}`,
-        { status: statusFromWinner, nipp },
-        { headers }
-      );
+      // refresh data
+      await Promise.all([fetchList(), fetchWinnerList()]);
 
-      await fetchList();
-      showSuccess(`Pemenang diset ke ${nipp} (status: ${statusFromWinner}).`);
+      showSuccess(`Pemenang diset ke ${nipp} (status: Belum Verifikasi).`);
       closeWinnerModal();
     } catch (e) {
       showError(e?.response?.data?.message || e.message);
@@ -730,7 +733,11 @@ export default function AdminPrizePage() {
                     key={row.id}
                     className={`transition-all duration-300 hover:bg-green-50/70 ${
                       index % 2 === 0 ? "bg-white/40" : "bg-gray-50/40"
-                    } ${row.pemenang ? "border-l-4 border-green-500" : "border-l-4 border-gray-300"}`}
+                    } ${
+                      row.pemenang
+                        ? "border-l-4 border-green-500"
+                        : "border-l-4 border-gray-300"
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -738,7 +745,9 @@ export default function AdminPrizePage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-gray-900 font-semibold text-lg">{row.prize}</p>
+                      <p className="text-gray-900 font-semibold text-lg">
+                        {row.prize}
+                      </p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
@@ -809,7 +818,10 @@ export default function AdminPrizePage() {
                 ))}
                 {!ordered.length && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-16 text-center text-gray-500"
+                    >
                       Tidak ada data ditemukan.
                     </td>
                   </tr>
@@ -822,10 +834,15 @@ export default function AdminPrizePage() {
         {/* --- Modal Set Pemenang --- */}
         {showWinnerModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeWinnerModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeWinnerModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-                <h3 className="text-xl font-bold text-white">👤 Set Pemenang</h3>
+                <h3 className="text-xl font-bold text-white">
+                  👤 Set Pemenang
+                </h3>
               </div>
               <div className="p-6">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
@@ -851,7 +868,10 @@ export default function AdminPrizePage() {
                 {nippInput?.trim() && (
                   <div className="mb-4 text-sm text-gray-700">
                     Status di tabel winner:{" "}
-                    <b>{winnerStatusMap.get(nippInput.trim()) || "Belum Verifikasi"}</b>
+                    <b>
+                      {winnerStatusMap.get(nippInput.trim()) ||
+                        "Belum Verifikasi"}
+                    </b>
                   </div>
                 )}
 
@@ -878,7 +898,10 @@ export default function AdminPrizePage() {
         {/* --- Modal Edit Hadiah & Kategori --- */}
         {showEditModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeEditModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeEditModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
                 <h3 className="text-xl font-bold text-white">📝 Edit Hadiah</h3>
@@ -936,18 +959,25 @@ export default function AdminPrizePage() {
         {/* --- Modal Password Admin --- */}
         {adminModal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeAdminModal} />
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeAdminModal}
+            />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
                 <h3 className="text-lg font-bold text-white">
-                  {adminModal.action === "delete" && "Konfirmasi Admin (Hapus Hadiah)"}
-                  {adminModal.action === "clear" && "Konfirmasi Admin (Kosongkan Pemenang)"}
-                  {adminModal.action === "edit" && "Konfirmasi Admin (Edit Hadiah)"}
+                  {adminModal.action === "delete" &&
+                    "Konfirmasi Admin (Hapus Hadiah)"}
+                  {adminModal.action === "clear" &&
+                    "Konfirmasi Admin (Kosongkan Pemenang)"}
+                  {adminModal.action === "edit" &&
+                    "Konfirmasi Admin (Edit Hadiah)"}
                 </h3>
               </div>
               <div className="p-6 space-y-3">
                 <p className="text-sm text-gray-700">
-                  Masukkan password admin untuk melanjutkan aksi <b>{adminModal.action}</b>.
+                  Masukkan password admin untuk melanjutkan aksi{" "}
+                  <b>{adminModal.action}</b>.
                 </p>
                 <input
                   type="password"
@@ -961,7 +991,9 @@ export default function AdminPrizePage() {
                   onKeyDown={(e) => e.key === "Enter" && submitAdminModal()}
                   autoFocus
                 />
-                {adminError && <p className="text-sm text-red-600">{adminError}</p>}
+                {adminError && (
+                  <p className="text-sm text-red-600">{adminError}</p>
+                )}
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     onClick={closeAdminModal}
