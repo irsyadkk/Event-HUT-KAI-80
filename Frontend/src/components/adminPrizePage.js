@@ -342,8 +342,7 @@ export default function AdminPrizePage() {
 
   const handleDelete = (row) => {
     showConfirm(
-      `Yakin ingin menghapus hadiah ID #${row.id}? Aksi ini tidak dapat dibatalkan.` +
-        (row?.pemenang ? `\nNIPP saat ini: ${row.pemenang}` : ""),
+      `Yakin ingin menghapus hadiah ID #${row.id}? Aksi ini tidak dapat dibatalkan.`,
       () => requireAdmin("delete", row)
     );
   };
@@ -359,31 +358,15 @@ export default function AdminPrizePage() {
   // === Aksi setelah password benar ===
   const performDelete = async (row) => {
     if (!row) return;
-
-    // butuh nipp untuk reset status winner
-    let nippToSend = row?.pemenang;
-    if (!nippToSend) {
-      nippToSend = window.prompt(
-        `Masukkan NIPP yang statusnya perlu direset saat menghapus hadiah #${row.id}:`
-      );
-      if (!nippToSend || !String(nippToSend).trim()) {
-        showError("NIPP wajib diisi untuk menghapus hadiah.");
-        return;
-      }
-      nippToSend = String(nippToSend).trim();
-    }
-
     setLoading(true);
     try {
-      await axios.delete(`/prize/${row.id}`, {
-        headers,
-        data: { nipp: nippToSend }, // body via config.data
-      });
+      // Tidak kirim body/data lagi
+      await axios.delete(`/prize/${row.id}`, { headers });
+
+      // refresh prize & winner agar status ikut terupdate dari BE
       await Promise.all([fetchList(), fetchWinnerList()]);
 
-      showSuccess(
-        `Hadiah #${row.id} dihapus. Status NIPP ${nippToSend} direset ke "Belum Verifikasi".`
-      );
+      showSuccess(`Hadiah #${row.id} dihapus.`);
     } catch (e) {
       showError(e?.response?.data?.message || e.message);
     } finally {
@@ -776,7 +759,7 @@ export default function AdminPrizePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-2">
-                        {/* Hanya tampil kalau belum ada pemenang */}
+                        {/* Set hanya saat belum ada pemenang */}
                         {!row.pemenang && (
                           <button
                             onClick={() => openWinnerModal(row)}
@@ -788,6 +771,7 @@ export default function AdminPrizePage() {
                           </button>
                         )}
 
+                        {/* Edit selalu tampil */}
                         <button
                           onClick={() => requireAdmin("edit", row)}
                           className="px-3 py-1 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-semibold shadow-md"
@@ -797,21 +781,29 @@ export default function AdminPrizePage() {
                           Edit
                         </button>
 
-                        <button
-                          onClick={() => clearWinner(row)}
-                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold shadow-md"
-                          disabled={loading}
-                          title="Kosongkan pemenang"
-                        >
-                          Clear
-                        </button>
-                        <button
-                          onClick={() => handleDelete(row)}
-                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold shadow-md"
-                          disabled={loading}
-                        >
-                          Hapus
-                        </button>
+                        {/* Clear hanya saat SUDAH ada pemenang (opsional, tapi direkomendasikan) */}
+                        {row.pemenang && (
+                          <button
+                            onClick={() => clearWinner(row)}
+                            className="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold shadow-md"
+                            disabled={loading}
+                            title="Kosongkan pemenang"
+                          >
+                            Clear
+                          </button>
+                        )}
+
+                        {/* Hapus hanya saat BELUM ada pemenang */}
+                        {!row.pemenang && (
+                          <button
+                            onClick={() => handleDelete(row)}
+                            className="px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold shadow-md"
+                            disabled={loading}
+                            title="Hapus hadiah"
+                          >
+                            Hapus
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
