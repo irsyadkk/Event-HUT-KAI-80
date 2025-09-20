@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { ADMIN_NIPP } from "../utils";
+import { ADMIN_NIPP, BASE_URL } from "../utils";
+import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
 
 const useAuthHeaders = () =>
@@ -69,6 +70,15 @@ export default function VerificationPage() {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const socket = io(BASE_URL);
+    socket.on("PRIZE_READY_UPDATE", (rows) => {
+      setList(rows || []);
+      setLoading(false);
+    });
+    return () => socket.disconnect();
+  }, []);
 
   const fetchList = async () => {
     try {

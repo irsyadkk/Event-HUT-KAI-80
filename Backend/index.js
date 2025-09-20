@@ -54,10 +54,21 @@ await pgClient.query("LISTEN winner_changes");
 pgClient.on("notification", async (msg) => {
   switch (msg.channel) {
     case "prize_changes": {
+      // kirim semua data (tetap ada, untuk page lain)
       const { rows } = await pgClient.query("SELECT * FROM prizes ORDER BY id");
       io.emit("PRIZE_UPDATE", rows);
+
+      // kirim data yang sudah terfilter (tambahan)
+      const { rows: readyRows } = await pgClient.query(`
+        SELECT *
+        FROM prizes
+        WHERE status IN ('Belum Verifikasi','diambil di daop')
+        ORDER BY id
+      `);
+      io.emit("PRIZE_READY_UPDATE", readyRows);
       break;
     }
+
     case "winner_changes": {
       const { rows } = await pgClient.query(
         "SELECT * FROM winners ORDER BY nipp"

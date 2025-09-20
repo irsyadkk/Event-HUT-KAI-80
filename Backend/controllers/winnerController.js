@@ -1,5 +1,6 @@
 import db from "../config/Database.js";
 import Order from "../models/orderModel.js";
+import Prize from "../models/prizeModel.js";
 import Winner from "../models/winnersModel.js";
 
 const makeError = (msg, code = 400) => {
@@ -116,9 +117,18 @@ export const editWinnerByNipp = async (req, res) => {
     if (!winner) {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
     }
-
     const newNipp = String(nippchange).trim();
     const oldNipp = String(nipp).trim();
+
+    const isHasPrize = await Prize.findOne({
+      where: { pemenang: oldNipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (isHasPrize) {
+      throw makeError(`NIPP ${oldNipp} Already has a Prize !`, 400);
+    }
+
     if (newNipp === oldNipp) {
       await t.commit();
       return res.status(200).json({
@@ -146,7 +156,7 @@ export const editWinnerByNipp = async (req, res) => {
     }
 
     await Winner.update(
-      { nipp: newNipp },
+      { nipp: newNipp, status: "Belum Verifikasi" },
       { where: { nipp: oldNipp }, transaction: t }
     );
 
