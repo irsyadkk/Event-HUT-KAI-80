@@ -133,10 +133,10 @@ export default function AdminPrizePage() {
   const [editKategori, setEditKategori] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
-  // --- Modal Admin Password (hapus/kosongkan/set/ubah/edit)
+  // --- Modal Admin Password (hapus/kosongkan/edit)
   const [adminModal, setAdminModal] = useState({
     open: false,
-    action: null, // 'delete' | 'clear' | 'winner' | 'edit'
+    action: null, // 'delete' | 'clear' | 'edit'
     payload: null, // row hadiah
   });
   const [adminInput, setAdminInput] = useState("");
@@ -303,6 +303,7 @@ export default function AdminPrizePage() {
 
   // minta password admin sebelum aksi tertentu
   const requireAdmin = (action, payloadRow = null) => {
+    // action: 'delete' | 'clear' | 'edit'
     setAdminModal({ open: true, action, payload: payloadRow });
     setAdminInput("");
     setAdminError("");
@@ -325,8 +326,6 @@ export default function AdminPrizePage() {
       await performDelete(payload);
     } else if (action === "clear") {
       await performClearWinner(payload);
-    } else if (action === "winner") {
-      openWinnerModal(payload);
     } else if (action === "edit") {
       openEditModal(payload);
     }
@@ -369,7 +368,7 @@ export default function AdminPrizePage() {
     try {
       await axios.delete(`/prize/${row.id}`, {
         headers,
-        data: { nipp: nippToSend }, // kirim body via config.data
+        data: { nipp: nippToSend }, // body via config.data
       });
       await fetchList();
       showSuccess(
@@ -416,10 +415,10 @@ export default function AdminPrizePage() {
     }
   };
 
-  // --- Aksi Pemenang via Modal
+  // --- Modal Set Pemenang
   const openWinnerModal = (row) => {
     setActivePrize(row);
-    setNippInput(row.pemenang ? row.pemenang : "");
+    setNippInput(""); // tidak prefill lagi
     setShowWinnerModal(true);
   };
   const closeWinnerModal = () => {
@@ -768,16 +767,17 @@ export default function AdminPrizePage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() =>
-                            row.pemenang ? requireAdmin("winner", row) : openWinnerModal(row)
-                          }
-                          className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold shadow-md"
-                          disabled={loading}
-                          title={row.pemenang ? "Ubah Pemenang" : "Set Pemenang"}
-                        >
-                          {row.pemenang ? "Ubah" : "Set"}
-                        </button>
+                        {/* Hanya tampil kalau belum ada pemenang */}
+                        {!row.pemenang && (
+                          <button
+                            onClick={() => openWinnerModal(row)}
+                            className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold shadow-md"
+                            disabled={loading}
+                            title="Set Pemenang"
+                          >
+                            Set
+                          </button>
+                        )}
 
                         <button
                           onClick={() => requireAdmin("edit", row)}
@@ -819,15 +819,13 @@ export default function AdminPrizePage() {
           </div>
         </div>
 
-        {/* --- Modal Set/Ubah Pemenang --- */}
+        {/* --- Modal Set Pemenang --- */}
         {showWinnerModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeWinnerModal} />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
               <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-                <h3 className="text-xl font-bold text-white">
-                  {activePrize?.pemenang ? "✏️ Ubah Pemenang" : "👤 Set Pemenang"}
-                </h3>
+                <h3 className="text-xl font-bold text-white">👤 Set Pemenang</h3>
               </div>
               <div className="p-6">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
@@ -944,10 +942,6 @@ export default function AdminPrizePage() {
                 <h3 className="text-lg font-bold text-white">
                   {adminModal.action === "delete" && "Konfirmasi Admin (Hapus Hadiah)"}
                   {adminModal.action === "clear" && "Konfirmasi Admin (Kosongkan Pemenang)"}
-                  {adminModal.action === "winner" &&
-                    (adminModal?.payload?.pemenang
-                      ? "Konfirmasi Admin (Ubah Pemenang)"
-                      : "Konfirmasi Admin (Set Pemenang)")}
                   {adminModal.action === "edit" && "Konfirmasi Admin (Edit Hadiah)"}
                 </h3>
               </div>
