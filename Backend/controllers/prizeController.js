@@ -13,9 +13,11 @@ const makeError = (msg, code = 400) => {
 export const addPrize = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { prize, kategori } = req.body;
-    if (!prize || !kategori) {
-      const msg = !prize
+    const { id, prize, kategori } = req.body;
+    if (!id || !prize || !kategori) {
+      const msg = !id
+        ? "id field cannot be empty !"
+        : !prize
         ? "prize field cannot be empty !"
         : "kategori field cannot be empty";
       throw makeError(msg, 400);
@@ -23,6 +25,7 @@ export const addPrize = async (req, res) => {
 
     await Prize.create(
       {
+        id: id,
         prize: prize,
         kategori: kategori,
       },
@@ -32,7 +35,7 @@ export const addPrize = async (req, res) => {
     await t.commit();
     res.status(200).json({
       status: "Success",
-      message: `Prize ${prize} Added to ${kategori} Successfully !`,
+      message: `Prize ${prize} with ID ${id} Added to ${kategori} Successfully !`,
     });
   } catch (error) {
     if (!t.finished) {

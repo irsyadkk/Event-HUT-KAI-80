@@ -1,6 +1,5 @@
 import db from "../config/Database.js";
 import Order from "../models/orderModel.js";
-import Pickups from "../models/pickupModel.js";
 import Winner from "../models/winnersModel.js";
 
 const makeError = (msg, code = 400) => {
@@ -78,7 +77,6 @@ export const getWinner = async (req, res) => {
 };
 
 // GET WINNER BY NIPP
-// GET WINNER BY NIPP
 export const getWinnerByNipp = async (req, res) => {
   try {
     const nipp = req.params.nipp;
@@ -89,7 +87,7 @@ export const getWinnerByNipp = async (req, res) => {
     res.status(200).json({
       status: "Success",
       message: "Winner Retrieved",
-      data: winner, // <— sebelumnya 'prize' (typo)
+      data: winner,
     });
   } catch (error) {
     res
@@ -98,7 +96,6 @@ export const getWinnerByNipp = async (req, res) => {
   }
 };
 
-// EDIT WINNER BY NIPP
 // EDIT WINNER BY NIPP (only NIPP, validate against orders)
 export const editWinnerByNipp = async (req, res) => {
   const t = await db.transaction();
@@ -130,7 +127,6 @@ export const editWinnerByNipp = async (req, res) => {
       });
     }
 
-    // 1) Validasi: NIPP baru harus ada di tabel orders
     const orderExists = await Order.findOne({
       where: { nipp: newNipp },
       transaction: t,
@@ -140,7 +136,6 @@ export const editWinnerByNipp = async (req, res) => {
       throw makeError(`NIPP ${newNipp} doesn't exist in orders table !`, 400);
     }
 
-    // 2) Validasi: NIPP baru belum terdaftar di tabel winners
     const duplicateWinner = await Winner.findOne({
       where: { nipp: newNipp },
       transaction: t,
@@ -150,7 +145,6 @@ export const editWinnerByNipp = async (req, res) => {
       throw makeError(`NIPP ${newNipp} already exists in winners table !`, 400);
     }
 
-    // 3) Update hanya kolom nipp
     await Winner.update(
       { nipp: newNipp },
       { where: { nipp: oldNipp }, transaction: t }
@@ -171,7 +165,6 @@ export const editWinnerByNipp = async (req, res) => {
 };
 
 // DELETE WINNER BY NIPP
-// DELETE WINNER BY NIPP
 export const deleteWinnerByNipp = async (req, res) => {
   const t = await db.transaction();
   try {
@@ -180,7 +173,7 @@ export const deleteWinnerByNipp = async (req, res) => {
     const winner = await Winner.findOne({
       where: { nipp },
       transaction: t,
-      lock: t.LOCK.UPDATE, // atau lock: true
+      lock: t.LOCK.UPDATE,
     });
     if (!winner) {
       throw makeError(`Winner With NIPP ${nipp} Not Found !`, 404);
@@ -188,7 +181,7 @@ export const deleteWinnerByNipp = async (req, res) => {
 
     await Winner.destroy({ where: { nipp }, transaction: t });
 
-    await t.commit(); // <— tambahkan commit
+    await t.commit();
     res.status(200).json({ status: "Success", message: "Winner Deleted" });
   } catch (error) {
     if (!t.finished) await t.rollback();
