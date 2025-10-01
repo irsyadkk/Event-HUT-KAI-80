@@ -71,6 +71,11 @@ const AdminDesktopPage = () => {
   }, [navigate]);
 
   // ===================== API CALLS =====================
+  const openImportModalForTableUsers = () => {
+    setImportOpen(true);
+    setImportMsg(null);
+    setImportFile(null);
+  };
   const openImportModalForCurrentTable = () => {
     if (selectedTable !== "order") return;
     setImportOpen(true);
@@ -107,6 +112,13 @@ const AdminDesktopPage = () => {
     } finally {
       setImportLoading(false);
     }
+  };
+
+  const openResetModalForTableUsers = () => {
+    const table = "users";
+    setResetTarget(table);
+    setResetCascade(false);
+    setResetOpen(true);
   };
 
   const openResetModalForCurrentTable = () => {
@@ -894,13 +906,20 @@ const AdminDesktopPage = () => {
             </h2>
             <div className="flex gap-3">
               <button
-                onClick={getAllUsers}
+                onClick={openImportModalForTableUsers}
                 className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-                disabled={isLoadingUsers}
-                title="Refresh data users"
+                title="Import Users (.csv/.xlsx)"
               >
-                {isLoadingUsers ? "Memuat..." : "Refresh"}
+                Import Users (.csv/.xlsx)
               </button>
+              <button
+                onClick={openResetModalForTableUsers}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
+                title={`Reset semua data di tabel`}
+              >
+                Reset Tabel Users
+              </button>
+
               <button
                 onClick={exportExcelUsers}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
@@ -1191,7 +1210,7 @@ const AdminDesktopPage = () => {
         {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* tombol Import mengikuti tab aktif */}
+ 
 
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
