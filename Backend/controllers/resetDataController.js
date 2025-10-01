@@ -28,7 +28,6 @@ export const resetSingleTable = async (req, res) => {
     const t = await db.transaction();
     try {
         await ModelToTruncate.destroy({
-            where: {},
             truncate: true,
             cascade: true,
             transaction: t,
