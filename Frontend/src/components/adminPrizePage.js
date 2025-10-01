@@ -138,6 +138,10 @@ export default function AdminPrizePage() {
   const [editInput, setEditInput] = useState("");
   const [editKategori, setEditKategori] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  // di atas (bersama state lain)
+  const [importOpen, setImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   // --- Modal Admin Password (hapus/kosongkan/edit)
   const [adminModal, setAdminModal] = useState({
@@ -159,6 +163,53 @@ export default function AdminPrizePage() {
   // --- Winner list
   const [winnerList, setWinnerList] = useState([]);
   const [winnerLoading, setWinnerLoading] = useState(false);
+  // buka/tutup modal import
+  const openImportModal = () => setImportOpen(true);
+  const closeImportModal = () => {
+    setImportOpen(false);
+    setImportFile(null);
+  };
+
+  const submitImportPrize = async () => {
+    if (!importFile)
+      return showError("Pilih file .csv atau .xlsx terlebih dahulu.");
+    const form = new FormData();
+    form.append("file", importFile);
+
+    setImporting(true);
+    try {
+      await axios.post(`/import/prizes`, form, {
+        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      });
+      await fetchList();
+      showSuccess("Import hadiah berhasil.");
+      closeImportModal();
+    } catch (e) {
+      showError(e?.response?.data?.message || e.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // reset prizes (minta konfirmasi + password admin seperti aksi lain)
+  const confirmResetPrizes = () =>
+    showConfirm(
+      "Yakin ingin menghapus SEMUA data hadiah? Tindakan ini tidak dapat dibatalkan.",
+      () => requireAdmin("reset-prizes")
+    );
+
+  const performResetPrizes = async () => {
+    setLoading(true);
+    try {
+      await axios.delete(`/reset/prizes`, { headers });
+      await fetchList();
+      showSuccess("Tabel hadiah berhasil di-reset.");
+    } catch (e) {
+      showError(e?.response?.data?.message || e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [allowed, setAllowed] = useState(false);
   useEffect(() => {
@@ -337,6 +388,8 @@ export default function AdminPrizePage() {
       await performClearWinner(payload);
     } else if (action === "edit") {
       openEditModal(payload);
+    } else if (action === "reset-prizes") {
+      await performResetPrizes();
     }
   };
 
@@ -678,12 +731,31 @@ export default function AdminPrizePage() {
             <h2 className="text-2xl font-bold text-white">
               Daftar Lengkap Hadiah ({ordered.length} dari {list.length})
             </h2>
-            <button
-              onClick={exportExcelPrize}
-              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold flex items-center gap-2"
-            >
-              Export Data Hadiah ke Excel (.xlsx)
-            </button>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={openImportModal}
+                className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold"
+                title="Import Hadiah (.csv/.xlsx)"
+              >
+                Import Hadiah (.csv/.xlsx)
+              </button>
+
+              <button
+                onClick={confirmResetPrizes}
+                className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold"
+                title="Reset seluruh tabel hadiah"
+              >
+                Reset Tabel Hadiah
+              </button>
+
+              <button
+                onClick={exportExcelPrize}
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm font-semibold"
+              >
+                Export Data Hadiah ke Excel (.xlsx)
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-b-2xl">
@@ -998,6 +1070,52 @@ export default function AdminPrizePage() {
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold"
                   >
                     Lanjutkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {importOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeImportModal}
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
+              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4">
+                <h3 className="text-xl font-bold text-white">
+                  📥 Import Hadiah
+                </h3>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600">
+                  Format header yang didukung: <b>id/Id/ID</b>,{" "}
+                  <b>prize/"Nama Hadiah"</b>, <b>kategori/Kategori</b>.
+                  Opsional: <b>pemenang/Pemenang</b>, <b>status/Status</b>.
+                </p>
+
+                <input
+                  type="file"
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="w-full border-2 border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 p-3 rounded-xl"
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={closeImportModal}
+                    className="px-4 py-2 rounded-xl border-2 border-gray-300 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={submitImportPrize}
+                    disabled={importing || !importFile}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold disabled:opacity-50"
+                  >
+                    {importing ? "Mengimpor..." : "Import"}
                   </button>
                 </div>
               </div>
