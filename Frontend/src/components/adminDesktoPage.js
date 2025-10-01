@@ -406,7 +406,7 @@ const AdminDesktopPage = () => {
               >
                 Undian
               </button>
-              
+
               <button
                 onClick={() => navigate("/qrpickup")}
                 className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
@@ -899,7 +899,7 @@ const AdminDesktopPage = () => {
 
           {selectedTable === "order" ? (
             /* ---------- TABEL ORDER ---------- */
-            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <div key="order-table" className="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -958,7 +958,7 @@ const AdminDesktopPage = () => {
                   ) : (
                     orderList.map((order, index) => (
                       <tr
-                        key={order.id}
+                        key={`order-${order.id ?? order.nipp}`}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 text-sm text-gray-700">
@@ -1013,7 +1013,7 @@ const AdminDesktopPage = () => {
             </div>
           ) : (
             /* ---------- TABEL PICKUP ---------- */
-            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <div key="pickup-table" className="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -1077,45 +1077,52 @@ const AdminDesktopPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    pickupList.map((pickup, index) => (
-                      <tr
-                        key={pickup.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {index + 1}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.timestamp ?? "-"}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                            {pickup.nipp}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.nama ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.jumlah_kuota ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.jenis_pengambilan ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.pos_pengambilan ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.nipp_pj ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.nama_pj ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {pickup.status ?? "-"}
-                        </td>
-                      </tr>
-                    ))
+                    pickupList.map((pickup, index) => {
+                      const rowKey =
+                        pickup.id ??
+                        (pickup.timestamp && pickup.nipp
+                          ? `${pickup.nipp}-${pickup.timestamp}`
+                          : `idx-${index}`);
+                      return (
+                        <tr
+                          key={`pickup-${rowKey}`}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {index + 1}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.timestamp ?? "-"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                              {pickup.nipp}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.nama ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.jumlah_kuota ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.jenis_pengambilan ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.pos_pengambilan ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.nipp_pj ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.nama_pj ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {pickup.status ?? "-"}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
