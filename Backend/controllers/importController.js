@@ -33,9 +33,9 @@ const parseOrdersRow = (row) => {
   const nama = Array.isArray(anggotaStr)
     ? anggotaStr
     : String(anggotaStr || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
   return {
     nipp,
@@ -89,7 +89,11 @@ export const importFile = async (req, res) => {
       rows = await new Promise((resolve, reject) => {
         const results = [];
         fs.createReadStream(file.path)
-          .pipe(csv()) // otomatis baca header
+          .pipe(csv({
+            bom: true,
+            mapHeaders: ({ header }) => header.trim(),
+            separator: ';',
+          })) // otomatis baca header
           .on("data", (row) => results.push(row))
           .on("end", () => resolve(results))
           .on("error", reject);
@@ -127,7 +131,7 @@ export const importFile = async (req, res) => {
       // hapus file temp
       try {
         fs.unlinkSync(file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     res.status(200).json({
@@ -139,7 +143,7 @@ export const importFile = async (req, res) => {
     if (file) {
       try {
         fs.unlinkSync(file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
     res
       .status(error.statusCode || 500)
