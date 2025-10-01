@@ -1,12 +1,11 @@
-// controllers/importController.js
 import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
 import XLSX from "xlsx";
 import Order from "../models/orderModel.js";
-import Pickups from "../models/pickupModel.js";
 import db from "../config/Database.js";
-import { refreshToken } from "./refreshToken.js";
+import Prize from "../models/prizeModel.js";
+import User from "../models/userModel.js";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -17,7 +16,8 @@ const makeError = (msg, code = 400) => {
 // Daftar tabel yang diizinkan untuk import
 const models = {
   orders: Order,
-  pickups: Pickups,
+  users: User,
+  prizes: Prize,
 };
 
 // --- Helpers parsing baris dari CSV/XLSX ---
@@ -53,7 +53,7 @@ const parseUserRow = (row) => ({
   refreshToken: null,
 });
 
-// PARSE USER
+// PARSE PRIZE
 const parsePrizeRow = (row) => ({
   id: DEFAULT,
   prize:
