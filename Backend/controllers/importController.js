@@ -55,7 +55,6 @@ const parseUserRow = (row) => ({
 
 // PARSE PRIZE
 const parsePrizeRow = (row) => ({
-  id: DEFAULT,
   prize:
     row.prize ??
     row.Prize ??
