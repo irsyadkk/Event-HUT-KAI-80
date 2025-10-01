@@ -68,6 +68,7 @@ const AdminDesktopPage = () => {
 
   // ===================== API CALLS =====================
   const openImportModalForCurrentTable = () => {
+    if (selectedTable !== "order") return;
     setImportOpen(true);
     setImportMsg(null);
     setImportFile(null);
@@ -1045,7 +1046,6 @@ const AdminDesktopPage = () => {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* tombol Import mengikuti tab aktif */}
-            
 
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
@@ -1053,17 +1053,18 @@ const AdminDesktopPage = () => {
                 ? "Data Peserta Terdaftar"
                 : "Data Pickup"}
             </h2>
-            <button
-              onClick={openImportModalForCurrentTable}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-              title={`Import ${
-                selectedTable === "order" ? "Peserta" : "Pickup"
-              } (.csv/.xlsx)`}
-            >
-              Import {selectedTable === "order" ? "Peserta" : "Pickup"}{" "}
-              (.csv/.xlsx)
-            </button>
+
             {/* tombol export */}
+            {selectedTable === "order" && (
+              <button
+                onClick={openImportModalForCurrentTable}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                title="Import Peserta (.csv/.xlsx)"
+              >
+                Import Peserta (.csv/.xlsx)
+              </button>
+            )}
+
             {selectedTable === "order" ? (
               <button
                 onClick={exportExcelOrder}
@@ -1078,7 +1079,6 @@ const AdminDesktopPage = () => {
               >
                 Export Data Pickup ke Excel (.xlsx)
               </button>
-              
             )}
 
             {/* tombol switch + reset */}
