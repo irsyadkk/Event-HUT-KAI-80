@@ -62,6 +62,7 @@ const parsePrizeRow = (row) => ({
     row.nama ??
     row.Nama ??
     row.NAMA ??
+    row["Nama Hadiah"] ??
     null,
   kategori: row.kategori ?? row.Kategori ?? row.KATEGORI ?? null,
   pemenang: row.pemenang ?? row.Pemenang ?? row.PEMENANG ?? null,
