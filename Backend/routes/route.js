@@ -1,4 +1,6 @@
 import express from "express";
+import multer from "multer";
+import { importFile } from "../controllers/importController.js";
 import { refreshToken } from "../controllers/refreshToken.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import {
@@ -49,6 +51,8 @@ import {
 } from "../controllers/winnerController.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
+
 // REFRESH TOKEN
 router.get("/token", refreshToken);
 
@@ -101,4 +105,8 @@ router.get("/winner", getWinner);
 router.get("/winner/:nipp", verifyToken, getWinnerByNipp);
 router.put("/winner/:nipp", verifyToken, editWinnerByNipp);
 router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
+
+// IMPORT DATA FROM CSV/XLSX
+router.post("/import/:table", upload.single("file"), importFile);
+
 export default router;
