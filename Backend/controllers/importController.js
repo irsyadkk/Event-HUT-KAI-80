@@ -6,6 +6,7 @@ import XLSX from "xlsx";
 import Order from "../models/orderModel.js";
 import Pickups from "../models/pickupModel.js";
 import db from "../config/Database.js";
+import { refreshToken } from "./refreshToken.js";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -44,17 +45,28 @@ const parseOrdersRow = (row) => {
   };
 };
 
-// Pickups: mengikuti export kamu
-const parsePickupsRow = (row) => ({
-  timestamp: row.timestamp ?? row.Timestamp ?? null,
-  nipp: String(row.nipp ?? row.NIPP ?? "").trim(),
-  nama: row.nama ?? row.Nama ?? null,
-  jumlah_kuota: Number(row.jumlah_kuota ?? row["Jumlah Kuota"] ?? 0) || 0,
-  jenis_pengambilan: row.jenis_pengambilan ?? row["Jenis Pengambilan"] ?? null,
-  pos_pengambilan: row.pos_pengambilan ?? row["Pos Pengambilan"] ?? null,
-  nipp_pj: row.nipp_pj ?? row["NIPP Penanggung Jawab"] ?? null,
-  nama_pj: row.nama_pj ?? row["Nama Penanggung Jawab"] ?? null,
-  status: row.status ?? row.Status ?? null,
+// PARSE USER
+const parseUserRow = (row) => ({
+  nipp: (row.nipp ?? row.Nipp ?? row.NIPP).trim(),
+  nama: row.nama ?? row.Nama ?? row.NAMA ?? null,
+  penetapan: Number(row.penetapan ?? row.Penetapan ?? row.PENETAPAN ?? null),
+  refreshToken: null,
+});
+
+// PARSE USER
+const parsePrizeRow = (row) => ({
+  id: DEFAULT,
+  prize:
+    row.prize ??
+    row.Prize ??
+    row.PRIZE ??
+    row.nama ??
+    row.Nama ??
+    row.NAMA ??
+    null,
+  kategori: row.kategori ?? row.Kategori ?? row.KATEGORI ?? null,
+  pemenang: row.pemenang ?? row.Pemenang ?? row.PEMENANG ?? null,
+  status: row.status ?? row.Status ?? row.STATUS ?? null,
 });
 
 export const importFile = async (req, res) => {
@@ -92,8 +104,10 @@ export const importFile = async (req, res) => {
     let payload = [];
     if (table === "orders") {
       payload = rows.map(parseOrdersRow).filter((r) => r.nipp);
-    } else if (table === "pickups") {
-      payload = rows.map(parsePickupsRow).filter((r) => r.nipp);
+    } else if (table === "users") {
+      payload = rows.map(parseUserRow).filter((r) => r.nipp);
+    } else if (table === "prizes") {
+      payload = rows.map(parsePrizeRow).filter((r) => r.prize);
     }
 
     // --- Insert dengan transaksi ---
