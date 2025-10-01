@@ -97,10 +97,6 @@ export const deletePrizeById = async (req, res) => {
   const t = await db.transaction();
   try {
     const { id } = req.params;
-    const { nipp } = req.body || {};
-
-    const nippTrim = String(nipp || "").trim();
-    if (!nippTrim) throw makeError("nipp field cannot be empty", 400);
 
     const ifPrizeExist = await Prize.findOne({
       where: { id },
@@ -109,21 +105,7 @@ export const deletePrizeById = async (req, res) => {
     });
     if (!ifPrizeExist) throw makeError("Prize Not Found !", 404);
 
-    // Pastikan NIPP ada di tabel winners
-    const ifWinnerExist = await Winner.findOne({
-      where: { nipp: nippTrim },
-      transaction: t,
-      lock: t.LOCK.UPDATE,
-    });
-    if (!ifWinnerExist) throw makeError(`NIPP ${nippTrim} Not Found in winners Table !`, 404);
-
     await Prize.destroy({ where: { id }, transaction: t });
-
-    // Reset status NIPP terkait
-    await Winner.update(
-      { status: "Belum Verifikasi" },
-      { where: { nipp: nippTrim }, transaction: t }
-    );
 
     await t.commit();
     await broadcastPrizes(req);
