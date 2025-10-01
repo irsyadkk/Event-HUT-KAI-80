@@ -12,6 +12,8 @@ import VerificationPage from "./components/verificationPage";
 import WinnerInputPage from "./components/winnerInputPage";
 import WinnerDisplayPage from "./components/winnerDisplayPage";
 import PrizeNamesPage from "./components/prizeNamesPage";
+import EditRegisterPage from "./components/editRegisterPage";
+import EditPickupPage from "./components/editPickupPage";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
         <Route path="/winnerinput" element={<WinnerInputPage />} />
         <Route path="/winnerdisplay" element={<WinnerDisplayPage />} />
         <Route path="/prizenames" element={<PrizeNamesPage />} />
+        <Route path="/detailregister/edit" element={<EditRegisterPage />} />
+        <Route path="/pickup/edit" element={<EditPickupPage />} />
       </Routes>
     </BrowserRouter>
   );

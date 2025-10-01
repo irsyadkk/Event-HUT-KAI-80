@@ -899,7 +899,10 @@ const AdminDesktopPage = () => {
 
           {selectedTable === "order" ? (
             /* ---------- TABEL ORDER ---------- */
-            <div key="order-table" className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <div
+              key="order-table"
+              className="overflow-x-auto max-h-[400px] overflow-y-auto"
+            >
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -994,16 +997,39 @@ const AdminDesktopPage = () => {
                           {order.keberangkatan ?? "-"}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => {
-                              navigate("/detailregister", {
-                                state: { nipp: order.nipp },
-                              });
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all duration-200 hover:shadow-lg transform hover:scale-105"
-                          >
-                            Detail
-                          </button>
+                          <div className="flex justify-center gap-4">
+                            {/* Tombol Detail */}
+                            <button
+                              onClick={() =>
+                                navigate("/detailregister", {
+                                  state: { nipp: order.nipp },
+                                })
+                              }
+                              className="inline-flex items-center px-4 py-2 
+                 bg-gradient-to-r from-yellow-500 to-yellow-600 
+                 hover:from-yellow-600 hover:to-yellow-700 
+                 text-white text-sm font-medium rounded-lg shadow 
+                 transition-all"
+                            >
+                              Detail
+                            </button>
+
+                            {/* Tombol Edit */}
+                            <button
+                              onClick={() =>
+                                navigate("/detailregister/edit", {
+                                  state: { nipp: order.nipp },
+                                })
+                              }
+                              className="inline-flex items-center px-4 py-2 
+                 bg-gradient-to-r from-blue-600 to-blue-700 
+                 hover:from-blue-700 hover:to-blue-800 
+                 text-white text-sm font-medium rounded-lg shadow 
+                 transition-all"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1013,7 +1039,10 @@ const AdminDesktopPage = () => {
             </div>
           ) : (
             /* ---------- TABEL PICKUP ---------- */
-            <div key="pickup-table" className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <div
+              key="pickup-table"
+              className="overflow-x-auto max-h-[400px] overflow-y-auto"
+            >
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -1046,6 +1075,9 @@ const AdminDesktopPage = () => {
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                       Status
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -1119,6 +1151,26 @@ const AdminDesktopPage = () => {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
                             {pickup.status ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() =>
+                                navigate("/pickup/edit", {
+                                  state: {
+                                    // minimal butuh nipp; tambahkan id/timestamp kalau halaman edit-mu memerlukannya
+                                    nipp: pickup.nipp,
+                                    timestamp: pickup.timestamp ?? null,
+                                  },
+                                })
+                              }
+                              className="inline-flex items-center px-4 py-2 
+                     bg-gradient-to-r from-blue-600 to-blue-700 
+                     hover:from-blue-700 hover:to-blue-800 
+                     text-white text-sm font-medium rounded-lg shadow 
+                     transition-all"
+                            >
+                              Edit
+                            </button>
                           </td>
                         </tr>
                       );
