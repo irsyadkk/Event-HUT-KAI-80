@@ -70,13 +70,11 @@ const EditPickupPage = () => {
     setError("");
     try {
       await api.put(`/pickup/${nippAwal}`, {
-        nipp,
-        nama,
-        jumlah_kuota: Number(jumlahKuota),
+        // nipp, nama, jumlah_kuota tidak ikut diubah (readOnly)
         jenis_pengambilan: jenisPengambilan,
         pos_pengambilan: posPengambilan,
-        nipp_pj: nippPj,
-        nama_pj: namaPj,
+        nipp_pj: jenisPengambilan === "KOLEKTIF" ? nippPj : "",
+        nama_pj: jenisPengambilan === "KOLEKTIF" ? namaPj : "",
       });
 
       navigate("/admindesk", { state: { focus: "pickup" } });
@@ -127,6 +125,7 @@ const EditPickupPage = () => {
 
             {/* grid 2 kolom supaya compact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* NIPP */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   NIPP
@@ -134,11 +133,12 @@ const EditPickupPage = () => {
                 <input
                   type="text"
                   value={nipp}
-                  onChange={(e) => setNipp(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
+                  readOnly
+                  className="w-full border-2 border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed rounded-xl px-4 py-2"
                 />
               </div>
 
+              {/* Nama */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nama
@@ -146,11 +146,12 @@ const EditPickupPage = () => {
                 <input
                   type="text"
                   value={nama}
-                  onChange={(e) => setNama(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
+                  readOnly
+                  className="w-full border-2 border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed rounded-xl px-4 py-2"
                 />
               </div>
 
+              {/* Jumlah Kuota */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Jumlah Kuota
@@ -158,11 +159,12 @@ const EditPickupPage = () => {
                 <input
                   type="number"
                   value={jumlahKuota}
-                  onChange={(e) => setJumlahKuota(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
+                  readOnly
+                  className="w-full border-2 border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed rounded-xl px-4 py-2"
                 />
               </div>
 
+              {/* Jenis Pengambilan */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Jenis Pengambilan
@@ -181,6 +183,7 @@ const EditPickupPage = () => {
                 </select>
               </div>
 
+              {/* Pos Pengambilan */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Pos Pengambilan
@@ -199,29 +202,34 @@ const EditPickupPage = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  NIPP Penanggung Jawab
-                </label>
-                <input
-                  type="text"
-                  value={nippPj}
-                  onChange={(e) => setNippPj(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
-                />
-              </div>
+              {/* PJ muncul hanya kalau KOLEKTIF */}
+              {jenisPengambilan === "KOLEKTIF" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      NIPP Penanggung Jawab
+                    </label>
+                    <input
+                      type="text"
+                      value={nippPj}
+                      onChange={(e) => setNippPj(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama Penanggung Jawab
-                </label>
-                <input
-                  type="text"
-                  value={namaPj}
-                  onChange={(e) => setNamaPj(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nama Penanggung Jawab
+                    </label>
+                    <input
+                      type="text"
+                      value={namaPj}
+                      onChange={(e) => setNamaPj(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-2"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-4">

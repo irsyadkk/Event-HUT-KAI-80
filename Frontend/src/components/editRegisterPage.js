@@ -18,7 +18,7 @@ const LOKASI_OPTIONS = [
 export default function EditRegisterPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const nipp = state?.nipp;
+  const nippParam = state?.nipp;
 
   const [allowed, setAllowed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,18 +36,18 @@ export default function EditRegisterPage() {
     const nippLogin = localStorage.getItem("nipp");
     if (!token || !nippLogin) return navigate("/");
     if (nippLogin !== ADMIN_NIPP) return navigate("/");
-    if (!nipp) return navigate("/admindesk");
+    if (!nippParam) return navigate("/admindesk");
     setAllowed(true);
-  }, [navigate, nipp]);
+  }, [navigate, nippParam]);
 
   // load data awal
   useEffect(() => {
-    if (!allowed || !nipp) return;
+    if (!allowed || !nippParam) return;
     (async () => {
       setLoading(true);
       setError("");
       try {
-        const res = await api.get(`/order/${nipp}`);
+        const res = await api.get(`/order/${nippParam}`);
         const data = res?.data?.data;
         setAnggota(Array.isArray(data?.nama) ? data.nama : []);
         setTransportasi(data?.transportasi ?? "");
@@ -59,13 +59,11 @@ export default function EditRegisterPage() {
         setLoading(false);
       }
     })();
-  }, [allowed, nipp]);
+  }, [allowed, nippParam]);
 
+  // edit inline nama anggota
   const updateAnggota = (idx, val) =>
     setAnggota((prev) => prev.map((v, i) => (i === idx ? val : v)));
-  const addAnggota = () => setAnggota((prev) => [...prev, ""]);
-  const removeAnggota = (idx) =>
-    setAnggota((prev) => prev.filter((_, i) => i !== idx));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -77,14 +75,13 @@ export default function EditRegisterPage() {
     setSaving(true);
     setError("");
     try {
-      // SESUAI ROUTE: router.put("/order/:nipp", verifyToken, editOrder)
-      await api.put(`/order/${nipp}`, {
+      // PUT /order/:nipp
+      await api.put(`/order/${nippParam}`, {
         nama: cleaned,
         transportasi,
         keberangkatan,
       });
-      // kembali ke halaman detail dengan nipp yang sama
-      navigate("/detailregister", { state: { nipp } });
+      navigate("/detailregister", { state: { nipp: nippParam } });
     } catch (e) {
       console.error(e);
       setError(e?.response?.data?.message || "Gagal menyimpan perubahan.");
@@ -104,6 +101,7 @@ export default function EditRegisterPage() {
       }}
     >
       <div className="max-w-3xl mx-auto">
+        {/* Logo */}
         <div className="flex justify-center mb-6">
           <img
             src={LogoKAI}
@@ -112,13 +110,14 @@ export default function EditRegisterPage() {
           />
         </div>
 
+        {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-800">
               Edit Registrasi
             </h1>
             <span className="text-sm text-gray-500">
-              NIPP: <b>{nipp}</b>
+              NIPP: <b>{nippParam}</b>
             </span>
           </div>
 
@@ -132,38 +131,43 @@ export default function EditRegisterPage() {
                 </div>
               )}
 
+              {/* NIPP (readonly) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  NIPP
+                </label>
+                <input
+                  type="text"
+                  value={nippParam}
+                  readOnly
+                  className="w-full border-2 border-gray-200 bg-gray-100 rounded-xl px-4 py-2 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+
               {/* Anggota */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Anggota Keluarga
                 </label>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {anggota.map((nm, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={nm}
-                        onChange={(e) => updateAnggota(idx, e.target.value)}
-                        className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder={`Nama anggota #${idx + 1}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeAnggota(idx)}
-                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
-                      >
-                        Hapus
-                      </button>
-                    </div>
+                    <input
+                      key={idx}
+                      type="text"
+                      value={nm}
+                      onChange={(e) => {
+                        if (idx !== 0) updateAnggota(idx, e.target.value); // hanya bisa edit selain index 0
+                      }}
+                      readOnly={idx === 0} // anggota pertama tidak bisa diubah
+                      className={`w-full border-2 rounded-xl px-4 py-2 focus:ring-2 ${
+                        idx === 0
+                          ? "bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
+                          : "border-gray-200 focus:ring-green-500 focus:border-green-500"
+                      }`}
+                      placeholder={`Nama anggota #${idx + 1}`}
+                    />
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={addAnggota}
-                  className="mt-3 px-4 py-2 bg-gray-800 hover:bg-black text-white rounded-xl"
-                >
-                  + Tambah Anggota
-                </button>
               </div>
 
               {/* Transportasi & Keberangkatan */}
