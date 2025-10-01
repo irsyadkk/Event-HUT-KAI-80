@@ -27,12 +27,8 @@ export const resetSingleTable = async (req, res) => {
 
     const t = await db.transaction();
     try {
-        await ModelToTruncate.destroy({
-            where: {},
-            truncate: true,
-            cascade: true,
-            transaction: t,
-        });
+        await db.query(`TRUNCATE TABLE "${ModelToTruncate.tableName}" RESTART IDENTITY CASCADE;`, { transaction: t });
+
 
         await t.commit();
         res.status(200).json({
@@ -40,7 +36,9 @@ export const resetSingleTable = async (req, res) => {
             message: `Semua data dari tabel '${tableName}' berhasil dihapus.`,
         });
     } catch (error) {
-        await t.rollback();
+        if (!t.finished) {
+            await t.rollback();
+        }
         res.status(500).json({
             status: "Error",
             message: `Gagal me-reset tabel '${tableName}'.`,

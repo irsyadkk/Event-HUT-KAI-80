@@ -48,6 +48,12 @@ const AdminDesktopPage = () => {
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
+  // di paling atas bersama state lain
+  const [importTarget, setImportTarget] = useState(null); // 'orders' | 'pickups' | 'users'
+
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [usersMsg, setUsersMsg] = useState(null); // {text, type}
 
   // ✅ cek token & role admin
   useEffect(() => {
@@ -67,6 +73,12 @@ const AdminDesktopPage = () => {
   }, [navigate]);
 
   // ===================== API CALLS =====================
+  const openImportModalForTableUsers = () => {
+    setImportTarget("users");
+    setImportOpen(true);
+    setImportMsg(null);
+    setImportFile(null);
+  };
   const openImportModalForCurrentTable = () => {
     if (selectedTable !== "order") return;
     setImportOpen(true);
@@ -79,22 +91,30 @@ const AdminDesktopPage = () => {
       setImportMsg({ text: "Pilih file terlebih dahulu.", type: "error" });
       return;
     }
+    if (!importTarget) {
+      setImportMsg({ text: "Target import tidak valid.", type: "error" });
+      return;
+    }
+
     setImportLoading(true);
     try {
-      const table = selectedTable === "order" ? "orders" : "pickups";
       const form = new FormData();
       form.append("file", importFile);
 
-      await api.post(`/import/${table}`, form, {
+      await api.post(`/import/${importTarget}`, form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // refresh data sesuai tabel
-      if (table === "orders") await getAllOrders();
-      else await getAllPickups();
+      // refresh sesuai target
+      if (importTarget === "orders") await getAllOrders();
+      else if (importTarget === "pickups") await getAllPickups();
+      else if (importTarget === "users") await getAllUsers();
 
       setImportOpen(false);
-      setImportMsg({ text: `Import ${table} berhasil.`, type: "success" });
+      setImportMsg({
+        text: `Import ${importTarget} berhasil.`,
+        type: "success",
+      });
     } catch (err) {
       setImportMsg({
         text: err?.response?.data?.message || "Gagal import.",
@@ -103,6 +123,13 @@ const AdminDesktopPage = () => {
     } finally {
       setImportLoading(false);
     }
+  };
+
+  const openResetModalForTableUsers = () => {
+    const table = "users";
+    setResetTarget(table);
+    setResetCascade(false);
+    setResetOpen(true);
   };
 
   const openResetModalForCurrentTable = () => {
@@ -137,6 +164,43 @@ const AdminDesktopPage = () => {
     } finally {
       setIsResetting(false);
     }
+  };
+
+  // --- function ambil semua users
+  const getAllUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    setUsersMsg(null);
+    try {
+      const res = await api.get("/users"); // verifyToken akan cek token dr interceptor
+      setUsers(res?.data?.data || []);
+    } catch (err) {
+      console.error("Gagal mengambil data users:", err);
+      setUsersMsg({
+        text: err?.response?.data?.message || "Gagal mengambil data users.",
+        type: "error",
+      });
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
+  // --- export users ke excel (opsional)
+  const exportExcelUsers = () => {
+    if (!users || users.length === 0) return;
+    const data = users.map((u, i) => ({
+      No: i + 1,
+      NIPP: u.nipp,
+      Nama: u.nama,
+      Penetapan: u.penetapan,
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, "DataUsers.xlsx");
   };
 
   const getAllOrders = useCallback(async () => {
@@ -446,8 +510,9 @@ const AdminDesktopPage = () => {
       getAllOrders();
       getAllPickups();
       getQuota();
+      getAllUsers(); // <-- ambil data users
     }
-  }, [allowed, getAllOrders, getQuota]);
+  }, [allowed, getAllOrders, getAllPickups, getQuota, getAllUsers]);
 
   // Download QR
   const downloadQRCode = () => {
@@ -688,10 +753,13 @@ const AdminDesktopPage = () => {
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
               <h2 className="text-2xl font-bold mb-2 text-gray-800">
                 Import{" "}
-                {selectedTable === "order"
+                {importTarget === "orders"
                   ? "Data Peserta (orders)"
-                  : "Data Pickup (pickups)"}
+                  : importTarget === "pickups"
+                  ? "Data Pickup (pickups)"
+                  : "Data Users (users)"}
               </h2>
+
               <p className="text-sm text-gray-600 mb-4">
                 Format file: <b>.csv</b> atau <b>.xlsx</b>. Gunakan header yang
                 sesuai (lihat template di bawah).
@@ -706,8 +774,8 @@ const AdminDesktopPage = () => {
 
               {/* Template info kecil */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-700 mb-4">
-                {selectedTable === "order" ? (
-                  <div>
+                {importTarget === "orders" ? (
+                  <>
                     <p className="font-semibold mb-1">
                       Template kolom (orders):
                     </p>
@@ -717,9 +785,9 @@ const AdminDesktopPage = () => {
                     <p className="mt-1">
                       Contoh Anggota Keluarga: <i>Andi,Budi,Citra</i>
                     </p>
-                  </div>
-                ) : (
-                  <div>
+                  </>
+                ) : importTarget === "pickups" ? (
+                  <>
                     <p className="font-semibold mb-1">
                       Template kolom (pickups):
                     </p>
@@ -728,7 +796,14 @@ const AdminDesktopPage = () => {
                       Pos Pengambilan, NIPP Penanggung Jawab, Nama Penanggung
                       Jawab, Status
                     </code>
-                  </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold mb-1">
+                      Template kolom (users):
+                    </p>
+                    <code>nipp, nama, penetapan</code>
+                  </>
                 )}
               </div>
 
@@ -842,6 +917,117 @@ const AdminDesktopPage = () => {
             </div>
           )}
         </div>
+
+        {/* ==== TABEL USERS (baru) - diletakkan tepat di bawah Pencarian Pegawai ==== */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              Data Users
+            </h2>
+            <div className="flex gap-3">
+              <button
+                onClick={openImportModalForTableUsers}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                title="Import Users (.csv/.xlsx)"
+              >
+                Import Users (.csv/.xlsx)
+              </button>
+              <button
+                onClick={openResetModalForTableUsers}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
+                title={`Reset semua data di tabel`}
+              >
+                Reset Tabel Users
+              </button>
+
+              <button
+                onClick={exportExcelUsers}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                disabled={users.length === 0}
+              >
+                Export Data Users (.xlsx)
+              </button>
+            </div>
+          </div>
+
+          {usersMsg && (
+            <div
+              className={`m-4 p-4 rounded-xl ${
+                usersMsg.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-700"
+                  : "bg-green-50 border border-green-200 text-green-700"
+              }`}
+            >
+              <p className="font-medium">{usersMsg.text}</p>
+            </div>
+          )}
+
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    No
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    NIPP
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Nama
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                    Penetapan
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {isLoadingUsers ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      Memuat data users...
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      Belum ada data users.
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((u, i) => (
+                    <tr
+                      key={`user-${u.id ?? u.nipp}`}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {i + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                          {u.nipp}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {u.nama}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {u.penetapan}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/* ==== akhir TABEL USERS ==== */}
 
         {/* Search Pegawai Result */}
         {searchPegawaiResult && (
@@ -1045,8 +1231,6 @@ const AdminDesktopPage = () => {
         {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* tombol Import mengikuti tab aktif */}
-
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               {selectedTable === "order"
