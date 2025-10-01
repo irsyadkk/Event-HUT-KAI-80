@@ -1,4 +1,6 @@
 import express from "express";
+import multer from "multer";
+import { importFile } from "../controllers/importController.js";
 import { refreshToken } from "../controllers/refreshToken.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import {
@@ -50,6 +52,8 @@ import {
 import { resetSingleTable } from "../controllers/resetDataController.js";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
+
 // REFRESH TOKEN
 router.get("/token", refreshToken);
 
@@ -105,5 +109,7 @@ router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
 
 // RESET DATA TABLE
 router.delete("/reset/:tableName", verifyToken, resetSingleTable);
+// IMPORT DATA FROM CSV/XLSX
+router.post("/import/:table", upload.single("file"), importFile);
 
 export default router;
