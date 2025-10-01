@@ -48,6 +48,8 @@ const AdminDesktopPage = () => {
   const [importFile, setImportFile] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
+  // di paling atas bersama state lain
+  const [importTarget, setImportTarget] = useState(null); // 'orders' | 'pickups' | 'users'
 
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -72,6 +74,7 @@ const AdminDesktopPage = () => {
 
   // ===================== API CALLS =====================
   const openImportModalForTableUsers = () => {
+    setImportTarget("users");
     setImportOpen(true);
     setImportMsg(null);
     setImportFile(null);
@@ -88,22 +91,30 @@ const AdminDesktopPage = () => {
       setImportMsg({ text: "Pilih file terlebih dahulu.", type: "error" });
       return;
     }
+    if (!importTarget) {
+      setImportMsg({ text: "Target import tidak valid.", type: "error" });
+      return;
+    }
+
     setImportLoading(true);
     try {
-      const table = selectedTable === "order" ? "orders" : "pickups";
       const form = new FormData();
       form.append("file", importFile);
 
-      await api.post(`/import/${table}`, form, {
+      await api.post(`/import/${importTarget}`, form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // refresh data sesuai tabel
-      if (table === "orders") await getAllOrders();
-      else await getAllPickups();
+      // refresh sesuai target
+      if (importTarget === "orders") await getAllOrders();
+      else if (importTarget === "pickups") await getAllPickups();
+      else if (importTarget === "users") await getAllUsers();
 
       setImportOpen(false);
-      setImportMsg({ text: `Import ${table} berhasil.`, type: "success" });
+      setImportMsg({
+        text: `Import ${importTarget} berhasil.`,
+        type: "success",
+      });
     } catch (err) {
       setImportMsg({
         text: err?.response?.data?.message || "Gagal import.",
@@ -742,10 +753,13 @@ const AdminDesktopPage = () => {
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
               <h2 className="text-2xl font-bold mb-2 text-gray-800">
                 Import{" "}
-                {selectedTable === "order"
+                {importTarget === "orders"
                   ? "Data Peserta (orders)"
-                  : "Data Pickup (pickups)"}
+                  : importTarget === "pickups"
+                  ? "Data Pickup (pickups)"
+                  : "Data Users (users)"}
               </h2>
+
               <p className="text-sm text-gray-600 mb-4">
                 Format file: <b>.csv</b> atau <b>.xlsx</b>. Gunakan header yang
                 sesuai (lihat template di bawah).
@@ -760,8 +774,8 @@ const AdminDesktopPage = () => {
 
               {/* Template info kecil */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-700 mb-4">
-                {selectedTable === "order" ? (
-                  <div>
+                {importTarget === "orders" ? (
+                  <>
                     <p className="font-semibold mb-1">
                       Template kolom (orders):
                     </p>
@@ -771,9 +785,9 @@ const AdminDesktopPage = () => {
                     <p className="mt-1">
                       Contoh Anggota Keluarga: <i>Andi,Budi,Citra</i>
                     </p>
-                  </div>
-                ) : (
-                  <div>
+                  </>
+                ) : importTarget === "pickups" ? (
+                  <>
                     <p className="font-semibold mb-1">
                       Template kolom (pickups):
                     </p>
@@ -782,7 +796,14 @@ const AdminDesktopPage = () => {
                       Pos Pengambilan, NIPP Penanggung Jawab, Nama Penanggung
                       Jawab, Status
                     </code>
-                  </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold mb-1">
+                      Template kolom (users):
+                    </p>
+                    <code>nipp, nama, penetapan</code>
+                  </>
                 )}
               </div>
 
@@ -1210,8 +1231,6 @@ const AdminDesktopPage = () => {
         {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
- 
-
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               {selectedTable === "order"
