@@ -47,6 +47,7 @@ import {
   getWinner,
   getWinnerByNipp,
 } from "../controllers/winnerController.js";
+import { resetSingleTable } from "../controllers/resetDataController.js";
 
 const router = express.Router();
 // REFRESH TOKEN
@@ -101,4 +102,8 @@ router.get("/winner", getWinner);
 router.get("/winner/:nipp", verifyToken, getWinnerByNipp);
 router.put("/winner/:nipp", verifyToken, editWinnerByNipp);
 router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
+
+// RESET DATA TABLE
+router.delete("/reset/:tableName", verifyToken, resetSingleTable);
+
 export default router;
