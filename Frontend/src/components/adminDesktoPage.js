@@ -37,6 +37,17 @@ const AdminDesktopPage = () => {
   const [namaAdd, setNamaAdd] = useState("");
   const [penetapanAdd, setPenetapanAdd] = useState("");
   const [selectedTable, setSelectedTable] = useState("order");
+  // --- Reset table states
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null); // 'orders' | 'pickups'
+  const [resetCascade, setResetCascade] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetMsg, setResetMsg] = useState(null); // { text, type: 'success' | 'error' }
+
+  const [importOpen, setImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importMsg, setImportMsg] = useState(null);
 
   // ✅ cek token & role admin
   useEffect(() => {
@@ -56,6 +67,77 @@ const AdminDesktopPage = () => {
   }, [navigate]);
 
   // ===================== API CALLS =====================
+  const openImportModalForCurrentTable = () => {
+    setImportOpen(true);
+    setImportMsg(null);
+    setImportFile(null);
+  };
+
+  const doImport = async () => {
+    if (!importFile) {
+      setImportMsg({ text: "Pilih file terlebih dahulu.", type: "error" });
+      return;
+    }
+    setImportLoading(true);
+    try {
+      const table = selectedTable === "order" ? "orders" : "pickups";
+      const form = new FormData();
+      form.append("file", importFile);
+
+      await api.post(`/import/${table}`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // refresh data sesuai tabel
+      if (table === "orders") await getAllOrders();
+      else await getAllPickups();
+
+      setImportOpen(false);
+      setImportMsg({ text: `Import ${table} berhasil.`, type: "success" });
+    } catch (err) {
+      setImportMsg({
+        text: err?.response?.data?.message || "Gagal import.",
+        type: "error",
+      });
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const openResetModalForCurrentTable = () => {
+    const table = selectedTable === "order" ? "orders" : "pickups";
+    setResetTarget(table);
+    setResetCascade(false);
+    setResetOpen(true);
+  };
+
+  const doResetTable = async () => {
+    if (!resetTarget) return;
+    setIsResetting(true);
+    try {
+      // kalau mau cascade: /reset/orders?cascade=true
+      const qs = resetCascade ? "?cascade=true" : "";
+      await api.delete(`/reset/${resetTarget}${qs}`);
+
+      if (resetTarget === "orders") await getAllOrders();
+      if (resetTarget === "pickups") await getAllPickups();
+
+      setResetOpen(false);
+      setResetMsg({
+        text: `Berhasil reset tabel ${resetTarget}.`,
+        type: "success",
+      });
+    } catch (err) {
+      console.error("Gagal reset:", err);
+      setResetMsg({
+        text: err?.response?.data?.message || "Gagal reset tabel.",
+        type: "error",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const getAllOrders = useCallback(async () => {
     try {
       const res = await api.get("/order");
@@ -557,6 +639,117 @@ const AdminDesktopPage = () => {
             </div>
           </div>
         )}
+        {resetOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">
+                Reset Tabel {resetTarget === "orders" ? "Order" : "Pickup"}
+              </h2>
+              <p className="text-sm text-gray-700 mb-4">
+                Aksi ini akan <b>menghapus semua data</b> dari tabel{" "}
+                <b>{resetTarget}</b>. Lanjutkan?
+              </p>
+
+              <label className="flex items-center gap-2 mb-6 select-none">
+                <input
+                  type="checkbox"
+                  checked={resetCascade}
+                  onChange={(e) => setResetCascade(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-gray-700">
+                  Gunakan <b>CASCADE</b> (hapus baris terkait yang punya FK).
+                  Gunakan jika ada constraint yang menghalangi TRUNCATE.
+                </span>
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setResetOpen(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all font-medium"
+                  disabled={isResetting}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={doResetTable}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-medium"
+                  disabled={isResetting}
+                >
+                  {isResetting ? "Menghapus..." : "Ya, Reset"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {importOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+                Import{" "}
+                {selectedTable === "order"
+                  ? "Data Peserta (orders)"
+                  : "Data Pickup (pickups)"}
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Format file: <b>.csv</b> atau <b>.xlsx</b>. Gunakan header yang
+                sesuai (lihat template di bawah).
+              </p>
+
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4"
+              />
+
+              {/* Template info kecil */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-700 mb-4">
+                {selectedTable === "order" ? (
+                  <div>
+                    <p className="font-semibold mb-1">
+                      Template kolom (orders):
+                    </p>
+                    <code>
+                      nipp, Anggota Keluarga, Transportasi, Keberangkatan
+                    </code>
+                    <p className="mt-1">
+                      Contoh Anggota Keluarga: <i>Andi,Budi,Citra</i>
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-semibold mb-1">
+                      Template kolom (pickups):
+                    </p>
+                    <code>
+                      Timestamp, NIPP, Nama, Jumlah Kuota, Jenis Pengambilan,
+                      Pos Pengambilan, NIPP Penanggung Jawab, Nama Penanggung
+                      Jawab, Status
+                    </code>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setImportOpen(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all font-medium"
+                  disabled={importLoading}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={doImport}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl transition-all font-medium"
+                  disabled={importLoading}
+                >
+                  {importLoading ? "Mengunggah..." : "Upload & Import"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add User Section */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -851,12 +1044,26 @@ const AdminDesktopPage = () => {
         {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* tombol Import mengikuti tab aktif */}
+            
+
             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
               {selectedTable === "order"
                 ? "Data Peserta Terdaftar"
                 : "Data Pickup"}
             </h2>
+            <button
+              onClick={openImportModalForCurrentTable}
+              className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+              title={`Import ${
+                selectedTable === "order" ? "Peserta" : "Pickup"
+              } (.csv/.xlsx)`}
+            >
+              Import {selectedTable === "order" ? "Peserta" : "Pickup"}{" "}
+              (.csv/.xlsx)
+            </button>
+            {/* tombol export */}
             {selectedTable === "order" ? (
               <button
                 onClick={exportExcelOrder}
@@ -871,9 +1078,11 @@ const AdminDesktopPage = () => {
               >
                 Export Data Pickup ke Excel (.xlsx)
               </button>
+              
             )}
-            {/* tombol switch table */}
-            <div className="flex gap-3">
+
+            {/* tombol switch + reset */}
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedTable("order")}
                 className={`px-4 py-2 rounded-lg font-medium ${
@@ -893,6 +1102,17 @@ const AdminDesktopPage = () => {
                 }`}
               >
                 Pickup
+              </button>
+
+              {/* --- TOMBOL RESET TABEL (current tab) --- */}
+              <button
+                onClick={openResetModalForCurrentTable}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
+                title={`Reset semua data di tabel ${
+                  selectedTable === "order" ? "Order" : "Pickup"
+                }`}
+              >
+                Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
               </button>
             </div>
           </div>
