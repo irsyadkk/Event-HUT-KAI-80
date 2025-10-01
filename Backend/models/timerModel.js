@@ -4,8 +4,13 @@ import db from "../config/Database.js";
 const Timer = db.define(
   "timer",
   {
+    id: {
+      type: Sequelize.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     date: {
-      type: Sequelize.DATE,
+      type: "TIMESTAMP WITHOUT TIME ZONE",
       allowNull: false,
     },
   },
