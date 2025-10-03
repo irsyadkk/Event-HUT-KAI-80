@@ -291,3 +291,66 @@ export async function logout(req, res) {
   res.clearCookie("refreshToken");
   return res.sendStatus(200);
 }
+
+// UPDATE USER
+export const updateUser = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const { nipp, nama, penetapan } = req.body;
+    const nippParam = req.params.nipp;
+
+    // Cari user lama
+    const userOld = await User.findOne({
+      where: { nipp: nippParam },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!userOld) {
+      throw makeError("User Not Found !", 404);
+    }
+
+    const namaOld = userOld.nama;
+
+    // Update user
+    await User.update(
+      { nipp: nipp, nama: nama, penetapan: penetapan },
+      { where: { nipp: nippParam }, transaction: t }
+    );
+
+    // Kalau nama berubah, update di tabel lain
+    if (nama && nama !== namaOld) {
+      // Update pickup langsung
+      await db.models.pickups.update(
+        { nama: nama },
+        { where: { nipp: nipp }, transaction: t }
+      );
+
+      // Update nama[1] di orders dengan raw query
+      await db.query(
+        `
+        UPDATE orders
+        SET nama[1] = :nama
+        WHERE nipp = :nipp
+          AND nama[1] = :namaOld
+        `,
+        {
+          replacements: { nama, nipp, namaOld },
+          transaction: t,
+        }
+      );
+    }
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `User ${nippParam} updated successfully`,
+      data: { nipp, nama, penetapan },
+    });
+  } catch (error) {
+    if (!t.finished) await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};

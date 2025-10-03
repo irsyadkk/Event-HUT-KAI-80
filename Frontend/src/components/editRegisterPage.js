@@ -177,6 +177,8 @@ const EditRegisterPage = () => {
   const [quota, setQuota] = useState(0);
   const [quotaTotal, setQuotaTotal] = useState(0);
   const [sisaPenetapan, setSisaPenetapan] = useState(0);
+  const [sisaPenetapanTemp, setSisaPenetapanTemp] = useState(0);
+  const [basePrefillCount, setBasePrefillCount] = useState(0);
 
   const [modalInfo, setModalInfo] = useState({
     isOpen: false,
@@ -202,7 +204,7 @@ const EditRegisterPage = () => {
     }
   }, [navigate]);
 
-  // Ambil user + (opsional) prefill order, TAPI tidak mengunci UI lagi
+  // Ambil user + prefill order (tanpa mengunci UI)
   useEffect(() => {
     if (!isDataLoaded || !nipp) return;
     const loadData = async () => {
@@ -214,14 +216,7 @@ const EditRegisterPage = () => {
         const sisa = Number(userData.penetapan ?? 0);
         setSisaPenetapan(sisa);
 
-        // set data pegawai (readOnly)
-        setUserFromUsers({
-          id: "user-main",
-          name: pegawaiName,
-          fromUser: true,
-        });
-
-        // 2) Ambil order untuk PREFILL saja (bukan untuk lock)
+        // 2) Ambil order untuk PREFILL (jika ada)
         let orderData = {};
         try {
           const orderRes = await api.get(`/order/${nipp}`);
@@ -231,7 +226,8 @@ const EditRegisterPage = () => {
         }
 
         const orderNames = Array.isArray(orderData.nama) ? orderData.nama : [];
-        // status hadir default berdasar prefill: jika nama pertama = pegawai → hadir
+
+        // Status hadir default: jika nama pertama = pegawai → hadir
         if (
           orderNames.length > 0 &&
           orderNames[0]?.trim()?.toLowerCase() === pegawaiName.toLowerCase()
@@ -244,11 +240,7 @@ const EditRegisterPage = () => {
         setLokasi(orderData.keberangkatan || "");
         setTransportasi(orderData.transportasi || "");
 
-        // 3) Simpan sisa kuota keluarga sesuai kolom penetapan di tabel users
-
-        // 4) Susun daftar anggota:
-        //    - Pegawai selalu first, flagged `fromUser: true` (readOnly + tidak bisa hapus)
-        //    - Semua nama lain (dari order lama) dianggap editable biasa (BUKAN fromOrder)
+        // 3) Susun daftar anggota
         const prefills = orderNames
           .filter(
             (nm) => nm && nm.trim().toLowerCase() !== pegawaiName.toLowerCase()
@@ -264,6 +256,15 @@ const EditRegisterPage = () => {
           { id: "user-main", name: pegawaiName, fromUser: true },
           ...prefills,
         ]);
+        setUserFromUsers({
+          id: "user-main",
+          name: pegawaiName,
+          fromUser: true,
+        });
+
+        // 4) Inisialisasi sisaPenetapanTemp = penetapan - jumlah prefills
+        setSisaPenetapanTemp(sisa);
+        setBasePrefillCount(prefills.length);
       } catch (err) {
         console.error("Gagal memuat data:", err);
         setModalInfo({
@@ -277,7 +278,7 @@ const EditRegisterPage = () => {
     loadData();
   }, [isDataLoaded, nipp]);
 
-  // Kuota global
+  // Kuota global (opsional, info)
   const getQuota = useCallback(async () => {
     try {
       const res = await api.get("/quota");
@@ -287,18 +288,14 @@ const EditRegisterPage = () => {
       console.error("Gagal mengambil data quota :", err);
     }
   }, []);
-
   useEffect(() => {
     getQuota();
   }, [getQuota]);
 
   // ===== Helpers =====
-  const addedRowsCount = () =>
-    members.filter((m) => !m.fromUser && m.source === "added").length;
-  const canAddMember = () => addedRowsCount() < sisaPenetapan;
-
   const familyFilledCount = () =>
     members.filter((m) => !m.fromUser && (m.name || "").trim() !== "").length;
+  const canAddMember = () => sisaPenetapanTemp > 0;
 
   const handleMemberNameChange = (id, newName) => {
     setMembers((prev) =>
@@ -308,8 +305,13 @@ const EditRegisterPage = () => {
 
   const handleRemoveMember = (id) => {
     const target = members.find((m) => m.id === id);
-    if (target?.fromUser) return; // CHANGED: pegawai tidak bisa dihapus
+    if (target?.fromUser) return; // pegawai tidak bisa dihapus
+
+    // hapus anggota
     setMembers((prev) => prev.filter((m) => m.id !== id));
+
+    // sesuai niat: apapun sumbernya (prefill/added), hapus keluarga → +1 slot
+    setSisaPenetapanTemp((prev) => prev + 1);
   };
 
   const handleAddMember = () => {
@@ -317,11 +319,12 @@ const EditRegisterPage = () => {
       setModalInfo({
         isOpen: true,
         title: "Kuota Tambah Habis",
-        message: `Sisa penetapan Anda ${sisaPenetapan}. Anda sudah menambah ${addedRowsCount()} baris pada sesi ini.`,
+        message: `Sisa penetapan Anda ${sisaPenetapan}.`,
         type: "warning",
       });
       return;
     }
+    setSisaPenetapanTemp((prev) => Math.max(0, prev - 1)); // decrement aman
     const newId = `new-${Date.now()}`;
     setMembers((prev) => [
       ...prev,
@@ -336,9 +339,22 @@ const EditRegisterPage = () => {
     setModalInfo({ isOpen: false, title: "", message: "", type: "info" });
   };
 
-  // Submit: selalu PUT (upsert) — CHANGED
+  // Submit: selalu PUT (upsert)
   const submitOrder = async () => {
     try {
+      // Validasi: total keluarga terisi tidak boleh > sisa penetapan
+      const totalKeluarga = familyFilledCount();
+      const maxAllowed = basePrefillCount + sisaPenetapan;
+      if (totalKeluarga > maxAllowed) {
+        setModalInfo({
+          isOpen: true,
+          title: "Melebihi Batas",
+          message: `Anggota keluarga (${totalKeluarga}) melebihi batas (${maxAllowed}).`,
+          type: "warning",
+        });
+        return;
+      }
+
       await api.put(`/order/${nipp}`, {
         nipp,
         nama: members
@@ -384,17 +400,19 @@ const EditRegisterPage = () => {
       return;
     }
 
-    if (addedRowsCount() > sisaPenetapan) {
+    const totalKeluarga = familyFilledCount();
+    const maxAllowed = basePrefillCount + sisaPenetapan;
+    if (totalKeluarga > maxAllowed) {
       setModalInfo({
         isOpen: true,
         title: "Melebihi Sisa Penetapan",
-        message: `Baris tambahan (${addedRowsCount()}) melebihi sisa penetapan (${sisaPenetapan}).`,
+        message: `Anggota keluarga (${totalKeluarga}) melebihi sisa penetapan (${sisaPenetapan}).`,
         type: "warning",
       });
       return;
     }
 
-    // Jika pegawai "tidak hadir", wajib ada minimal satu anggota lain
+    // Jika pegawai "tidak hadir", wajib minimal satu anggota lain
     const anggotaLain = members.filter(
       (m) => !m.fromUser && (m.name || "").trim() !== ""
     );
@@ -422,7 +440,7 @@ const EditRegisterPage = () => {
 
   const getMemberLabel = (member, index) => {
     if (member.fromUser) return "Data Pegawai";
-    return `Anggota Keluarga ${index}`; // CHANGED: semuanya editable selain pegawai
+    return `Anggota Keluarga ${index}`;
   };
 
   const getMemberPlaceholder = (member) =>
@@ -482,7 +500,7 @@ const EditRegisterPage = () => {
               </p>
             </div>
 
-            {/* Informasi Keberangkatan (SELALU editable) */}
+            {/* Informasi Keberangkatan */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Informasi Keberangkatan
@@ -560,7 +578,7 @@ const EditRegisterPage = () => {
                             onChange={(e) =>
                               handleMemberNameChange(member.id, e.target.value)
                             }
-                            readOnly={member.fromUser} // CHANGED: cuma pegawai yang readOnly
+                            readOnly={member.fromUser}
                             placeholder={getMemberPlaceholder(member)}
                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
                               member.fromUser
@@ -641,7 +659,7 @@ const EditRegisterPage = () => {
             </div>
 
             {/* Tombol tambah anggota */}
-            {isDataLoaded && addedRowsCount() < sisaPenetapan && (
+            {isDataLoaded && canAddMember() && (
               <div className="flex justify-center mb-8">
                 <button
                   type="button"

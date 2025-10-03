@@ -11,6 +11,7 @@ import {
   addUser,
   addPenetapanByNIPP,
   subPenetapanByNIPP,
+  updateUser,
 } from "../controllers/userController.js";
 import {
   addOrder,
@@ -69,6 +70,7 @@ router.get("/users/:nipp", verifyToken, getUserByNIPP);
 router.post("/users", verifyToken, addUser);
 router.patch("/usersadd/:nipp", verifyToken, addPenetapanByNIPP);
 router.patch("/userssub/:nipp", verifyToken, subPenetapanByNIPP);
+router.patch("/user/:nipp",verifyToken, updateUser);
 
 // ORDER
 router.post("/order", verifyToken, addOrder);
