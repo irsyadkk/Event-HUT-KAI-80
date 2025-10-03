@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import Quota from "../models/quotaModel.js";
 import QRCode from "qrcode";
 import db from "../config/Database.js";
+import Pickups from "../models/pickupModel.js";
 
 const makeError = (msg, code = 400) => {
   const error = new Error(msg);
@@ -361,6 +362,7 @@ export const editOrder = async (req, res) => {
     // UPDATE DB
     const updatedPenetapan = user.penetapan - penguranganPenetapan;
     const updatedQuota = quota.quota - penguranganQuota;
+    const namaLength = nama.length;
 
     await User.update(
       { penetapan: updatedPenetapan },
@@ -369,6 +371,10 @@ export const editOrder = async (req, res) => {
     await Quota.update(
       { quota: updatedQuota },
       { where: { id: 1 }, transaction: t }
+    );
+    await Pickups.update(
+      { jumlah_kuota: namaLength },
+      { where: { nipp: nipp }, transaction: t }
     );
 
     const qrData = JSON.stringify({ nipp, nama, status });
