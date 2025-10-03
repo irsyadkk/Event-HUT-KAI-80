@@ -14,6 +14,7 @@ const InputNipp = () => {
   const [allowed, setAllowed] = useState(false);
   const [targetTime, setTargetTime] = useState(null);
   const [active, setActive] = useState(false);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     const fetchTimer = async () => {
@@ -22,7 +23,9 @@ const InputNipp = () => {
         const timer = res.data.data;
         const timerDate = timer.date;
         const active = timer.active;
+        const ended = timer.ended;
         setActive(active);
+        setEnded(ended);
         if (timerDate) {
           setTargetTime(new Date(timerDate));
         }
@@ -49,7 +52,7 @@ const InputNipp = () => {
     const now = new Date();
     if (!active) {
       setAllowed(true);
-    } else if (active && now < targetTime) {
+    } else if ((active && now < targetTime) || ended) {
       setAllowed(false);
       navigate("/");
     } else {
