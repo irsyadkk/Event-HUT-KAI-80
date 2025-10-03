@@ -13,73 +13,69 @@ const LoginAdmin = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  //   const handleSubmit = async (e) => {
-  //     e.preventDefault();
-  //     setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  //     if (!nipp) {
-  //       setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
-  //       setIsLoading(false);
-  //       return;
-  //     } else if (nipp.length < 5) {
-  //       setMessage({ text: "NIPP minimal 5 karakter!", type: "error" });
-  //       setIsLoading(false);
-  //       return;
-  //     } else if (!password) {
-  //       setMessage({ text: "Password tidak boleh kosong!", type: "error" });
-  //       setIsLoading(false);
-  //       return;
-  //     }
+    if (!nipp) {
+      setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
+      setIsLoading(false);
+      return;
+    } else if (nipp.length < 5) {
+      setMessage({ text: "NIPP minimal 5 karakter!", type: "error" });
+      setIsLoading(false);
+      return;
+    }
 
-  //     try {
-  //       // Login request
-  //       const response = await axios.post(`${BASE_URL}/login`, { nipp });
+    try {
+      // Login request
+      const response = await axios.post(`${BASE_URL}/login`, { nipp });
 
-  //       console.log("Login success:", response.data);
-  //       localStorage.setItem("token", response.data.accessToken);
-  //       localStorage.setItem("nipp", response.data.user.nipp);
-  //       localStorage.setItem("nama", response.data.user.nama);
+      console.log("Login success:", response.data);
+      localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("nipp", response.data.user.nipp);
+      localStorage.setItem("nama", response.data.user.nama);
 
-  //       setMessage({ text: "Selamat Datang", type: "success" });
-  //       // Check if order exists (handle 404 as normal)
-  //       let orderExists = false;
-  //       try {
-  //         const ifOrderExist = await api.get(`${BASE_URL}/order/${nipp}`);
-  //         if (ifOrderExist.data) {
-  //           orderExists = true;
-  //         }
-  //       } catch (err) {
-  //         if (err.response?.status === 404) {
-  //           // Order not found is okay, just continue
-  //           orderExists = false;
-  //         } else {
-  //           // Other errors should be thrown
-  //           throw err;
-  //         }
-  //       }
+      setMessage({ text: "Selamat Datang", type: "success" });
+      // Check if order exists (handle 404 as normal)
+      let orderExists = false;
+      try {
+        const ifOrderExist = await api.get(`${BASE_URL}/order/${nipp}`);
+        if (ifOrderExist.data) {
+          orderExists = true;
+        }
+      } catch (err) {
+        if (err.response?.status === 404) {
+          // Order not found is okay, just continue
+          orderExists = false;
+        } else {
+          // Other errors should be thrown
+          throw err;
+        }
+      }
 
-  //       if (orderExists) {
-  //         navigate(`/qrresult`, { state: { nipp } });
-  //         setIsLoading(false);
-  //         return;
-  //       }
+      if (orderExists) {
+        navigate(`/qrresult`, { state: { nipp } });
+        setIsLoading(false);
+        return;
+      }
 
-  //       if (response.data.user.nipp === ADMIN_NIPP) {
-  //         navigate("/admindesk");
-  //       } else {
-  //         navigate("/addmembers", { state: { nipp } });
-  //       }
-  //     } catch (error) {
-  //       console.error("Login failed:", error);
-  //       let errorMessage = "Login gagal. Periksa NIPP anda";
-  //       if (error.response?.data?.msg) {
-  //         errorMessage = error.response.data.msg;
-  //       }
-  //       setMessage({ text: errorMessage, type: "error" });
-  //     }
+      if (response.data.user.nipp === ADMIN_NIPP) {
+        navigate("/admindesk");
+      } else {
+        navigate("/addmembers", { state: { nipp } });
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      let errorMessage = "Login gagal. Periksa NIPP anda";
+      if (error.response?.data?.msg) {
+        errorMessage = error.response.data.msg;
+      }
+      setMessage({ text: errorMessage, type: "error" });
+    }
 
-  //     setIsLoading(false);
-  //   };
+    setIsLoading(false);
+  };
 
   return (
     <div
@@ -105,7 +101,7 @@ const LoginAdmin = () => {
 
         {/* Main Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={navigate("/admindesk")} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Input Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
