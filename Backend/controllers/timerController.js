@@ -37,13 +37,13 @@ export const getTimer = async (req, res) => {
 export const addEditTimer = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { date, status } = req.body;
+    const { date, status, ended } = req.body;
 
-    if (!date) {
-      throw makeError("date field cannot be empty !", 400);
-    }
     if (status === undefined) {
       throw makeError("status field cannot be empty !", 400);
+    }
+    if (ended === undefined) {
+      throw makeError("ended field cannot be empty !", 400);
     }
 
     const inputDate = new Date(date);
@@ -57,12 +57,12 @@ export const addEditTimer = async (req, res) => {
 
     if (!timer) {
       await Timer.create(
-        { id: 1, date: date, active: status },
+        { id: 1, date: date, active: status, ended: ended },
         { transaction: t }
       );
     } else {
       await Timer.update(
-        { date: date, active: status },
+        { date: date, active: status, ended: ended },
         { where: { id: 1 }, transaction: t }
       );
     }
@@ -72,7 +72,7 @@ export const addEditTimer = async (req, res) => {
 
     res.status(200).json({
       status: "Success",
-      message: `Timer set to ${date} with active status ${status} !`,
+      message: `Timer set to ${date} with active status ${status} and ended ${ended} !`,
       data: timer,
     });
   } catch (error) {
