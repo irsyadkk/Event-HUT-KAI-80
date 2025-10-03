@@ -14,7 +14,7 @@ import WinnerDisplayPage from "./components/winnerDisplayPage";
 import PrizeNamesPage from "./components/prizeNamesPage";
 import EditRegisterPage from "./components/editRegisterPage";
 import EditPickupPage from "./components/editPickupPage";
-import TimerForm from "./components/testpage";
+import TimerForm from "./components/testTimer";
 
 function App() {
   return (

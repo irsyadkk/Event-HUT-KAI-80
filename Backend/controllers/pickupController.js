@@ -34,14 +34,14 @@ export const addPickup = async (req, res) => {
       const msg = !nipp
         ? "nipp field cannot be empty !"
         : !nama
-        ? "nama field cannot be empty !"
-        : !jumlah_kuota
-        ? "Status field cannot be empty !"
-        : !jenis_pengambilan
-        ? "jenis_pengambilan field cannot be empty !"
-        : !pos_pengambilan
-        ? "pos_pengambilan field cannot be empty !"
-        : "status field cannot be empty !";
+          ? "nama field cannot be empty !"
+          : !jumlah_kuota
+            ? "Status field cannot be empty !"
+            : !jenis_pengambilan
+              ? "jenis_pengambilan field cannot be empty !"
+              : !pos_pengambilan
+                ? "pos_pengambilan field cannot be empty !"
+                : "status field cannot be empty !";
       throw makeError(msg, 400);
     }
 
@@ -176,6 +176,66 @@ export const deletePickupByNIPP = async (req, res) => {
     });
   } catch (error) {
     await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// Edit pickup
+export const editPickupByNIPP = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const {
+      jenis_pengambilan,
+      pos_pengambilan,
+      nipp_pj,
+      nama_pj,
+    } = req.body;
+
+    const pickup = await Pickups.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    })
+
+    if (!pickup) {
+      throw makeError("Pickup Not Found!!", 404);
+    }
+
+    if (jenis_pengambilan && !["INDIVIDU", "KOLEKTIF"].includes(jenis_pengambilan)) {
+      throw makeError("jenis_pengambilan must be INDIVIDU or KOLEKTIF", 400);
+    }
+
+    let updatedData = {
+      jenis_pengambilan: jenis_pengambilan ?? pickup.jenis_pengambilan,
+      pos_pengambilan: pos_pengambilan ?? pickup.pos_pengambilan,
+    };
+
+    if (jenis_pengambilan === "KOLEKTIF" || pickup.jenis_pengambilan === "KOLEKTIF") {
+      updatedData.nipp_pj = nipp_pj ?? pickup.nipp_pj;
+      updatedData.nama_pj = nama_pj ?? pickup.nama_pj;
+    } else {
+      updatedData.nipp_pj = null;
+      updatedData.nama_pj = null;
+    }
+
+    await Pickups.update(updatedData, {
+      where: { nipp: nipp },
+      transaction: t,
+    });
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Pickup ${nipp} Updated !`,
+      data: updatedData,
+    });
+  } catch (error) {
+    if (!t.finished) {
+      await t.rollback();
+    }
     res.status(error.statusCode || 500).json({
       status: "Error...",
       message: error.message,

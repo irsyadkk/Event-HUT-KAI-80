@@ -13,6 +13,10 @@ const Timer = db.define(
       type: "TIMESTAMP WITHOUT TIME ZONE",
       allowNull: false,
     },
+    active: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+    },
   },
   {
     freezeTableName: true,

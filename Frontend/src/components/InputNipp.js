@@ -4,6 +4,7 @@ import axios from "axios";
 import { BASE_URL, ADMIN_NIPP } from "../utils";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api";
+import { io } from "socket.io-client";
 
 const InputNipp = () => {
   const navigate = useNavigate();
@@ -11,18 +12,50 @@ const InputNipp = () => {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [allowed, setAllowed] = useState(false);
+  const [targetTime, setTargetTime] = useState(null);
+  const [active, setActive] = useState(false);
 
-  // CHANGE THIS AND targetTime IN landingPage.js TO SYNC
-  const targetTime = new Date("2025-09-14T15:00:00+07:00");
-//
   useEffect(() => {
+    const fetchTimer = async () => {
+      try {
+        const res = await api.get("/timer");
+        const timer = res.data.data;
+        const timerDate = timer.date;
+        const active = timer.active;
+        setActive(active);
+        if (timerDate) {
+          setTargetTime(new Date(timerDate));
+        }
+      } catch (err) {
+        console.error("Gagal ambil timer:", err);
+      }
+    };
+
+    fetchTimer();
+  }, []);
+
+  useEffect(() => {
+    const socket = io(BASE_URL);
+    socket.on("TIMER_UPDATE", (timer) => {
+      setActive(timer.active);
+      setTargetTime(new Date(timer.date));
+    });
+    return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!targetTime) return;
+
     const now = new Date();
-    if (now < targetTime) {
+    if (!active) {
+      setAllowed(true);
+    } else if (active && now < targetTime) {
+      setAllowed(false);
       navigate("/");
     } else {
       setAllowed(true);
     }
-  }, [navigate]);
+  }, [targetTime, navigate]);
 
   if (!allowed) return null;
 

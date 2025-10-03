@@ -37,30 +37,42 @@ export const getTimer = async (req, res) => {
 export const addEditTimer = async (req, res) => {
   const t = await db.transaction();
   try {
-    const { date } = req.body;
+    const { date, status } = req.body;
 
     if (!date) {
-      throw makeError("Date field cannot be empty!", 400);
+      throw makeError("date field cannot be empty !", 400);
+    }
+    if (status === undefined) {
+      throw makeError("status field cannot be empty !", 400);
     }
 
-    // Cari timer id=1
+    const inputDate = new Date(date);
+    const now = new Date();
+
+    if (inputDate <= now) {
+      throw makeError("date must be grater than current date !");
+    }
+
     let timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
 
     if (!timer) {
-      // Insert baru
-      timer = await Timer.create({ id: 1, date }, { transaction: t });
+      await Timer.create(
+        { id: 1, date: date, active: status },
+        { transaction: t }
+      );
     } else {
-      // Update existing
-      await Timer.update({ date }, { where: { id: 1 }, transaction: t });
-      // Ambil ulang hasil update
-      timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
+      await Timer.update(
+        { date: date, active: status },
+        { where: { id: 1 }, transaction: t }
+      );
     }
+    timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
 
     await t.commit();
 
     res.status(200).json({
       status: "Success",
-      message: `Timer set to ${date}`,
+      message: `Timer set to ${date} with active status ${status} !`,
       data: timer,
     });
   } catch (error) {
