@@ -52,7 +52,10 @@ const InputNipp = () => {
     const now = new Date();
     if (!active) {
       setAllowed(true);
-    } else if ((active && now < targetTime) || ended) {
+    } else if (active && now < targetTime) {
+      setAllowed(false);
+      navigate("/");
+    } else if (ended) {
       setAllowed(false);
       navigate("/");
     } else {
