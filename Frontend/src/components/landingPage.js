@@ -211,9 +211,6 @@ function LandingPage() {
                     <p className="text-xl lg:text-2xl font-black">
                       EVENT SUDAH BERAKHIR
                     </p>
-                    <p className="text-sm lg:text-base opacity-90">
-                      Sampai jumpa di event berikutnya 👋
-                    </p>
                   </div>
                 </div>
               ) : active && targetTime && timeLeft > 0 ? (
@@ -249,8 +246,9 @@ function LandingPage() {
               {/* Main Action Button */}
               <button
                 onClick={() => {
+                  if (ended) return; // pasif jika event berakhir
                   if (active && timeLeft > 0) {
-                    navigate("/");
+                    navigate("/"); // menunggu registrasi mulai
                   } else {
                     navigate("/inputnipp");
                   }
@@ -258,26 +256,24 @@ function LandingPage() {
                 className={`w-full py-6 lg:py-8 px-8 rounded-3xl font-black text-lg lg:text-xl shadow-2xl 
                 transition-all duration-500 transform relative overflow-hidden
                 ${
-                  active && timeLeft > 0
+                  ended
+                    ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                    : active && timeLeft > 0
                     ? "bg-gray-500 text-gray-300 cursor-not-allowed"
                     : "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 text-gray-900 hover:scale-105 hover:shadow-3xl animate-pulse"
                 }`}
-                disabled={active && timeLeft > 0}
+                disabled={ended || (active && timeLeft > 0)}
               >
-                {!active && timeLeft <= 0 && (
+                {/* Glow animasi hanya saat aktif untuk check-in */}
+                {!ended && !(active && timeLeft > 0) && (
                   <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/50 to-orange-500/50 blur-xl animate-pulse"></div>
                 )}
-                <span className="relative z-10 flex items-center justify-center space-x-3">
-                  {active && timeLeft > 0 ? (
-                    <>
-                      <span>⏳</span>
-                      <span>Menunggu Registrasi...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>CHECK IN UNTUK LIHAT TIKET</span>
-                    </>
-                  )}
+                <span className="relative z-10 flex items-center justify-center text-center">
+                  {ended
+                    ? "SAMPAI JUMPA DI EVENT BERIKUTNYA"
+                    : active && timeLeft > 0
+                    ? "Menunggu Registrasi..."
+                    : "CHECK IN UNTUK LIHAT TIKET"}
                 </span>
               </button>
             </div>
