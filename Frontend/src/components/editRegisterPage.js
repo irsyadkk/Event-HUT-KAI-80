@@ -13,54 +13,24 @@ const ModalIcon = ({ type }) => {
   if (type === "success")
     return (
       <div className={`${base} bg-green-100`}>
-        <svg
-          className="w-8 h-8 text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M5 13l4 4L19 7"
-          />
+        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
         </svg>
       </div>
     );
   if (type === "error")
     return (
       <div className={`${base} bg-red-100`}>
-        <svg
-          className="w-8 h-8 text-red-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
+        <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </div>
     );
   if (type === "warning")
     return (
       <div className={`${base} bg-yellow-100`}>
-        <svg
-          className="w-8 h-8 text-yellow-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z"
-          />
+        <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>
       </div>
     );
@@ -111,33 +81,17 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm w-full mx-4">
         <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-blue-100">
-          <svg
-            className="w-8 h-8 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
+          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
         </div>
         <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
         <div className="text-gray-600 mb-8">{children}</div>
         <div className="flex gap-4">
-          <button
-            onClick={onClose}
-            className="w-full px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-all"
-          >
+          <button onClick={onClose} className="w-full px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-all">
             Batal
           </button>
-          <button
-            onClick={onConfirm}
-            className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all"
-          >
+          <button onClick={onConfirm} className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all">
             Ya, Yakin
           </button>
         </div>
@@ -149,15 +103,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, children }) => {
 // ===== Konstanta =====
 const STATUS_HADIR = "hadir";
 const STATUS_TIDAK = "tidak hadir";
-const LOKASI_OPTIONS = [
-  "purworejo",
-  "DI Yogyakarta",
-  "klaten",
-  "surakarta",
-  "sragen",
-  "wonogiri",
-  "magelang",
-];
+const LOKASI_OPTIONS = ["purworejo", "DI Yogyakarta", "klaten", "surakarta", "sragen", "wonogiri", "magelang"];
 const TRANSPORTASI_OPTIONS = ["kendaraan pribadi", "kendaraan umum / online"];
 
 const EditRegisterPage = () => {
@@ -177,13 +123,9 @@ const EditRegisterPage = () => {
   const [quota, setQuota] = useState(0);
   const [quotaTotal, setQuotaTotal] = useState(0);
   const [sisaPenetapan, setSisaPenetapan] = useState(0);
+  const [sisaPenetapanTemp, setSisaPenetapanTemp] = useState(0);
 
-  const [modalInfo, setModalInfo] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-  });
+  const [modalInfo, setModalInfo] = useState({ isOpen: false, title: "", message: "", type: "info" });
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   // Auth check
@@ -202,7 +144,7 @@ const EditRegisterPage = () => {
     }
   }, [navigate]);
 
-  // Ambil user + (opsional) prefill order, TAPI tidak mengunci UI lagi
+  // Ambil user + prefill order (tanpa mengunci UI)
   useEffect(() => {
     if (!isDataLoaded || !nipp) return;
     const loadData = async () => {
@@ -214,14 +156,7 @@ const EditRegisterPage = () => {
         const sisa = Number(userData.penetapan ?? 0);
         setSisaPenetapan(sisa);
 
-        // set data pegawai (readOnly)
-        setUserFromUsers({
-          id: "user-main",
-          name: pegawaiName,
-          fromUser: true,
-        });
-
-        // 2) Ambil order untuk PREFILL saja (bukan untuk lock)
+        // 2) Ambil order untuk PREFILL (jika ada)
         let orderData = {};
         try {
           const orderRes = await api.get(`/order/${nipp}`);
@@ -231,11 +166,9 @@ const EditRegisterPage = () => {
         }
 
         const orderNames = Array.isArray(orderData.nama) ? orderData.nama : [];
-        // status hadir default berdasar prefill: jika nama pertama = pegawai → hadir
-        if (
-          orderNames.length > 0 &&
-          orderNames[0]?.trim()?.toLowerCase() === pegawaiName.toLowerCase()
-        ) {
+
+        // Status hadir default: jika nama pertama = pegawai → hadir
+        if (orderNames.length > 0 && orderNames[0]?.trim()?.toLowerCase() === pegawaiName.toLowerCase()) {
           setStatusHadir(STATUS_HADIR);
         } else {
           setStatusHadir(STATUS_TIDAK);
@@ -244,26 +177,16 @@ const EditRegisterPage = () => {
         setLokasi(orderData.keberangkatan || "");
         setTransportasi(orderData.transportasi || "");
 
-        // 3) Simpan sisa kuota keluarga sesuai kolom penetapan di tabel users
-
-        // 4) Susun daftar anggota:
-        //    - Pegawai selalu first, flagged `fromUser: true` (readOnly + tidak bisa hapus)
-        //    - Semua nama lain (dari order lama) dianggap editable biasa (BUKAN fromOrder)
+        // 3) Susun daftar anggota
         const prefills = orderNames
-          .filter(
-            (nm) => nm && nm.trim().toLowerCase() !== pegawaiName.toLowerCase()
-          )
-          .map((nm, i) => ({
-            id: `prefill-${i}`,
-            name: nm,
-            fromUser: false,
-            source: "prefill",
-          }));
+          .filter((nm) => nm && nm.trim().toLowerCase() !== pegawaiName.toLowerCase())
+          .map((nm, i) => ({ id: `prefill-${i}`, name: nm, fromUser: false, source: "prefill" }));
 
-        setMembers([
-          { id: "user-main", name: pegawaiName, fromUser: true },
-          ...prefills,
-        ]);
+        setMembers([{ id: "user-main", name: pegawaiName, fromUser: true }, ...prefills]);
+        setUserFromUsers({ id: "user-main", name: pegawaiName, fromUser: true });
+
+        // 4) Inisialisasi sisaPenetapanTemp = penetapan - jumlah prefills
+        setSisaPenetapanTemp(Math.max(0, sisa - prefills.length));
       } catch (err) {
         console.error("Gagal memuat data:", err);
         setModalInfo({
@@ -277,7 +200,7 @@ const EditRegisterPage = () => {
     loadData();
   }, [isDataLoaded, nipp]);
 
-  // Kuota global
+  // Kuota global (opsional, info)
   const getQuota = useCallback(async () => {
     try {
       const res = await api.get("/quota");
@@ -287,29 +210,27 @@ const EditRegisterPage = () => {
       console.error("Gagal mengambil data quota :", err);
     }
   }, []);
-
   useEffect(() => {
     getQuota();
   }, [getQuota]);
 
   // ===== Helpers =====
-  const addedRowsCount = () =>
-    members.filter((m) => !m.fromUser && m.source === "added").length;
-  const canAddMember = () => addedRowsCount() < sisaPenetapan;
-
-  const familyFilledCount = () =>
-    members.filter((m) => !m.fromUser && (m.name || "").trim() !== "").length;
+  const familyFilledCount = () => members.filter((m) => !m.fromUser && (m.name || "").trim() !== "").length;
+  const canAddMember = () => sisaPenetapanTemp > 0;
 
   const handleMemberNameChange = (id, newName) => {
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, name: newName } : m))
-    );
+    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, name: newName } : m)));
   };
 
   const handleRemoveMember = (id) => {
     const target = members.find((m) => m.id === id);
-    if (target?.fromUser) return; // CHANGED: pegawai tidak bisa dihapus
+    if (target?.fromUser) return; // pegawai tidak bisa dihapus
+
+    // hapus anggota
     setMembers((prev) => prev.filter((m) => m.id !== id));
+
+    // sesuai niat: apapun sumbernya (prefill/added), hapus keluarga → +1 slot
+    setSisaPenetapanTemp((prev) => prev + 1);
   };
 
   const handleAddMember = () => {
@@ -317,16 +238,14 @@ const EditRegisterPage = () => {
       setModalInfo({
         isOpen: true,
         title: "Kuota Tambah Habis",
-        message: `Sisa penetapan Anda ${sisaPenetapan}. Anda sudah menambah ${addedRowsCount()} baris pada sesi ini.`,
+        message: `Sisa penetapan Anda ${sisaPenetapan}.`,
         type: "warning",
       });
       return;
     }
+    setSisaPenetapanTemp((prev) => Math.max(0, prev - 1)); // decrement aman
     const newId = `new-${Date.now()}`;
-    setMembers((prev) => [
-      ...prev,
-      { id: newId, name: "", fromUser: false, source: "added" },
-    ]);
+    setMembers((prev) => [...prev, { id: newId, name: "", fromUser: false, source: "added" }]);
   };
 
   const handleCloseModal = () => {
@@ -336,9 +255,21 @@ const EditRegisterPage = () => {
     setModalInfo({ isOpen: false, title: "", message: "", type: "info" });
   };
 
-  // Submit: selalu PUT (upsert) — CHANGED
+  // Submit: selalu PUT (upsert)
   const submitOrder = async () => {
     try {
+      // Validasi: total keluarga terisi tidak boleh > sisa penetapan
+      const totalKeluarga = familyFilledCount();
+      if (totalKeluarga > sisaPenetapan) {
+        setModalInfo({
+          isOpen: true,
+          title: "Melebihi Sisa Penetapan",
+          message: `Anggota keluarga (${totalKeluarga}) melebihi sisa penetapan (${sisaPenetapan}).`,
+          type: "warning",
+        });
+        return;
+      }
+
       await api.put(`/order/${nipp}`, {
         nipp,
         nama: members
@@ -352,16 +283,13 @@ const EditRegisterPage = () => {
       setModalInfo({
         isOpen: true,
         title: "Pendaftaran Disimpan!",
-        message:
-          "Data Anda berhasil disimpan dan bisa diubah kembali bila diperlukan.",
+        message: "Data Anda berhasil disimpan dan bisa diubah kembali bila diperlukan.",
         type: "success",
       });
     } catch (error) {
       console.error(error);
       const errorMessage =
-        error.response?.data?.msg ||
-        error.response?.data?.message ||
-        "Gagal menyimpan. Silakan coba lagi.";
+        error.response?.data?.msg || error.response?.data?.message || "Gagal menyimpan. Silakan coba lagi.";
       setModalInfo({
         isOpen: true,
         title: "Terjadi Kesalahan",
@@ -384,26 +312,24 @@ const EditRegisterPage = () => {
       return;
     }
 
-    if (addedRowsCount() > sisaPenetapan) {
+    const totalKeluarga = familyFilledCount();
+    if (totalKeluarga > sisaPenetapan) {
       setModalInfo({
         isOpen: true,
         title: "Melebihi Sisa Penetapan",
-        message: `Baris tambahan (${addedRowsCount()}) melebihi sisa penetapan (${sisaPenetapan}).`,
+        message: `Anggota keluarga (${totalKeluarga}) melebihi sisa penetapan (${sisaPenetapan}).`,
         type: "warning",
       });
       return;
     }
 
-    // Jika pegawai "tidak hadir", wajib ada minimal satu anggota lain
-    const anggotaLain = members.filter(
-      (m) => !m.fromUser && (m.name || "").trim() !== ""
-    );
+    // Jika pegawai "tidak hadir", wajib minimal satu anggota lain
+    const anggotaLain = members.filter((m) => !m.fromUser && (m.name || "").trim() !== "");
     if (statusHadir === STATUS_TIDAK && anggotaLain.length === 0) {
       setModalInfo({
         isOpen: true,
         title: "Tidak Bisa Mendaftar",
-        message:
-          "Anda memilih 'Tidak Hadir'. Tambahkan minimal satu anggota keluarga.",
+        message: "Anda memilih 'Tidak Hadir'. Tambahkan minimal satu anggota keluarga.",
         type: "warning",
       });
       return;
@@ -417,37 +343,28 @@ const EditRegisterPage = () => {
     submitOrder();
   };
 
-  const currentUsed =
-    familyFilledCount() + (statusHadir === STATUS_HADIR ? 1 : 0);
+  const currentUsed = familyFilledCount() + (statusHadir === STATUS_HADIR ? 1 : 0);
 
   const getMemberLabel = (member, index) => {
     if (member.fromUser) return "Data Pegawai";
-    return `Anggota Keluarga ${index}`; // CHANGED: semuanya editable selain pegawai
+    return `Anggota Keluarga ${index}`;
   };
 
-  const getMemberPlaceholder = (member) =>
-    member.fromUser ? "Nama pegawai" : "Masukkan nama anggota";
+  const getMemberPlaceholder = (member) => (member.fromUser ? "Nama pegawai" : "Masukkan nama anggota");
 
   // ===== Render =====
   return (
     <>
       <div
         className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 py-6 px-4"
-        style={{
-          background:
-            "linear-gradient(to bottom right, #406017, #527020, #334d12)",
-        }}
+        style={{ background: "linear-gradient(to bottom right, #406017, #527020, #334d12)" }}
       >
         <div className="max-w-4xl mx-auto w-full space-y-6">
           {userFromUsers && (
             <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 md:p-8 text-center border border-white/20">
               <div className="flex flex-col items-center gap-4">
                 <div className="flex justify-center mb-6">
-                  <img
-                    src={LogoKAI}
-                    alt="Logo HUT KAI 80"
-                    className="h-20 w-auto object-contain"
-                  />
+                  <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-20 w-auto object-contain" />
                 </div>
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -466,33 +383,23 @@ const EditRegisterPage = () => {
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 Data Pendaftaran
               </h2>
               <p className="text-gray-600">
-                Lengkapi informasi keberangkatan dan anggota keluarga yang akan
-                mengikuti acara.
+                Lengkapi informasi keberangkatan dan anggota keluarga yang akan mengikuti acara.
               </p>
             </div>
 
-            {/* Informasi Keberangkatan (SELALU editable) */}
+            {/* Informasi Keberangkatan */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Informasi Keberangkatan
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Informasi Keberangkatan</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label
-                    htmlFor="lokasi"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
+                  <label htmlFor="lokasi" className="block text-sm font-semibold text-gray-700 mb-2">
                     Lokasi Keberangkatan Terdekat
                   </label>
                   <select
@@ -501,9 +408,7 @@ const EditRegisterPage = () => {
                     onChange={(e) => setLokasi(e.target.value)}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all bg-white hover:border-gray-300"
                   >
-                    <option value="" disabled>
-                      Pilih Lokasi Keberangkatan Terdekat
-                    </option>
+                    <option value="" disabled>Pilih Lokasi Keberangkatan Terdekat</option>
                     {LOKASI_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
                         {opt.charAt(0).toUpperCase() + opt.slice(1)}
@@ -512,10 +417,7 @@ const EditRegisterPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label
-                    htmlFor="transportasi"
-                    className="block text-sm font-semibold text-gray-700 mb-2"
-                  >
+                  <label htmlFor="transportasi" className="block text-sm font-semibold text-gray-700 mb-2">
                     Jenis Transportasi Menuju Puncak Sosok
                   </label>
                   <select
@@ -524,9 +426,7 @@ const EditRegisterPage = () => {
                     onChange={(e) => setTransportasi(e.target.value)}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all bg-white hover:border-gray-300"
                   >
-                    <option value="" disabled>
-                      Pilih Jenis Transportasi
-                    </option>
+                    <option value="" disabled>Pilih Jenis Transportasi</option>
                     {TRANSPORTASI_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
                         {opt.charAt(0).toUpperCase() + opt.slice(1)}
@@ -539,16 +439,11 @@ const EditRegisterPage = () => {
 
             {/* Daftar Anggota */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Daftar Anggota Keluarga
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Daftar Anggota Keluarga</h3>
               <div className="space-y-6">
                 {members.length > 0 ? (
                   members.map((member, index) => (
-                    <div
-                      key={member.id}
-                      className="bg-gray-50 rounded-2xl p-6 border border-gray-200"
-                    >
+                    <div key={member.id} className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
                       <div className="flex flex-col lg:flex-row gap-6">
                         <div className="flex-1">
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -557,10 +452,8 @@ const EditRegisterPage = () => {
                           <input
                             type="text"
                             value={member.name || ""}
-                            onChange={(e) =>
-                              handleMemberNameChange(member.id, e.target.value)
-                            }
-                            readOnly={member.fromUser} // CHANGED: cuma pegawai yang readOnly
+                            onChange={(e) => handleMemberNameChange(member.id, e.target.value)}
+                            readOnly={member.fromUser}
                             placeholder={getMemberPlaceholder(member)}
                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all ${
                               member.fromUser
@@ -572,18 +465,14 @@ const EditRegisterPage = () => {
 
                         {member.fromUser && (
                           <div className="lg:w-48">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                              Status Kehadiran
-                            </label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Status Kehadiran</label>
                             <select
                               value={statusHadir}
                               onChange={(e) => setStatusHadir(e.target.value)}
                               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all bg-white hover:border-gray-300"
                             >
                               <option value={STATUS_HADIR}>✅ Hadir</option>
-                              <option value={STATUS_TIDAK}>
-                                ❌ Tidak Hadir
-                              </option>
+                              <option value={STATUS_TIDAK}>❌ Tidak Hadir</option>
                             </select>
                           </div>
                         )}
@@ -595,18 +484,8 @@ const EditRegisterPage = () => {
                               onClick={() => handleRemoveMember(member.id)}
                               className="w-full lg:w-auto px-4 py-3 text-red-600 hover:bg-red-50 border-2 border-red-300 hover:border-red-400 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                               <span className="hidden lg:inline">Hapus</span>
                             </button>
@@ -618,48 +497,26 @@ const EditRegisterPage = () => {
                 ) : (
                   <div className="text-center py-12 text-gray-500">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
-                        />
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                       </svg>
                     </div>
-                    <p className="font-medium">
-                      Memuat data anggota keluarga...
-                    </p>
+                    <p className="font-medium">Memuat data anggota keluarga...</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Tombol tambah anggota */}
-            {isDataLoaded && addedRowsCount() < sisaPenetapan && (
+            {isDataLoaded && canAddMember() && (
               <div className="flex justify-center mb-8">
                 <button
                   type="button"
                   onClick={handleAddMember}
                   className="inline-flex items-center gap-3 px-8 py-4 text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 border-2 border-green-300 hover:border-green-400 rounded-2xl transition-all duration-200 font-semibold text-lg transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Tambah Anggota Keluarga
                 </button>
@@ -673,23 +530,10 @@ const EditRegisterPage = () => {
                   type="button"
                   onClick={handleOpenConfirmModal}
                   className="w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-3 text-white"
-                  style={{
-                    background:
-                      "linear-gradient(to bottom right, #406017, #527020, #334d12)",
-                  }}
+                  style={{ background: "linear-gradient(to bottom right, #406017, #527020, #334d12)" }}
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   SIMPAN / DAFTAR
                 </button>
@@ -714,9 +558,8 @@ const EditRegisterPage = () => {
         title="Konfirmasi Pendaftaran"
       >
         <p>
-          Anda akan mendaftarkan total <strong>{currentUsed} anggota</strong>.
-          (pegawai {statusHadir === "hadir" ? "ikut" : "tidak ikut"}, keluarga
-          terisi: {familyFilledCount()}).
+          Anda akan mendaftarkan total <strong>{currentUsed} anggota</strong>. (pegawai{" "}
+          {statusHadir === "hadir" ? "ikut" : "tidak ikut"}, keluarga terisi: {familyFilledCount()}).
         </p>
       </ConfirmationModal>
     </>
