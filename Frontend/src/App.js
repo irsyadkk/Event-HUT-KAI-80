@@ -15,6 +15,7 @@ import PrizeNamesPage from "./components/prizeNamesPage";
 import EditRegisterPage from "./components/editRegisterPage";
 import EditPickupPage from "./components/editPickupPage";
 import TimerForm from "./components/testTimer";
+import LoginAdmin from "./components/loginAdmin";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/detailregister/edit" element={<EditRegisterPage />} />
         <Route path="/pickup/edit" element={<EditPickupPage />} />
         <Route path="/testtimer" element={<TimerForm />} />
+        <Route path="/loginadmin" element={<LoginAdmin />} />
       </Routes>
     </BrowserRouter>
   );
