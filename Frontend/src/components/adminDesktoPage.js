@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useTransition } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -55,6 +55,25 @@ const AdminDesktopPage = () => {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [usersMsg, setUsersMsg] = useState(null); // {text, type}
 
+  // === TIMER: state ===
+  const [timerDate, setTimerDate] = useState(""); // "YYYY-MM-DDTHH:mm" (datetime-local)
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerEnded, setTimerEnded] = useState(false); // event berakhir
+  const [timerSaving, setTimerSaving] = useState(false);
+  const [timerMsg, setTimerMsg] = useState(null); // {text, type}
+  const [timerAction, setTimerAction] = useState(""); // "" | "ACTIVATE" | "DEACTIVATE" | "END"
+  const [isPendingAction, startTransition] = useTransition();
+
+  // === TIMER: state konfirmasi ===
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmCfg, setConfirmCfg] = useState({
+    action: null, // 'ACTIVATE' | 'DEACTIVATE' | 'END'
+    title: "",
+    message: "",
+    proceedText: "",
+    loading: false,
+  });
+
   // ✅ cek token & role admin
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -71,6 +90,23 @@ const AdminDesktopPage = () => {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (!allowed) return;
+    const fetchTimer = async () => {
+      try {
+        const res = await api.get("/timer");
+        const data = res?.data?.data || {};
+        setTimerDate((data.date || "").slice(0, 16)); // yyyy-MM-ddTHH:mm untuk <input datetime-local>
+        setTimerActive(!!data.active);
+        setTimerEnded(!!data.ended);
+      } catch (err) {
+        console.error("Gagal mengambil timer:", err);
+        setTimerMsg({ text: "Gagal mengambil timer.", type: "error" });
+      }
+    };
+    fetchTimer();
+  }, [allowed]);
 
   // ===================== API CALLS =====================
   const openImportModalForTableUsers = () => {
@@ -471,6 +507,113 @@ const AdminDesktopPage = () => {
     }
   };
 
+  const formatWIB = (dateLike) => {
+    try {
+      const d = typeof dateLike === "string" ? new Date(dateLike) : dateLike;
+      const optsDate = {
+        timeZone: "Asia/Jakarta",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      };
+      const optsTime = {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      };
+      const dStr = new Intl.DateTimeFormat("id-ID", optsDate).format(d);
+      const tStr = new Intl.DateTimeFormat("id-ID", optsTime)
+        .format(d)
+        .replace(":", ".");
+      return `${dStr} pukul ${tStr}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const nowJakarta = () => new Date();
+
+  const isTimerExpired = () => {
+    if (!timerDate) return false;
+    const target = new Date(timerDate);
+    return nowJakarta().getTime() >= target.getTime();
+  };
+
+  const currentStatusText = () => {
+    if (timerEnded) return "Event berakhir.";
+    if (timerDate) {
+      if (isTimerExpired()) return "Timer sudah habis.";
+      const when = formatWIB(timerDate);
+      return timerActive
+        ? `Timer diset pada ${when}.`
+        : `Timer diset pada ${when} (nonaktif).`;
+    }
+    return timerActive ? "Timer aktif." : "Timer nonaktif.";
+  };
+
+  // === AKTIFKAN ===
+  const handleSaveTimer = async () => {
+    if (!timerDate) {
+      setTimerMsg({ text: "Waktu belum dipilih.", type: "error" });
+      return;
+    }
+    setTimerSaving(true);
+    setTimerMsg(null);
+    try {
+      await api.patch("/timer", {
+        date: timerDate,
+        status: true,
+        ended: false,
+      });
+      setTimerActive(true);
+      setTimerEnded(false);
+      setTimerMsg({ text: "Timer diaktifkan & disimpan.", type: "success" });
+      setTimerAction(""); // reset dropdown ke placeholder
+    } catch (err) {
+      console.error("Gagal mengaktifkan timer:", err);
+      setTimerMsg({ text: "Gagal mengaktifkan timer.", type: "error" });
+    } finally {
+      setTimerSaving(false);
+    }
+  };
+
+  // === MATIKAN (sebelum habis) ===
+  const handleDeactivateTimer = async () => {
+    try {
+      await api.patch("/timer", { status: false, ended: false });
+      setTimerActive(false);
+      setTimerMsg({ text: "Timer dimatikan.", type: "success" });
+      setTimerAction(""); // reset dropdown
+    } catch (err) {
+      console.error("Gagal mematikan timer:", err);
+      setTimerMsg({ text: "Gagal mematikan timer.", type: "error" });
+    }
+  };
+
+  // === AKHIRI EVENT ===
+  const handleEndEvent = async () => {
+    try {
+      await api.patch("/timer", { status: false, ended: true });
+      setTimerActive(false);
+      setTimerEnded(true);
+      setTimerMsg({ text: "Event diakhiri.", type: "success" });
+      setTimerAction(""); // reset dropdown
+    } catch (err) {
+      console.error("Gagal mengakhiri event:", err);
+      setTimerMsg({ text: "Gagal mengakhiri event.", type: "error" });
+    }
+  };
+
+  // === perubahan dropdown
+  const handleTimerActionChange = (e) => {
+    const v = e.target.value;
+    // jangan panggil setTimerMsg di sini biar render ringan
+    startTransition(() => {
+      setTimerAction(v); // render hanya Timer Card terasa halus
+    });
+  };
+
   const handleSubQuota = async () => {
     const value = Number(quotaValue);
     if (isNaN(value) || value <= 0) {
@@ -489,6 +632,60 @@ const AdminDesktopPage = () => {
       alert(`Kuota sebanyak ${value} berhasil dikurangi !`);
     } catch (err) {
       console.error("Gagal mengurangi kuota:", err);
+    }
+  };
+
+  const openConfirm = (action) => {
+    // susun pesan default
+    let title = "";
+    let message = "";
+    let proceedText = "Ya, Lanjutkan";
+
+    if (action === "ACTIVATE") {
+      title = "Aktifkan Timer?";
+      message =
+        "Timer akan diaktifkan sesuai waktu yang Anda pilih. Pastikan waktunya sudah benar.";
+      proceedText = "Aktifkan & Simpan";
+    } else if (action === "DEACTIVATE") {
+      title = "Matikan Timer?";
+      if (isTimerExpired() || !timerActive) {
+        // Safety: tidak boleh—tapi kita jaga-jaga kalau sampai terpanggil
+        message = "Timer sudah habis atau tidak aktif. Tidak dapat dimatikan.";
+      } else {
+        message =
+          "Timer yang sedang berjalan akan dimatikan. Anda bisa mengaktifkannya lagi kapan saja.";
+      }
+      proceedText = "Matikan Timer";
+    } else if (action === "END") {
+      title = "Akhiri Event?";
+      if (!isTimerExpired() && timerActive) {
+        message =
+          "Timer masih tersisa. Mengakhiri event akan secara otomatis mematikan timer dan menutup akses Check-in. Lanjutkan?";
+      } else {
+        message = "Event akan diakhiri dan akses Check-in ditutup.";
+      }
+      proceedText = "Akhiri Event";
+    }
+
+    setConfirmCfg({ action, title, message, proceedText, loading: false });
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmProceed = async () => {
+    setConfirmCfg((c) => ({ ...c, loading: true }));
+    try {
+      if (confirmCfg.action === "ACTIVATE") {
+        await handleSaveTimer();
+      } else if (confirmCfg.action === "DEACTIVATE") {
+        if (!isTimerExpired() && timerActive) {
+          await handleDeactivateTimer();
+        }
+      } else if (confirmCfg.action === "END") {
+        await handleEndEvent();
+      }
+      setConfirmOpen(false);
+    } finally {
+      setConfirmCfg((c) => ({ ...c, loading: false }));
     }
   };
 
@@ -574,7 +771,7 @@ const AdminDesktopPage = () => {
         {/* Quota Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Quota Stats */}
-          <div className="lg:col-span-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+          <div className="lg:col-span-1 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
               Status Kuota
@@ -641,6 +838,105 @@ const AdminDesktopPage = () => {
               </button>
             </div>
           </div>
+
+          {/* Timer Management */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Timer Registrasi
+            </h2>
+
+            {/* Dropdown Status Timer (placeholder bukan opsi) */}
+            <label className="block text-sm text-gray-600 mb-1">
+              Status Timer
+            </label>
+            <select
+              value={timerAction}
+              onChange={handleTimerActionChange}
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 mb-4 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-gray-900"
+            >
+              <option value="" disabled hidden>
+                Pilih Status untuk Timer
+              </option>
+              <option value="ACTIVATE">Aktifkan Timer</option>
+              <option value="DEACTIVATE">Matikan Timer</option>
+              <option value="END">Akhiri Event</option>
+            </select>
+
+            {/* Status saat ini */}
+            <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800">
+              <span className="font-semibold">Status saat ini:</span>{" "}
+              <span>{currentStatusText()}</span>
+            </div>
+
+            {/* === ACTIVATE: form + konfirmasi === */}
+            {timerAction === "ACTIVATE" && (
+              <>
+                <label className="block text-sm text-gray-600 mb-1">
+                  Pilih Waktu (WIB)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={timerDate}
+                  onChange={(e) => setTimerDate(e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 mb-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                />
+                <button
+                  onClick={() => openConfirm("ACTIVATE")}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={timerSaving || !timerDate || isPendingAction}
+                >
+                  {timerSaving ? "Menyimpan..." : "Simpan Timer"}
+                </button>
+              </>
+            )}
+
+            {/* === DEACTIVATE: tombol saja (disable jika sudah habis / tidak aktif) === */}
+            {timerAction === "DEACTIVATE" && (
+              <button
+                onClick={() => openConfirm("DEACTIVATE")}
+                className={`w-full px-4 py-3 rounded-xl shadow-lg transition-all font-medium text-white
+        ${
+          isTimerExpired() || !timerActive
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+        }`}
+                disabled={isTimerExpired() || !timerActive || isPendingAction}
+                title={
+                  isTimerExpired()
+                    ? "Timer sudah habis—tidak dapat dimatikan."
+                    : !timerActive
+                    ? "Timer tidak aktif."
+                    : "Matikan Timer"
+                }
+              >
+                Matikan Timer
+              </button>
+            )}
+
+            {/* === END: tombol saja + konfirmasi khusus jika masih ada sisa === */}
+            {timerAction === "END" && (
+              <button
+                onClick={() => openConfirm("END")}
+                className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl shadow-lg transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={isPendingAction}
+                title="Akhiri event dan tutup akses Check-in"
+              >
+                Akhiri Event
+              </button>
+            )}
+
+            {timerMsg && (
+              <div
+                className={`mt-3 p-3 rounded-xl ${
+                  timerMsg.type === "success"
+                    ? "bg-green-50 border border-green-200 text-green-700"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
+              >
+                <p className="text-sm font-medium">{timerMsg.text}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Modal Components */}
@@ -700,6 +996,50 @@ const AdminDesktopPage = () => {
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all font-medium"
                 >
                   Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {confirmOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {confirmCfg.title}
+              </h3>
+              <p className="text-gray-700 text-sm mb-6">{confirmCfg.message}</p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmOpen(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl transition-all font-medium"
+                  disabled={confirmCfg.loading}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleConfirmProceed}
+                  className={`flex-1 px-4 py-3 rounded-xl text-white transition-all font-medium
+            ${
+              confirmCfg.action === "END"
+                ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                : confirmCfg.action === "DEACTIVATE"
+                ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+            }`}
+                  disabled={
+                    confirmCfg.loading ||
+                    (confirmCfg.action === "DEACTIVATE" &&
+                      (isTimerExpired() || !timerActive))
+                  }
+                  title={
+                    confirmCfg.action === "DEACTIVATE" &&
+                    (isTimerExpired() || !timerActive)
+                      ? "Tidak dapat mematikan: timer sudah habis atau tidak aktif."
+                      : ""
+                  }
+                >
+                  {confirmCfg.loading ? "Memproses..." : confirmCfg.proceedText}
                 </button>
               </div>
             </div>

@@ -57,9 +57,9 @@ export const addUser = async (req, res) => {
     const { nipp, nama, penetapan } = req.body;
     if (!nipp || !nama || !penetapan) {
       const msg = !nipp
-        ? "Nama field cannot be empty !"
+        ? "nipp field cannot be empty !"
         : !nama
-        ? "Status field cannot be empty !"
+        ? "nama field cannot be empty !"
         : "Penetapan field cannot be empty !";
       throw makeError(msg, 400);
     }

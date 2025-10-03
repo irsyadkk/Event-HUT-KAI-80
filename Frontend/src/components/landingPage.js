@@ -10,19 +10,24 @@ function LandingPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [targetTime, setTargetTime] = useState(null);
   const [active, setActive] = useState(false);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     const fetchTimer = async () => {
       try {
         const res = await api.get("/timer");
-        const timer = res.data.data;
+        const timer = res.data?.data || {};
         const timerDate = timer.date;
-        const status = timer.active;
+        const status = !!timer.active;
+        const isEnded = !!timer.ended;
 
         setActive(status);
+        setEnded(isEnded);
 
-        if (status && timerDate) {
+        if (status && timerDate && !isEnded) {
           setTargetTime(new Date(timerDate));
+        } else {
+          setTargetTime(null);
         }
       } catch (err) {
         console.error("Gagal ambil timer:", err);
@@ -35,26 +40,41 @@ function LandingPage() {
   useEffect(() => {
     const socket = io(BASE_URL);
     socket.on("TIMER_UPDATE", (timer) => {
-      setActive(timer.active);
-      setTargetTime(new Date(timer.date));
+      const isEnded = !!timer.ended;
+      const isActive = !!timer.active;
+
+      setActive(isActive);
+      setEnded(isEnded);
+
+      if (isActive && timer.date && !isEnded) {
+        setTargetTime(new Date(timer.date));
+      } else {
+        setTargetTime(null);
+      }
     });
     return () => socket.disconnect();
   }, []);
 
   // Hitung countdown
   useEffect(() => {
-    if (!targetTime) return;
+    if (!targetTime) {
+      setTimeLeft(0);
+      return;
+    }
 
-    const timer = setInterval(() => {
+    const tick = () => {
       const now = new Date();
       const diff = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
       setTimeLeft(diff > 0 ? diff : 0);
 
+      // reset sesi setiap detik (sesuai kode asli)
       localStorage.removeItem("token");
       localStorage.removeItem("nipp");
       localStorage.removeItem("nama");
-    }, 1000);
+    };
 
+    tick(); // jalankan sekali agar tidak menunggu 1 detik pertama
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [targetTime]);
 
@@ -185,7 +205,18 @@ function LandingPage() {
 
             {/* Middle Column - Countdown + Button */}
             <div className="space-y-6">
-              {active && timeLeft > 0 ? (
+              {ended ? (
+                <div className="bg-gradient-to-r from-red-600 to-rose-600 rounded-3xl shadow-2xl p-6 lg:p-8 text-white border-2 border-red-400">
+                  <div className="text-center space-y-2">
+                    <p className="text-xl lg:text-2xl font-black">
+                      EVENT SUDAH BERAKHIR
+                    </p>
+                    <p className="text-sm lg:text-base opacity-90">
+                      Sampai jumpa di event berikutnya 👋
+                    </p>
+                  </div>
+                </div>
+              ) : active && targetTime && timeLeft > 0 ? (
                 <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-6 lg:p-8 border border-white/30 transform hover:scale-105 transition-all duration-300">
                   <div className="text-center space-y-4">
                     <div className="flex items-center justify-center space-x-2 mb-2">
@@ -198,6 +229,7 @@ function LandingPage() {
                       <div className="text-3xl lg:text-4xl font-black mb-2">
                         {formatTime(timeLeft)}
                       </div>
+                      {/* Tanggal keterangan (opsional/placeholder) */}
                       <p className="text-sm lg:text-base opacity-90">
                         14 September 2025 - 15:00 WIB
                       </p>

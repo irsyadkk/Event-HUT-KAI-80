@@ -11,9 +11,13 @@ const Timer = db.define(
     },
     date: {
       type: "TIMESTAMP WITHOUT TIME ZONE",
-      allowNull: false,
+      allowNull: true,
     },
     active: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+    },
+    ended: {
       type: Sequelize.BOOLEAN,
       allowNull: false,
     },
