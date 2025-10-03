@@ -249,9 +249,14 @@ function LandingPage() {
               {/* Main Action Button */}
               <button
                 onClick={() => {
+<<<<<<< HEAD
                   if (ended) return; // pasif jika event berakhir
                   if (timeLeft > 0) {
                     navigate("/"); // menunggu registrasi mulai
+=======
+                  if (active && timeLeft > 0) {
+                    navigate("/");
+>>>>>>> e4bd57f0cd5ea3c1b75dadcf4102c943cc1d4a30
                   } else {
                     navigate("/inputnipp");
                   }
@@ -259,6 +264,7 @@ function LandingPage() {
                 className={`w-full py-6 lg:py-8 px-8 rounded-3xl font-black text-lg lg:text-xl shadow-2xl 
                 transition-all duration-500 transform relative overflow-hidden
                 ${
+<<<<<<< HEAD
                   ended
                     ? "bg-gray-500 text-gray-300 cursor-not-allowed"
                     : timeLeft > 0
@@ -276,6 +282,28 @@ function LandingPage() {
                     : timeLeft > 0
                     ? "Menunggu Registrasi..."
                     : "CHECK IN UNTUK LIHAT TIKET"}
+=======
+                  active && timeLeft > 0
+                    ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                    : "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 text-gray-900 hover:scale-105 hover:shadow-3xl animate-pulse"
+                }`}
+                disabled={active && timeLeft > 0}
+              >
+                {!active && timeLeft <= 0 && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/50 to-orange-500/50 blur-xl animate-pulse"></div>
+                )}
+                <span className="relative z-10 flex items-center justify-center space-x-3">
+                  {active && timeLeft > 0 ? (
+                    <>
+                      <span>⏳</span>
+                      <span>Menunggu Registrasi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>CHECK IN UNTUK LIHAT TIKET</span>
+                    </>
+                  )}
+>>>>>>> e4bd57f0cd5ea3c1b75dadcf4102c943cc1d4a30
                 </span>
               </button>
             </div>
