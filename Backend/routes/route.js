@@ -30,6 +30,7 @@ import {
   getPickup,
   getPickupByNIPP,
   deletePickupByNIPP,
+  editPickupByNIPP,
 } from "../controllers/pickupController.js";
 import {
   addPrize,
@@ -87,6 +88,7 @@ router.post("/pickup", verifyToken, addPickup);
 router.get("/pickup", verifyToken, getPickup);
 router.get("/pickup/:nipp", verifyToken, getPickupByNIPP);
 router.delete("/pickup/:nipp", verifyToken, deletePickupByNIPP);
+router.patch("/pickup/:nipp", verifyToken, editPickupByNIPP)
 
 // PRIZE
 router.post("/addprize", verifyToken, addPrize);
