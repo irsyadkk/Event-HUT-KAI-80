@@ -50,7 +50,7 @@ const InputNipp = () => {
     if (!targetTime) return;
 
     const now = new Date();
-    if (!active) {
+    if (!active && !ended) {
       setAllowed(true);
     } else if (active && now < targetTime) {
       setAllowed(false);
