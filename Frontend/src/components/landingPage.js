@@ -1,26 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
+import api from "../api";
 
 function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
-
-  // CHANGE THIS AND targetTime IN InputNipp.js TO SYNC
-  const targetTime = new Date("2025-09-14T15:00:00+07:00");
+  const [targetTime, setTargetTime] = useState("");
 
   useEffect(() => {
+    const fetchTimer = async () => {
+      try {
+        const res = await api.get("/timer");
+        const timer = res.data.data;
+        const timerDate = timer.date;
+        console.log(timerDate);
+
+        if (timerDate) {
+          // backend return "2025-10-10 00:42:00"
+          // tambahin +07:00 biar dianggap WIB
+          setTargetTime(new Date(timerDate));
+        }
+      } catch (err) {
+        console.error("Gagal ambil timer:", err);
+      }
+    };
+
+    fetchTimer();
+  }, []);
+
+  // Hitung countdown
+  useEffect(() => {
+    if (!targetTime) return;
+
     const timer = setInterval(() => {
       const now = new Date();
       const diff = Math.floor((targetTime - now) / 1000);
       setTimeLeft(diff > 0 ? diff : 0);
+
       localStorage.removeItem("token");
       localStorage.removeItem("nipp");
       localStorage.removeItem("nama");
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [targetTime]);
 
   const formatTime = (seconds) => {
     const days = Math.floor(seconds / (24 * 60 * 60));

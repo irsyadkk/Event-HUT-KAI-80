@@ -50,6 +50,7 @@ import {
   getWinnerByNipp,
 } from "../controllers/winnerController.js";
 import { resetSingleTable } from "../controllers/resetDataController.js";
+import { addEditTimer, getTimer } from "../controllers/timerController.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -109,7 +110,12 @@ router.delete("/winner/:nipp", verifyToken, deleteWinnerByNipp);
 
 // RESET DATA TABLE
 router.delete("/reset/:tableName", verifyToken, resetSingleTable);
+
 // IMPORT DATA FROM CSV/XLSX
 router.post("/import/:table", upload.single("file"), importFile);
+
+// TIMER
+router.get("/timer", getTimer);
+router.patch("/timer", addEditTimer);
 
 export default router;
