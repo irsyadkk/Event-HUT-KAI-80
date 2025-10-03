@@ -217,7 +217,7 @@ function LandingPage() {
               {/* Main Action Button */}
               <button
                 onClick={() => {
-                  if (timeLeft > 0) {
+                  if (active && timeLeft > 0) {
                     navigate("/");
                   } else {
                     navigate("/inputnipp");
@@ -226,17 +226,17 @@ function LandingPage() {
                 className={`w-full py-6 lg:py-8 px-8 rounded-3xl font-black text-lg lg:text-xl shadow-2xl 
                 transition-all duration-500 transform relative overflow-hidden
                 ${
-                  timeLeft > 0
+                  active && timeLeft > 0
                     ? "bg-gray-500 text-gray-300 cursor-not-allowed"
                     : "bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 text-gray-900 hover:scale-105 hover:shadow-3xl animate-pulse"
                 }`}
-                disabled={timeLeft > 0}
+                disabled={active && timeLeft > 0}
               >
-                {timeLeft <= 0 && (
+                {!active && timeLeft <= 0 && (
                   <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/50 to-orange-500/50 blur-xl animate-pulse"></div>
                 )}
                 <span className="relative z-10 flex items-center justify-center space-x-3">
-                  {timeLeft > 0 ? (
+                  {active && timeLeft > 0 ? (
                     <>
                       <span>⏳</span>
                       <span>Menunggu Registrasi...</span>
