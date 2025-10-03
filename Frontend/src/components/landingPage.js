@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api";
+import { io } from "socket.io-client";
+import { BASE_URL } from "../utils";
 
 function LandingPage() {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(0);
-  const [targetTime, setTargetTime] = useState("");
+  const [targetTime, setTargetTime] = useState(null);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     const fetchTimer = async () => {
@@ -14,11 +17,11 @@ function LandingPage() {
         const res = await api.get("/timer");
         const timer = res.data.data;
         const timerDate = timer.date;
-        console.log(timerDate);
+        const status = timer.active;
 
-        if (timerDate) {
-          // backend return "2025-10-10 00:42:00"
-          // tambahin +07:00 biar dianggap WIB
+        setActive(status);
+
+        if (status && timerDate) {
           setTargetTime(new Date(timerDate));
         }
       } catch (err) {
@@ -29,13 +32,23 @@ function LandingPage() {
     fetchTimer();
   }, []);
 
+  useEffect(() => {
+    const socket = io(BASE_URL);
+    socket.on("TIMER_UPDATE", (timer) => {
+      console.log("Update socket : ", timer);
+      setActive(timer.active);
+      setTargetTime(new Date(timer.date));
+    });
+    return () => socket.disconnect();
+  }, []);
+
   // Hitung countdown
   useEffect(() => {
     if (!targetTime) return;
 
     const timer = setInterval(() => {
       const now = new Date();
-      const diff = Math.floor((targetTime - now) / 1000);
+      const diff = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
       setTimeLeft(diff > 0 ? diff : 0);
 
       localStorage.removeItem("token");
@@ -173,7 +186,7 @@ function LandingPage() {
 
             {/* Middle Column - Countdown + Button */}
             <div className="space-y-6">
-              {timeLeft > 0 ? (
+              {active && timeLeft > 0 ? (
                 <div className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-6 lg:p-8 border border-white/30 transform hover:scale-105 transition-all duration-300">
                   <div className="text-center space-y-4">
                     <div className="flex items-center justify-center space-x-2 mb-2">

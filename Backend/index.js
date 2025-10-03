@@ -50,6 +50,7 @@ const pgClient = new PGClient({
 await pgClient.connect();
 await pgClient.query("LISTEN prize_changes");
 await pgClient.query("LISTEN winner_changes");
+await pgClient.query("LISTEN timer_changes");
 
 pgClient.on("notification", async (msg) => {
   switch (msg.channel) {
@@ -74,6 +75,23 @@ pgClient.on("notification", async (msg) => {
         "SELECT * FROM winners ORDER BY nipp"
       );
       io.emit("WINNER_UPDATE", rows);
+      break;
+    }
+
+    // NOT CREATED YET
+    case "timer_changes": {
+      const { rows } = await pgClient.query("SELECT * FROM timer LIMIT 1");
+      if (rows.length > 0) {
+        const timer = rows[0];
+        const utcDate = new Date(timer.date);
+        const wibDate = new Date(utcDate.getTime() + 7 * 60 * 60 * 1000);
+
+        // kirim ke semua client
+        io.emit("TIMER_UPDATE", {
+          ...timer,
+          date: wibDate.toISOString().slice(0, 19).replace("T", " "),
+        });
+      }
       break;
     }
   }
