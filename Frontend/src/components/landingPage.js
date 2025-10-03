@@ -35,7 +35,6 @@ function LandingPage() {
   useEffect(() => {
     const socket = io(BASE_URL);
     socket.on("TIMER_UPDATE", (timer) => {
-      console.log("Update socket : ", timer);
       setActive(timer.active);
       setTargetTime(new Date(timer.date));
     });
