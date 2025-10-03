@@ -294,76 +294,75 @@ export const editOrder = async (req, res) => {
     const nipp = req.params.nipp;
     const { nama, status, transportasi, keberangkatan } = req.body;
 
-    // VALIDASI INPUT
+    // --- Validasi dasar ---
     if (
-      !nama ||
+      !Array.isArray(nama) ||
       !status ||
       !transportasi ||
       !keberangkatan ||
-      !Array.isArray(nama) ||
       nama.some((n) => typeof n !== "string" || !n.trim())
     ) {
-      const msg = !nama
-        ? "Nama field cannot be empty !"
-        : !status
-        ? "Status field cannot be empty !"
-        : !transportasi
-        ? "Transportasi field cannot be empty !"
-        : !keberangkatan
-        ? "Keberangkatan field cannot be empty !"
-        : !Array.isArray(nama)
-        ? "Nama must be an array !"
-        : "Each Element in Nama Must be String & Cannot be Empty !";
-      throw makeError(msg, 400);
+      throw makeError("Input tidak valid", 400);
     }
 
+    // --- Ambil data lama ---
     const order = await Order.findOne({ where: { nipp }, transaction: t });
     if (!order) throw makeError("Order Not Found !", 404);
 
-    const oldCount = order.nama.length;
-    const newCount = nama.length;
-    const diff = newCount - oldCount;
-
     const user = await User.findOne({ where: { nipp }, transaction: t });
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
+    if (!user || !quota) throw makeError("User/Quota Not Found !", 404);
 
-    let penguranganPenetapan = 0;
-    let penguranganQuota = 0;
+    // --- Normalisasi hitung used penetapan lama & baru ---
+    const oldStatus = String(order.status || "").toLowerCase();
+    const newStatus = String(status || "").toLowerCase();
+    const oldCountAll = Array.isArray(order.nama) ? order.nama.length : 0;
+    const newCountAll = Array.isArray(nama) ? nama.length : 0;
 
-    if (status.toLowerCase() === "tidak hadir") {
-      if (diff > 0) {
-        penguranganPenetapan = diff + 1;
-        penguranganQuota = diff;
-      } else if (diff < 0) {
-        penguranganPenetapan = diff - 1; // balikkan (hapus peserta + bonus 1)
-        penguranganQuota = diff;
-      }
-    } else if (status.toLowerCase() === "hadir") {
-      penguranganPenetapan = diff;
-      penguranganQuota = diff;
-    } else {
-      throw makeError(
-        "Status tidak valid (gunakan 'hadir' atau 'tidak hadir')",
-        400
-      );
-    }
+    // Keluarga = (total - 1) jika status "hadir", else total
+    const oldFamily = Math.max(
+      0,
+      oldStatus === "hadir" ? oldCountAll - 1 : oldCountAll
+    );
+    const newFamily = Math.max(
+      0,
+      newStatus === "hadir" ? newCountAll - 1 : newCountAll
+    );
 
-    // VALIDASI
-    if (user.penetapan < penguranganPenetapan) {
+    // Penetapan dimakan = 1 (pegawai) + keluarga
+    const oldUsedPenetapan = 1 + oldFamily;
+    const newUsedPenetapan = 1 + newFamily;
+
+    // Delta penetapan (positif = butuh tambahan jatah)
+    let deltaPenetapan = newUsedPenetapan - oldUsedPenetapan;
+    // Kebijakan: penetapan tidak pernah dikembalikan lewat edit
+    if (deltaPenetapan < 0) deltaPenetapan = 0;
+
+    // Delta quota global mengikuti jumlah real peserta di array `nama`
+    // Positif = minta kursi tambahan; Negatif = mengembalikan kursi
+    const deltaQuota = newCountAll - oldCountAll;
+
+    // --- Validasi stok ---
+    if (user.penetapan < deltaPenetapan) {
       throw makeError(
         `Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`,
         400
       );
     }
-    if (quota.quota < penguranganQuota) {
+    if (deltaQuota > 0 && quota.quota < deltaQuota) {
       throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
     }
 
-    // UPDATE DB
-    const updatedPenetapan = user.penetapan - penguranganPenetapan;
-    const updatedQuota = quota.quota - penguranganQuota;
-    const namaLength = nama.length;
+    // --- Hitung nilai update ---
+    const updatedPenetapan = user.penetapan - deltaPenetapan; // tidak pernah naik di sini
+    const updatedQuota = quota.quota - deltaQuota; // bisa naik/turun sesuai delta
+    const jumlahKuota = newCountAll;
 
+    // --- Generate QR baru ---
+    const qrData = JSON.stringify({ nipp, nama, status });
+    const qrCode = await QRCode.toDataURL(qrData);
+
+    // --- Commit updates (urut: user, quota, pickups, order) ---
     await User.update(
       { penetapan: updatedPenetapan },
       { where: { nipp }, transaction: t }
@@ -373,21 +372,11 @@ export const editOrder = async (req, res) => {
       { where: { id: 1 }, transaction: t }
     );
     await Pickups.update(
-      { jumlah_kuota: namaLength },
-      { where: { nipp: nipp }, transaction: t }
+      { jumlah_kuota: jumlahKuota },
+      { where: { nipp }, transaction: t }
     );
-
-    const qrData = JSON.stringify({ nipp, nama, status });
-    const qrCode = await QRCode.toDataURL(qrData);
-
     await order.update(
-      {
-        nama,
-        status,
-        qr: qrCode,
-        transportasi: transportasi,
-        keberangkatan: keberangkatan,
-      },
+      { nama, status: newStatus, qr: qrCode, transportasi, keberangkatan },
       { transaction: t }
     );
 
@@ -395,7 +384,14 @@ export const editOrder = async (req, res) => {
     res.status(200).json({
       status: "Success",
       message: `Order ${nipp} Updated`,
-      data: { nipp, nama, status, updatedPenetapan, updatedQuota },
+      data: {
+        nipp,
+        nama,
+        status: newStatus,
+        updatedPenetapan,
+        updatedQuota,
+        jumlahKuota,
+      },
     });
   } catch (error) {
     await t.rollback();
