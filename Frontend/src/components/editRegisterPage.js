@@ -176,7 +176,7 @@ const EditRegisterPage = () => {
 
   const [quota, setQuota] = useState(0);
   const [quotaTotal, setQuotaTotal] = useState(0);
-  const [maxMembers, setMaxMembers] = useState(0); // CHANGED: total kuota (pegawai+keluarga)
+  const [sisaPenetapan, setSisaPenetapan] = useState(0);
 
   const [modalInfo, setModalInfo] = useState({
     isOpen: false,
@@ -211,6 +211,8 @@ const EditRegisterPage = () => {
         const userRes = await api.get(`/users/${nipp}`);
         const userData = userRes.data.data;
         const pegawaiName = userData.nama?.trim() || "";
+        const sisa = Number(userData.penetapan ?? 0);
+        setSisaPenetapan(sisa);
 
         // set data pegawai (readOnly)
         setUserFromUsers({
@@ -242,9 +244,7 @@ const EditRegisterPage = () => {
         setLokasi(orderData.keberangkatan || "");
         setTransportasi(orderData.transportasi || "");
 
-        // 3) Hitung kuota total (pegawai + keluarga) → penetapan + 1
-        const totalKuota = Number(userData.penetapan ?? 0) + 1; // CHANGED
-        setMaxMembers(totalKuota);
+        // 3) Simpan sisa kuota keluarga sesuai kolom penetapan di tabel users
 
         // 4) Susun daftar anggota:
         //    - Pegawai selalu first, flagged `fromUser: true` (readOnly + tidak bisa hapus)
@@ -253,7 +253,12 @@ const EditRegisterPage = () => {
           .filter(
             (nm) => nm && nm.trim().toLowerCase() !== pegawaiName.toLowerCase()
           )
-          .map((nm, i) => ({ id: `prefill-${i}`, name: nm, fromUser: false }));
+          .map((nm, i) => ({
+            id: `prefill-${i}`,
+            name: nm,
+            fromUser: false,
+            source: "prefill",
+          }));
 
         setMembers([
           { id: "user-main", name: pegawaiName, fromUser: true },
@@ -288,16 +293,12 @@ const EditRegisterPage = () => {
   }, [getQuota]);
 
   // ===== Helpers =====
-  const countCurrentUsed = () => {
-    // hitung yang akan dikirim sebagai peserta
-    const others = members.filter(
-      (m) => !m.fromUser && (m.name || "").trim() !== ""
-    ).length;
-    const pegawaiCount = statusHadir === STATUS_HADIR ? 1 : 0;
-    return pegawaiCount + others;
-  };
+  const addedRowsCount = () =>
+    members.filter((m) => !m.fromUser && m.source === "added").length;
+  const canAddMember = () => addedRowsCount() < sisaPenetapan;
 
-  const canAddMember = () => countCurrentUsed() < maxMembers;
+  const familyFilledCount = () =>
+    members.filter((m) => !m.fromUser && (m.name || "").trim() !== "").length;
 
   const handleMemberNameChange = (id, newName) => {
     setMembers((prev) =>
@@ -315,14 +316,17 @@ const EditRegisterPage = () => {
     if (!canAddMember()) {
       setModalInfo({
         isOpen: true,
-        title: "Kuota Penuh",
-        message: `Anda tidak dapat menambahkan anggota lagi. Kuota maksimal adalah ${maxMembers} orang.`,
+        title: "Kuota Tambah Habis",
+        message: `Sisa penetapan Anda ${sisaPenetapan}. Anda sudah menambah ${addedRowsCount()} baris pada sesi ini.`,
         type: "warning",
       });
       return;
     }
     const newId = `new-${Date.now()}`;
-    setMembers((prev) => [...prev, { id: newId, name: "", fromUser: false }]);
+    setMembers((prev) => [
+      ...prev,
+      { id: newId, name: "", fromUser: false, source: "added" },
+    ]);
   };
 
   const handleCloseModal = () => {
@@ -380,6 +384,16 @@ const EditRegisterPage = () => {
       return;
     }
 
+    if (addedRowsCount() > sisaPenetapan) {
+      setModalInfo({
+        isOpen: true,
+        title: "Melebihi Sisa Penetapan",
+        message: `Baris tambahan (${addedRowsCount()}) melebihi sisa penetapan (${sisaPenetapan}).`,
+        type: "warning",
+      });
+      return;
+    }
+
     // Jika pegawai "tidak hadir", wajib ada minimal satu anggota lain
     const anggotaLain = members.filter(
       (m) => !m.fromUser && (m.name || "").trim() !== ""
@@ -403,7 +417,8 @@ const EditRegisterPage = () => {
     submitOrder();
   };
 
-  const currentUsed = countCurrentUsed();
+  const currentUsed =
+    familyFilledCount() + (statusHadir === STATUS_HADIR ? 1 : 0);
 
   const getMemberLabel = (member, index) => {
     if (member.fromUser) return "Data Pegawai";
@@ -626,7 +641,7 @@ const EditRegisterPage = () => {
             </div>
 
             {/* Tombol tambah anggota */}
-            {isDataLoaded && currentUsed < maxMembers && (
+            {isDataLoaded && addedRowsCount() < sisaPenetapan && (
               <div className="flex justify-center mb-8">
                 <button
                   type="button"
@@ -700,8 +715,8 @@ const EditRegisterPage = () => {
       >
         <p>
           Anda akan mendaftarkan total <strong>{currentUsed} anggota</strong>.
-          Pastikan data sudah benar – Anda tetap bisa mengedit kembali setelah
-          ini.
+          (pegawai {statusHadir === "hadir" ? "ikut" : "tidak ikut"}, keluarga
+          terisi: {familyFilledCount()}).
         </p>
       </ConfirmationModal>
     </>
