@@ -219,7 +219,7 @@ function LandingPage() {
                     <div className="flex items-center justify-center space-x-2 mb-2">
                       <div className="text-2xl animate-bounce">🔥</div>
                       <p className="text-gray-700 font-bold text-lg lg:text-xl">
-                        WAR TICKET TAHAP 2
+                        WAR TICKET
                       </p>
                     </div>
                     <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-2xl">
@@ -228,7 +228,7 @@ function LandingPage() {
                       </div>
                       {/* Tanggal keterangan (opsional/placeholder) */}
                       <p className="text-sm lg:text-base opacity-90">
-                        14 September 2025 - 15:00 WIB
+                        Tanggal Bulan Tahun - Jam:Menit WIB
                       </p>
                     </div>
                   </div>
