@@ -80,7 +80,7 @@ const AdminDesktopPage = () => {
     setImportFile(null);
   };
   const openImportModalForCurrentTable = () => {
-    if (selectedTable !== "order") return;
+    setImportTarget("orders"); // <- PENTING
     setImportOpen(true);
     setImportMsg(null);
     setImportFile(null);
