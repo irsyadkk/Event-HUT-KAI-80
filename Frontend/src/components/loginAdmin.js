@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { BASE_URL, ADMIN_NIPP } from "../utils";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api";
-import { io } from "socket.io-client";
+import { jwtDecode } from "jwt-decode";
 
 const LoginAdmin = () => {
   const navigate = useNavigate();
@@ -17,57 +16,37 @@ const LoginAdmin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!nipp) {
-      setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
-      setIsLoading(false);
-      return;
-    } else if (nipp.length < 5) {
-      setMessage({ text: "NIPP minimal 5 karakter!", type: "error" });
+    if (!nipp || !password) {
+      setMessage({ text: "NIPP dan Password wajib diisi!", type: "error" });
       setIsLoading(false);
       return;
     }
 
     try {
-      // Login request
-      const response = await axios.post(`${BASE_URL}/login`, { nipp });
+      const response = await api.post(
+        `${BASE_URL}/login`,
+        { nipp, password },
+        { withCredentials: true }
+      );
 
       console.log("Login success:", response.data);
-      localStorage.setItem("token", response.data.accessToken);
+
+      const token = response.data.accessToken;
+      localStorage.setItem("token", token);
       localStorage.setItem("nipp", response.data.user.nipp);
       localStorage.setItem("nama", response.data.user.nama);
 
-      setMessage({ text: "Selamat Datang", type: "success" });
-      // Check if order exists (handle 404 as normal)
-      let orderExists = false;
-      try {
-        const ifOrderExist = await api.get(`${BASE_URL}/order/${nipp}`);
-        if (ifOrderExist.data) {
-          orderExists = true;
-        }
-      } catch (err) {
-        if (err.response?.status === 404) {
-          // Order not found is okay, just continue
-          orderExists = false;
-        } else {
-          // Other errors should be thrown
-          throw err;
-        }
-      }
+      const decoded = jwtDecode(token);
 
-      if (orderExists) {
-        navigate(`/qrresult`, { state: { nipp } });
-        setIsLoading(false);
-        return;
-      }
-
-      if (response.data.user.nipp === ADMIN_NIPP) {
+      if (decoded.role === "superadmin" || decoded.role === "admin") {
         navigate("/admindesk");
       } else {
-        navigate("/addmembers", { state: { nipp } });
+        setMessage({ text: "Akses ditolak!", type: "error" });
+        localStorage.clear();
       }
     } catch (error) {
       console.error("Login failed:", error);
-      let errorMessage = "Login gagal. Periksa NIPP anda";
+      let errorMessage = "Login gagal. Periksa NIPP/Password";
       if (error.response?.data?.msg) {
         errorMessage = error.response.data.msg;
       }
@@ -94,9 +73,7 @@ const LoginAdmin = () => {
               className="h-40 w-auto object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Registrasi Gathering
-          </h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Login Admin</h1>
         </div>
 
         {/* Main Card */}
@@ -113,6 +90,34 @@ const LoginAdmin = () => {
                   value={nipp}
                   onChange={(e) => setNipp(e.target.value)}
                   placeholder="Masukkan NIPP Anda"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                />
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Masukkan Password Anda"
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   disabled={isLoading}
                 />

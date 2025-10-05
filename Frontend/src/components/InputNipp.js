@@ -112,11 +112,7 @@ const InputNipp = () => {
         return;
       }
 
-      if (response.data.user.nipp === ADMIN_NIPP) {
-        navigate("/admindesk");
-      } else {
-        navigate("/addmembers", { state: { nipp } });
-      }
+      navigate("/addmembers", { state: { nipp } });
     } catch (error) {
       console.error("Login failed:", error);
       let errorMessage = "Login gagal. Periksa NIPP anda";

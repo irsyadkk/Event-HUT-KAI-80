@@ -6,9 +6,11 @@ import { ADMIN_NIPP } from "../utils";
 import api from "../api";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { getUserRole } from "../getUserRole.js";
 
 const AdminDesktopPage = () => {
   const navigate = useNavigate();
+  const role = getUserRole();
 
   const [searchNipp, setSearchNipp] = useState("");
   const [searchNippPegawai, setSearchNippPegawai] = useState("");
@@ -83,8 +85,7 @@ const AdminDesktopPage = () => {
       return;
     }
     try {
-      const decoded = jwtDecode(token);
-      if (nipp !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
@@ -736,15 +737,30 @@ const AdminDesktopPage = () => {
                 className="h-16 md:h-20 w-auto drop-shadow-lg"
               />
               <div className="text-left">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">
-                  Admin Panel
-                </h1>
+                {role === "superadmin" ? (
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">
+                    Super Admin Panel
+                  </h1>
+                ) : (
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">
+                    Admin Panel
+                  </h1>
+                )}
                 <p className="text-white/80 text-sm md:text-base">
                   Manajemen Peserta & Kuota
                 </p>
               </div>
             </div>
             <div className="flex gap-3">
+              {role === "superadmin" && (
+                <button
+                  onClick={() => navigate("/adminmanage")}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                >
+                  Kelola Admin
+                </button>
+              )}
+
               <button
                 onClick={() => navigate("/adminprize")}
                 className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-700 hover:from-yellow-700 hover:to-orange-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
@@ -758,6 +774,7 @@ const AdminDesktopPage = () => {
               >
                 Scan QR
               </button>
+
               <button
                 onClick={logout}
                 className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"

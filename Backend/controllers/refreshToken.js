@@ -1,16 +1,20 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import Admin from "../models/adminModel.js";
+import SuperAdmin from "../models/superAdminModel.js";
 
 export const refreshToken = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken; // ambil dari cookie
-    if (!refreshToken) return res.sendStatus(401); // Unauthorized
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.sendStatus(401);
 
-    const user = await User.findOne({
-      where: { refresh_token: refreshToken },
-    });
+    // Cari di 3 tabel
+    let entity =
+      (await SuperAdmin.findOne({ where: { refresh_token: refreshToken } })) ||
+      (await Admin.findOne({ where: { refresh_token: refreshToken } })) ||
+      (await User.findOne({ where: { refresh_token: refreshToken } }));
 
-    if (!user) return res.sendStatus(403); // Forbidden
+    if (!entity) return res.sendStatus(403);
 
     jwt.verify(
       refreshToken,
@@ -18,16 +22,19 @@ export const refreshToken = async (req, res) => {
       (err, decoded) => {
         if (err) return res.sendStatus(403);
 
-        const { NIPP, NAMA } = user;
+        const safeData = {
+          nipp: entity.nipp,
+          nama: entity.nama,
+          role: decoded.role, // ambil dari payload lama
+        };
+
         const accessToken = jwt.sign(
-          { NIPP, NAMA },
+          safeData,
           process.env.ACCESS_TOKEN_SECRET,
           { expiresIn: "15m" }
         );
 
-        res.json({
-          accessToken,
-        });
+        res.json({ accessToken });
       }
     );
   } catch (error) {
