@@ -282,41 +282,64 @@ const AdminDesktopPage = () => {
     }
   }, []);
 
-  const handleSearch = async (e) => {
+  // Ganti fungsi handleSearch Anda dengan yang ini
+
+const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchNipp.trim()) {
       setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
       return;
     }
     setIsLoading(true);
+    setSearchResult(null); // Reset hasil pencarian sebelumnya
+    setMessageCari("");    // Reset pesan sebelumnya
+
     try {
-      const [orderRes, userRes] = await Promise.all([
+      // MODIFIKASI: Gunakan Promise.allSettled
+      const results = await Promise.allSettled([
         api.get(`/order/${searchNipp}`),
         api.get(`/users/${searchNipp}`),
       ]);
-      const orderData = orderRes.data.data;
-      const userData = userRes.data.data;
+
+      const orderResult = results[0];
+      const userResult = results[1];
+
+      // Cek apakah pencarian order berhasil
+      if (orderResult.status === "rejected") {
+        // Jika order saja sudah tidak ditemukan, berarti memang tidak ada data
+        throw new Error("NIPP tidak ditemukan / belum mendaftar");
+      }
+
+      // Jika sampai sini, berarti order PASTI ditemukan
+      const orderData = orderResult.value.data.data;
+      
+      // Cek apakah user ditemukan. Jika tidak, berikan nilai default
+      const userData = userResult.status === "fulfilled" 
+        ? userResult.value.data.data 
+        : { nama: "(Data User Tidak Ditemukan)", penetapan: "N/A" };
 
       setSearchResult({
         nipp: orderData.nipp,
-        nama: userData.nama,
-        penetapan: userData.penetapan,
-        anggota: orderData.nama,
+        nama: userData.nama, // Nama dari tabel user (atau default jika tidak ada)
+        penetapan: userData.penetapan, // Penetapan dari tabel user (atau default)
+        anggota: orderData.nama, // Daftar anggota keluarga dari tabel order
         qr: orderData.qr,
         transportasi: orderData.transportasi,
         keberangkatan: orderData.keberangkatan,
       });
-      setMessageCari({ text: "Data ditemukan !", type: "success" });
+      setMessageCari({ text: "Data ditemukan!", type: "success" });
+
     } catch (err) {
       console.error("Gagal mengambil data:", err);
       setMessageCari({
-        text: "NIPP tidak ditemukan / belum mendaftar",
+        text: err.message || "NIPP tidak ditemukan / belum mendaftar",
         type: "error",
       });
       setSearchResult(null);
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
-  };
+};
 
   const handleSearchPegawai = async (e) => {
     e.preventDefault();
