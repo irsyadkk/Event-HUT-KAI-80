@@ -2083,7 +2083,7 @@ const AdminDesktopPage = () => {
                                 1}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-700">
-                              {pickup.timestamp ?? "-"}
+                              {formatWIB(pickup.timestamp) || "-"}
                             </td>
                             <td className="px-6 py-4">
                               <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
