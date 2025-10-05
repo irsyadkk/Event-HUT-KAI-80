@@ -30,16 +30,16 @@ export const addOrderByAdmin = async (req, res) => {
       const msg = !nipp
         ? "NIPP field cannot be empty !"
         : !nama
-        ? "Nama field cannot be empty !"
-        : !status
-        ? "Status field cannot be empty !"
-        : !transportasi
-        ? "Transportasi field cannot be empty !"
-        : !keberangkatan
-        ? "Keberangkatan field cannot be empty !"
-        : !Array.isArray(nama)
-        ? "Nama must be an array !"
-        : "Each Element in Nama Must be String & Cannot be Empty !";
+          ? "Nama field cannot be empty !"
+          : !status
+            ? "Status field cannot be empty !"
+            : !transportasi
+              ? "Transportasi field cannot be empty !"
+              : !keberangkatan
+                ? "Keberangkatan field cannot be empty !"
+                : !Array.isArray(nama)
+                  ? "Nama must be an array !"
+                  : "Each Element in Nama Must be String & Cannot be Empty !";
       throw makeError(msg, 400);
     }
 
@@ -128,16 +128,16 @@ export const addOrder = async (req, res) => {
       const msg = !nipp
         ? "NIPP field cannot be empty !"
         : !nama
-        ? "Nama field cannot be empty !"
-        : !status
-        ? "Status field cannot be empty !"
-        : !transportasi
-        ? "Transportasi field cannot be empty !"
-        : !keberangkatan
-        ? "Keberangkatan field cannot be empty !"
-        : !Array.isArray(nama)
-        ? "Nama must be an array !"
-        : "Each Element in Nama Must be String & Cannot be Empty !";
+          ? "Nama field cannot be empty !"
+          : !status
+            ? "Status field cannot be empty !"
+            : !transportasi
+              ? "Transportasi field cannot be empty !"
+              : !keberangkatan
+                ? "Keberangkatan field cannot be empty !"
+                : !Array.isArray(nama)
+                  ? "Nama must be an array !"
+                  : "Each Element in Nama Must be String & Cannot be Empty !";
       throw makeError(msg, 400);
     }
 
@@ -262,7 +262,7 @@ export const getOrder = async (req, res) => {
       offset: offset,
       order: [
         // Opsional: urutkan data, misalnya berdasarkan ID
-        ['id', 'DESC']
+        ['id', 'ASC']
       ]
     });
 
