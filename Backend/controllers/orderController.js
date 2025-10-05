@@ -248,14 +248,37 @@ export const addOrder = async (req, res) => {
   }
 };
 
-// GET ORDERS
+// GET ORDERS (dengan Pagination)
 export const getOrder = async (req, res) => {
   try {
-    const orders = await Order.findAll();
+    // 1. Ambil query parameter untuk page dan limit, berikan nilai default
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; // Default 10 item per halaman
+    const offset = (page - 1) * limit;
+
+    // 2. Gunakan findAndCountAll untuk mendapatkan data per halaman dan total data
+    const { count, rows } = await Order.findAndCountAll({
+      limit: limit,
+      offset: offset,
+      order: [
+        // Opsional: urutkan data, misalnya berdasarkan ID
+        ['id', 'DESC']
+      ]
+    });
+
+    // 3. Hitung total halaman
+    const totalPages = Math.ceil(count / limit);
+
+    // 4. Kirim respons dengan struktur yang informatif untuk frontend
     res.status(200).json({
       status: "Success",
       message: "Orders Retrieved",
-      data: orders,
+      data: {
+        orders: rows,       // Data order untuk halaman saat ini
+        totalItems: count,    // Total semua item di database
+        totalPages: totalPages, // Total semua halaman yang ada
+        currentPage: page,    // Halaman saat ini
+      },
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
