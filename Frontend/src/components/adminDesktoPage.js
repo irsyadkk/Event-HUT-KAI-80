@@ -1015,8 +1015,8 @@ const AdminDesktopPage = () => {
             {timerMsg && (
               <div
                 className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
-                    ? "bg-green-50 border border-green-200 text-green-700"
-                    : "bg-red-50 border border-red-200 text-red-700"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
                   }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
@@ -1294,8 +1294,8 @@ const AdminDesktopPage = () => {
           {messageTambah && (
             <div
               className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
@@ -1332,8 +1332,8 @@ const AdminDesktopPage = () => {
           {messageCariPegawai && (
             <div
               className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
@@ -1456,8 +1456,8 @@ const AdminDesktopPage = () => {
           {usersMsg && (
             <div
               className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
-                  ? "bg-red-50 border border-red-200 text-red-700"
-                  : "bg-green-50 border border-green-200 text-green-700"
+                ? "bg-red-50 border border-red-200 text-red-700"
+                : "bg-green-50 border border-green-200 text-green-700"
                 }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
@@ -1597,8 +1597,8 @@ const AdminDesktopPage = () => {
           {messageCari && (
             <div
               className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageCari.text}</p>
@@ -1731,8 +1731,8 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => setSelectedTable("order")}
                 className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 Order
@@ -1740,8 +1740,8 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => setSelectedTable("pickup")}
                 className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 Pickup
@@ -2037,7 +2037,7 @@ const AdminDesktopPage = () => {
                             {index + 1}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.timestamp ?? "-"}
+                            {formatWIB(pickup.timestamp) || "-"}
                           </td>
                           <td className="px-6 py-4">
                             <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
