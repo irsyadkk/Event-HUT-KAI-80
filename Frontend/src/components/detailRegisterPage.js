@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ADMIN_NIPP } from "../utils";
 import api from "../api";
+import { getUserRole } from "../getUserRole.js";
 
 const DetailRegisterPage = () => {
   const navigate = useNavigate();
+  const role = getUserRole();
   const location = useLocation();
   const nipp = location.state?.nipp;
   const [namaPegawai, setNamaPegawai] = useState("");
@@ -42,16 +43,16 @@ const DetailRegisterPage = () => {
   // cek otorisasi
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const nippLogin = localStorage.getItem("nipp");
+    const nipp = localStorage.getItem("nipp");
 
-    if (!token || !nippLogin) {
+    if (!token || !nipp) {
       navigate("/");
       return;
     }
-    if (nippLogin !== ADMIN_NIPP) {
+    if (!role === "superadmin" || !role === "admin") {
       navigate("/");
     }
-    if (nippLogin === ADMIN_NIPP && !location.state?.nipp) {
+    if ((role === "superadmin" || role === "admin") && !location.state?.nipp) {
       navigate("/admindesk");
     } else {
       setAllowed(true);
