@@ -298,10 +298,6 @@ const AdminDesktopPage = () => {
         setTotalPickupItems(responsePagination.totalItems || 0);
       } catch (err) {
         console.error("Gagal mengambil data pickups:", err);
-        setUsersMsg({
-          text: err?.response?.data?.message || "Gagal mengambil data pickups.",
-          type: "error",
-        });
       }
     },
     [ITEMS_PER_PAGE]
@@ -779,7 +775,7 @@ const AdminDesktopPage = () => {
     if (allowed) {
       getQuota();
     }
-  }, [allowed, getAllPickups, getQuota, getAllUsers]);
+  }, [allowed, getQuota]);
 
   // Buat useEffect baru yang khusus menangani pengambilan data order
   useEffect(() => {
@@ -1995,188 +1991,202 @@ const AdminDesktopPage = () => {
               )}
             </>
           ) : (
-            /* ---------- TABEL PICKUP ---------- */
-            <div
-              key="pickup-table"
-              className="overflow-x-auto max-h-[400px] overflow-y-auto"
-            >
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      No
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Timestamp
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      NIPP
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Nama
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Jumlah Kuota
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Jenis Pengambilan
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Pos Pengambilan
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      NIPP Penanggung Jawab
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Nama Penanggung Jawab
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {pickupList.length === 0 ? (
+            <>
+              {/* ---------- TABEL PICKUP ---------- */}
+              <div
+                key="pickup-table"
+                className="overflow-x-auto max-h-[500px] overflow-y-auto"
+              >
+                <table className="w-full">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-12 text-center text-gray-500"
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-8 h-8 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
-                              ></path>
-                            </svg>
-                          </div>
-                          <p className="font-medium">Belum ada data pickup !</p>
-                        </div>
-                      </td>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        No
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Timestamp
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        NIPP
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Nama
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Jumlah Kuota
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Jenis Pengambilan
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        Pos Pengambilan
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        NIPP Penanggung Jawab
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        Nama Penanggung Jawab
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        Aksi
+                      </th>
                     </tr>
-                  ) : (
-                    pickupList.map((pickup, index) => {
-                      const rowKey =
-                        pickup.id ??
-                        (pickup.timestamp && pickup.nipp
-                          ? `${pickup.nipp}-${pickup.timestamp}`
-                          : `idx-${index}`);
-                      return (
-                        <tr
-                          key={`pickup-${rowKey}`}
-                          className="hover:bg-gray-50 transition-colors"
+                  </thead>
+
+                  <tbody className="divide-y divide-gray-100">
+                    {pickupList.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="11"
+                          className="px-6 py-12 text-center text-gray-500"
                         >
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.timestamp ?? "-"}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                              {pickup.nipp}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.nama ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.jumlah_kuota ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.jenis_pengambilan ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.pos_pengambilan ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.nipp_pj ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.nama_pj ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {pickup.status ?? "-"}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <button
-                              onClick={() =>
-                                navigate("/pickup/edit", {
-                                  state: {
-                                    // minimal butuh nipp; tambahkan id/timestamp kalau halaman edit-mu memerlukannya
-                                    nipp: pickup.nipp,
-                                    timestamp: pickup.timestamp ?? null,
-                                  },
-                                })
-                              }
-                              className="inline-flex items-center px-4 py-2 
-                     bg-gradient-to-r from-blue-600 to-blue-700 
-                     hover:from-blue-700 hover:to-blue-800 
-                     text-white text-sm font-medium rounded-lg shadow 
-                     transition-all"
-                            >
-                              Edit
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-8 h-8 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
+                                ></path>
+                              </svg>
+                            </div>
+                            <p className="font-medium">
+                              Belum ada data pickup!
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      pickupList.map((pickup, index) => {
+                        const rowKey =
+                          pickup.id ??
+                          (pickup.timestamp && pickup.nipp
+                            ? `${pickup.nipp}-${pickup.timestamp}`
+                            : `idx-${index}`);
+                        return (
+                          <tr
+                            key={`pickup-${rowKey}`}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {(currentPickupPage - 1) * ITEMS_PER_PAGE +
+                                index +
+                                1}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.timestamp ?? "-"}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                                {pickup.nipp}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.nama ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.jumlah_kuota ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.jenis_pengambilan ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.pos_pengambilan ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.nipp_pj ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.nama_pj ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700">
+                              {pickup.status ?? "-"}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button
+                                onClick={() =>
+                                  navigate("/pickup/edit", {
+                                    state: {
+                                      nipp: pickup.nipp,
+                                      timestamp: pickup.timestamp ?? null,
+                                    },
+                                  })
+                                }
+                                className="inline-flex items-center px-4 py-2 
+                      bg-gradient-to-r from-blue-600 to-blue-700 
+                      hover:from-blue-700 hover:to-blue-800 
+                      text-white text-sm font-medium rounded-lg shadow 
+                      transition-all"
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ============== KOMPONEN PAGINATION PICKUP ============== */}
+              {totalPickupPages > 0 && (
+                <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
+                  <span className="text-sm text-gray-700 mb-2 md:mb-0">
+                    Menampilkan{" "}
+                    <span className="font-semibold">
+                      {(currentPickupPage - 1) * ITEMS_PER_PAGE + 1}
+                    </span>
+                    {" - "}
+                    <span className="font-semibold">
+                      {(currentPickupPage - 1) * ITEMS_PER_PAGE +
+                        pickupList.length}
+                    </span>
+                    {" dari "}
+                    <span className="font-semibold">{totalPickupItems}</span>
+                    {" data"}
+                  </span>
+
+                  <div className="inline-flex -space-x-px rounded-md shadow-sm">
+                    <button
+                      onClick={() =>
+                        handlePagePickupChange(currentPickupPage - 1)
+                      }
+                      disabled={currentPickupPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sebelumnya
+                    </button>
+
+                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+                      Halaman {currentPickupPage} dari {totalPickupPages}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        handlePagePickupChange(currentPickupPage + 1)
+                      }
+                      disabled={currentPickupPage === totalPickupPages}
+                      className="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Berikutnya
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
-      {totalPickupPages > 0 && (
-        <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
-          <span className="text-sm text-gray-700 mb-2 md:mb-0">
-            Menampilkan{" "}
-            <span className="font-semibold">
-              {(currentPickupPage - 1) * ITEMS_PER_PAGE + 1}
-            </span>
-            {" - "}
-            <span className="font-semibold">
-              {(currentPickupPage - 1) * ITEMS_PER_PAGE + pickupList.length}
-            </span>
-            {" dari "}
-            <span className="font-semibold">{totalPickupItems}</span>
-            {" data"}
-          </span>
-          <div className="inline-flex -space-x-px rounded-md shadow-sm">
-            <button
-              onClick={() => handlePagePickupChange(currentPickupPage - 1)}
-              disabled={currentPickupPage === 1}
-              className="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Sebelumnya
-            </button>
-            {/* Logika untuk menampilkan nomor halaman bisa dibuat lebih kompleks,
-                        ini versi sederhana */}
-            <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
-              Halaman {currentPickupPage} dari {totalPickupPages}
-            </span>
-            <button
-              onClick={() => handlePagePickupChange(currentPickupPage + 1)}
-              disabled={currentPickupPage === totalPickupPages}
-              className="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Berikutnya
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

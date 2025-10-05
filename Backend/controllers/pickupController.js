@@ -128,7 +128,7 @@ export const getPickup = async (req, res) => {
     res.status(200).json({
       status: "success",
       message: "Pickups retrieved successfully",
-      data: [pickups],
+      data: pickups,
       pagination: {
         totalItems,
         totalPages,
