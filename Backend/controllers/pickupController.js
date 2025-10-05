@@ -34,14 +34,14 @@ export const addPickup = async (req, res) => {
       const msg = !nipp
         ? "nipp field cannot be empty !"
         : !nama
-          ? "nama field cannot be empty !"
-          : !jumlah_kuota
-            ? "Status field cannot be empty !"
-            : !jenis_pengambilan
-              ? "jenis_pengambilan field cannot be empty !"
-              : !pos_pengambilan
-                ? "pos_pengambilan field cannot be empty !"
-                : "status field cannot be empty !";
+        ? "nama field cannot be empty !"
+        : !jumlah_kuota
+        ? "Status field cannot be empty !"
+        : !jenis_pengambilan
+        ? "jenis_pengambilan field cannot be empty !"
+        : !pos_pengambilan
+        ? "pos_pengambilan field cannot be empty !"
+        : "status field cannot be empty !";
       throw makeError(msg, 400);
     }
 
@@ -113,11 +113,28 @@ export const addPickup = async (req, res) => {
 // GET PICKUP
 export const getPickup = async (req, res) => {
   try {
-    const pickups = await Pickups.findAll();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { rows: pickups, count: totalItems } = await Pickups.findAndCountAll({
+      limit,
+      offset,
+      order: ["timestamp", "ASC"],
+    });
+
+    const totalPages = Math.ceil(totalItems / limit);
+
     res.status(200).json({
-      status: "Success",
-      message: "Pickups Retrieved",
-      data: pickups,
+      status: "success",
+      message: "Pickups retrieved successfully",
+      data: [pickups],
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        perPage: limit,
+      },
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
@@ -188,24 +205,22 @@ export const editPickupByNIPP = async (req, res) => {
   const t = await db.transaction();
   try {
     const nipp = req.params.nipp;
-    const {
-      jenis_pengambilan,
-      pos_pengambilan,
-      nipp_pj,
-      nama_pj,
-    } = req.body;
+    const { jenis_pengambilan, pos_pengambilan, nipp_pj, nama_pj } = req.body;
 
     const pickup = await Pickups.findOne({
       where: { nipp: nipp },
       transaction: t,
       lock: t.LOCK.UPDATE,
-    })
+    });
 
     if (!pickup) {
       throw makeError("Pickup Not Found!!", 404);
     }
 
-    if (jenis_pengambilan && !["INDIVIDU", "KOLEKTIF"].includes(jenis_pengambilan)) {
+    if (
+      jenis_pengambilan &&
+      !["INDIVIDU", "KOLEKTIF"].includes(jenis_pengambilan)
+    ) {
       throw makeError("jenis_pengambilan must be INDIVIDU or KOLEKTIF", 400);
     }
 
@@ -214,7 +229,10 @@ export const editPickupByNIPP = async (req, res) => {
       pos_pengambilan: pos_pengambilan ?? pickup.pos_pengambilan,
     };
 
-    if (jenis_pengambilan === "KOLEKTIF" || pickup.jenis_pengambilan === "KOLEKTIF") {
+    if (
+      jenis_pengambilan === "KOLEKTIF" ||
+      pickup.jenis_pengambilan === "KOLEKTIF"
+    ) {
       updatedData.nipp_pj = nipp_pj ?? pickup.nipp_pj;
       updatedData.nama_pj = nama_pj ?? pickup.nama_pj;
     } else {
