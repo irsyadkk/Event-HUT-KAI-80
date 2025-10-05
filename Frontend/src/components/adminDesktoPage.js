@@ -1705,7 +1705,7 @@ const handleSearch = async (e) => {
               {/* ---------- TABEL ORDER ---------- */}
               <div
                 key="order-table"
-                className="overflow-x-auto"
+                className="overflow-x-auto max-h-[500px] overflow-y-auto"
               >
                 <table className="w-full">
                   <thead className="bg-gray-50">
