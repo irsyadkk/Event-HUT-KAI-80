@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useTransition } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { ADMIN_NIPP } from "../utils";
 import api from "../api";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -66,7 +65,12 @@ const AdminDesktopPage = () => {
   const [timerAction, setTimerAction] = useState(""); // "" | "ACTIVATE" | "DEACTIVATE" | "END"
   const [isPendingAction, startTransition] = useTransition();
 
-  //Pagination
+  //Pagination USER
+  const [currentUserPage, setCurrentUserPage] = useState(1);
+  const [totalUserPages, setTotalUserPages] = useState(0);
+  const [totalUserItems, setTotalUserItems] = useState(0);
+
+  //Pagination ORDER
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalOrderItems, setTotalOrderItems] = useState(0); // Opsional, untuk info
@@ -210,22 +214,32 @@ const AdminDesktopPage = () => {
   };
 
   // --- function ambil semua users
-  const getAllUsers = useCallback(async () => {
-    setIsLoadingUsers(true);
-    setUsersMsg(null);
-    try {
-      const res = await api.get("/users"); // verifyToken akan cek token dr interceptor
-      setUsers(res?.data?.data || []);
-    } catch (err) {
-      console.error("Gagal mengambil data users:", err);
-      setUsersMsg({
-        text: err?.response?.data?.message || "Gagal mengambil data users.",
-        type: "error",
-      });
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  }, []);
+  const getAllUsers = useCallback(
+    async (page = 1) => {
+      setIsLoadingUsers(true);
+      setUsersMsg(null);
+      try {
+        const res = await api.get(
+          `/users?page=${page}&limit=${ITEMS_PER_PAGE}`
+        );
+        const responseData = res.data.data;
+        const responsePagination = res.data.pagination;
+        setUsers(responseData || []);
+        setTotalUserPages(responsePagination.totalPages || 0);
+        setCurrentUserPage(responsePagination.currentPage || 1);
+        setTotalUserItems(responsePagination.totalItems || 0);
+      } catch (err) {
+        console.error("Gagal mengambil data users:", err);
+        setUsersMsg({
+          text: err?.response?.data?.message || "Gagal mengambil data users.",
+          type: "error",
+        });
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    },
+    [ITEMS_PER_PAGE]
+  );
 
   // --- export users ke excel (opsional)
   const exportExcelUsers = () => {
@@ -284,7 +298,7 @@ const AdminDesktopPage = () => {
 
   // Ganti fungsi handleSearch Anda dengan yang ini
 
-const handleSearch = async (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchNipp.trim()) {
       setMessageCari({ text: "NIPP tidak boleh kosong!", type: "error" });
@@ -292,7 +306,7 @@ const handleSearch = async (e) => {
     }
     setIsLoading(true);
     setSearchResult(null); // Reset hasil pencarian sebelumnya
-    setMessageCari("");    // Reset pesan sebelumnya
+    setMessageCari(""); // Reset pesan sebelumnya
 
     try {
       // MODIFIKASI: Gunakan Promise.allSettled
@@ -312,11 +326,12 @@ const handleSearch = async (e) => {
 
       // Jika sampai sini, berarti order PASTI ditemukan
       const orderData = orderResult.value.data.data;
-      
+
       // Cek apakah user ditemukan. Jika tidak, berikan nilai default
-      const userData = userResult.status === "fulfilled" 
-        ? userResult.value.data.data 
-        : { nama: "(Data User Tidak Ditemukan)", penetapan: "N/A" };
+      const userData =
+        userResult.status === "fulfilled"
+          ? userResult.value.data.data
+          : { nama: "(Data User Tidak Ditemukan)", penetapan: "N/A" };
 
       setSearchResult({
         nipp: orderData.nipp,
@@ -328,7 +343,6 @@ const handleSearch = async (e) => {
         keberangkatan: orderData.keberangkatan,
       });
       setMessageCari({ text: "Data ditemukan!", type: "success" });
-
     } catch (err) {
       console.error("Gagal mengambil data:", err);
       setMessageCari({
@@ -337,9 +351,9 @@ const handleSearch = async (e) => {
       });
       setSearchResult(null);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const handleSearchPegawai = async (e) => {
     e.preventDefault();
@@ -745,7 +759,6 @@ const handleSearch = async (e) => {
       // getAllOrders();
       getAllPickups();
       getQuota();
-      getAllUsers(); // <-- ambil data users
     }
   }, [allowed, getAllPickups, getQuota, getAllUsers]);
 
@@ -753,14 +766,20 @@ const handleSearch = async (e) => {
   useEffect(() => {
     if (allowed) {
       getAllOrders(currentPage);
+      getAllUsers(currentUserPage);
     }
-  }, [allowed, currentPage, getAllOrders]);
-
+  }, [allowed, currentPage, getAllOrders, getAllUsers, currentUserPage]);
 
   // ===================== FUNGSI HANDLER UNTUK PAGINATION =====================
   const handlePageChange = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
+    }
+  };
+
+  const handlePageUserChange = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalUserPages) {
+      setCurrentUserPage(pageNumber);
     }
   };
 
@@ -964,17 +983,18 @@ const handleSearch = async (e) => {
               <button
                 onClick={() => openConfirm("DEACTIVATE")}
                 className={`w-full px-4 py-3 rounded-xl shadow-lg transition-all font-medium text-white
-        ${isTimerExpired() || !timerActive
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                  }`}
+        ${
+          isTimerExpired() || !timerActive
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+        }`}
                 disabled={isTimerExpired() || !timerActive || isPendingAction}
                 title={
                   isTimerExpired()
                     ? "Timer sudah habis—tidak dapat dimatikan."
                     : !timerActive
-                      ? "Timer tidak aktif."
-                      : "Matikan Timer"
+                    ? "Timer tidak aktif."
+                    : "Matikan Timer"
                 }
               >
                 Matikan Timer
@@ -995,10 +1015,11 @@ const handleSearch = async (e) => {
 
             {timerMsg && (
               <div
-                className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-                  }`}
+                className={`mt-3 p-3 rounded-xl ${
+                  timerMsg.type === "success"
+                    ? "bg-green-50 border border-green-200 text-green-700"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
               </div>
@@ -1087,12 +1108,13 @@ const handleSearch = async (e) => {
                 <button
                   onClick={handleConfirmProceed}
                   className={`flex-1 px-4 py-3 rounded-xl text-white transition-all font-medium
-            ${confirmCfg.action === "END"
-                      ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-                      : confirmCfg.action === "DEACTIVATE"
-                        ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-                    }`}
+            ${
+              confirmCfg.action === "END"
+                ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                : confirmCfg.action === "DEACTIVATE"
+                ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+            }`}
                   disabled={
                     confirmCfg.loading ||
                     (confirmCfg.action === "DEACTIVATE" &&
@@ -1100,7 +1122,7 @@ const handleSearch = async (e) => {
                   }
                   title={
                     confirmCfg.action === "DEACTIVATE" &&
-                      (isTimerExpired() || !timerActive)
+                    (isTimerExpired() || !timerActive)
                       ? "Tidak dapat mematikan: timer sudah habis atau tidak aktif."
                       : ""
                   }
@@ -1162,8 +1184,8 @@ const handleSearch = async (e) => {
                 {importTarget === "orders"
                   ? "Data Peserta (orders)"
                   : importTarget === "pickups"
-                    ? "Data Pickup (pickups)"
-                    : "Data Users (users)"}
+                  ? "Data Pickup (pickups)"
+                  : "Data Users (users)"}
               </h2>
 
               <p className="text-sm text-gray-600 mb-4">
@@ -1274,10 +1296,11 @@ const handleSearch = async (e) => {
           </button>
           {messageTambah && (
             <div
-              className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mt-4 p-4 rounded-xl ${
+                messageTambah.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
             </div>
@@ -1312,12 +1335,92 @@ const handleSearch = async (e) => {
           </form>
           {messageCariPegawai && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mb-4 p-4 rounded-xl ${
+                messageCariPegawai.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
+            </div>
+          )}
+          {/* Search Pegawai Result */}
+          {searchPegawaiResult && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                Detail Pegawai
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchPegawaiResult.nipp}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">Nama</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchPegawaiResult.nama}
+                    </p>
+                  </div>
+
+                  {/* Penetapan + input + 2 tombol */}
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium mb-2">
+                      Penetapan
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <p className="text-lg font-bold text-gray-800">
+                        {searchPegawaiResult.penetapan}
+                      </p>
+
+                      <form
+                        onSubmit={(e) => e.preventDefault()}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          type="number"
+                          value={penetapanValueAdd}
+                          onChange={(e) => setPenetapanValueAdd(e.target.value)}
+                          placeholder="Jumlah..."
+                          className="w-28 border-2 border-gray-200 rounded-xl px-3 py-1
+                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          disabled={isLoading}
+                        />
+                        {/* Tombol Tambah */}
+                        <button
+                          type="button"
+                          onClick={handleAddPenetapan}
+                          className="px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700
+                           hover:from-blue-700 hover:to-blue-800 text-white rounded-xl
+                           shadow transition-all font-medium"
+                          disabled={isLoadingTambahPenetapan}
+                        >
+                          {isLoadingTambahPenetapan
+                            ? "Menambahkan..."
+                            : "Tambah Penetapan"}
+                        </button>
+
+                        {/* Tombol Kurang */}
+                        <button
+                          type="button"
+                          onClick={handleSubPenetapan}
+                          className="px-4 py-1 bg-gradient-to-r from-red-600 to-red-700
+                           hover:from-red-700 hover:to-red-800 text-white rounded-xl
+                           shadow transition-all font-medium"
+                          disabled={isLoadingKurangPenetapan}
+                        >
+                          {isLoadingKurangPenetapan
+                            ? "Mengurangi..."
+                            : "Kurangi Penetapan"}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1357,10 +1460,11 @@ const handleSearch = async (e) => {
 
           {usersMsg && (
             <div
-              className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
-                ? "bg-red-50 border border-red-200 text-red-700"
-                : "bg-green-50 border border-green-200 text-green-700"
-                }`}
+              className={`m-4 p-4 rounded-xl ${
+                usersMsg.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-700"
+                  : "bg-green-50 border border-green-200 text-green-700"
+              }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
             </div>
@@ -1429,88 +1533,46 @@ const handleSearch = async (e) => {
               </tbody>
             </table>
           </div>
-        </div>
-        {/* ==== akhir TABEL USERS ==== */}
-
-        {/* Search Pegawai Result */}
-        {searchPegawaiResult && (
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              Detail Pegawai
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">NIPP</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchPegawaiResult.nipp}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">Nama</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchPegawaiResult.nama}
-                  </p>
-                </div>
-
-                {/* Penetapan + input + 2 tombol */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium mb-2">
-                    Penetapan
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <p className="text-lg font-bold text-gray-800">
-                      {searchPegawaiResult.penetapan}
-                    </p>
-
-                    <form
-                      onSubmit={(e) => e.preventDefault()}
-                      className="flex items-center gap-2"
-                    >
-                      <input
-                        type="number"
-                        value={penetapanValueAdd}
-                        onChange={(e) => setPenetapanValueAdd(e.target.value)}
-                        placeholder="Jumlah..."
-                        className="w-28 border-2 border-gray-200 rounded-xl px-3 py-1
-                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        disabled={isLoading}
-                      />
-                      {/* Tombol Tambah */}
-                      <button
-                        type="button"
-                        onClick={handleAddPenetapan}
-                        className="px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700
-                           hover:from-blue-700 hover:to-blue-800 text-white rounded-xl
-                           shadow transition-all font-medium"
-                        disabled={isLoadingTambahPenetapan}
-                      >
-                        {isLoadingTambahPenetapan
-                          ? "Menambahkan..."
-                          : "Tambah Penetapan"}
-                      </button>
-
-                      {/* Tombol Kurang */}
-                      <button
-                        type="button"
-                        onClick={handleSubPenetapan}
-                        className="px-4 py-1 bg-gradient-to-r from-red-600 to-red-700
-                           hover:from-red-700 hover:to-red-800 text-white rounded-xl
-                           shadow transition-all font-medium"
-                        disabled={isLoadingKurangPenetapan}
-                      >
-                        {isLoadingKurangPenetapan
-                          ? "Mengurangi..."
-                          : "Kurangi Penetapan"}
-                      </button>
-                    </form>
-                  </div>
-                </div>
+          {totalUserPages > 0 && (
+            <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
+              <span className="text-sm text-gray-700 mb-2 md:mb-0">
+                Menampilkan{" "}
+                <span className="font-semibold">
+                  {(currentUserPage - 1) * ITEMS_PER_PAGE + 1}
+                </span>
+                {" - "}
+                <span className="font-semibold">
+                  {(currentUserPage - 1) * ITEMS_PER_PAGE + users.length}
+                </span>
+                {" dari "}
+                <span className="font-semibold">{totalUserItems}</span>
+                {" data"}
+              </span>
+              <div className="inline-flex -space-x-px rounded-md shadow-sm">
+                <button
+                  onClick={() => handlePageUserChange(currentUserPage - 1)}
+                  disabled={currentUserPage === 1}
+                  className="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Sebelumnya
+                </button>
+                {/* Logika untuk menampilkan nomor halaman bisa dibuat lebih kompleks,
+                        ini versi sederhana */}
+                <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+                  Halaman {currentUserPage} dari {totalUserPages}
+                </span>
+                <button
+                  onClick={() => handlePageUserChange(currentUserPage + 1)}
+                  disabled={currentUserPage === totalUserPages}
+                  className="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Berikutnya
+                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        {/* ==== akhir TABEL USERS ==== */}
 
         {/* Search Section */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -1540,95 +1602,99 @@ const handleSearch = async (e) => {
           </form>
           {messageCari && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mb-4 p-4 rounded-xl ${
+                messageCari.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageCari.text}</p>
             </div>
           )}
-        </div>
+          {/* Search Result */}
+          {searchResult && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                Detail Registrasi
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchResult.nipp}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">Nama</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchResult.nama}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">
+                      Penetapan
+                    </p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchResult.penetapan}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium mb-2">
+                      Anggota Terdaftar
+                    </p>
+                    {searchResult.anggota && searchResult.anggota.length > 0 ? (
+                      <ol className="list-decimal list-inside space-y-1">
+                        {searchResult.anggota.map((item, index) => (
+                          <li key={index} className="text-gray-700">
+                            {item}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-gray-500">
+                        Belum ada anggota terdaftar
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">
+                      Transportasi
+                    </p>
+                    <p className="text-lg text-gray-800">
+                      {searchResult.transportasi}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">
+                      Keberangkatan
+                    </p>
+                    <p className="text-lg text-gray-800">
+                      {searchResult.keberangkatan}
+                    </p>
+                  </div>
+                </div>
 
-        {/* Search Result */}
-        {searchResult && (
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              Detail Registrasi
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">NIPP</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchResult.nipp}
-                  </p>
+                <div className="flex flex-col items-center justify-center">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-100">
+                    <img
+                      src={searchResult.qr}
+                      alt="QR Code"
+                      className="w-48 h-48 object-contain"
+                    />
+                  </div>
+                  <button
+                    onClick={downloadQRCode}
+                    className="mt-6 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+                  >
+                    Download QR Code
+                  </button>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">Nama</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchResult.nama}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">Penetapan</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchResult.penetapan}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium mb-2">
-                    Anggota Terdaftar
-                  </p>
-                  {searchResult.anggota && searchResult.anggota.length > 0 ? (
-                    <ol className="list-decimal list-inside space-y-1">
-                      {searchResult.anggota.map((item, index) => (
-                        <li key={index} className="text-gray-700">
-                          {item}
-                        </li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <p className="text-gray-500">Belum ada anggota terdaftar</p>
-                  )}
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">
-                    Transportasi
-                  </p>
-                  <p className="text-lg text-gray-800">
-                    {searchResult.transportasi}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-600 font-medium">
-                    Keberangkatan
-                  </p>
-                  <p className="text-lg text-gray-800">
-                    {searchResult.keberangkatan}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center justify-center">
-                <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-100">
-                  <img
-                    src={searchResult.qr}
-                    alt="QR Code"
-                    className="w-48 h-48 object-contain"
-                  />
-                </div>
-                <button
-                  onClick={downloadQRCode}
-                  className="mt-6 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
-                >
-                  Download QR Code
-                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Table */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
@@ -1671,19 +1737,21 @@ const handleSearch = async (e) => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedTable("order")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "order"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
               >
                 Order
               </button>
               <button
                 onClick={() => setSelectedTable("pickup")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "pickup"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
               >
                 Pickup
               </button>
@@ -1692,8 +1760,9 @@ const handleSearch = async (e) => {
               <button
                 onClick={openResetModalForCurrentTable}
                 className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel ${selectedTable === "order" ? "Order" : "Pickup"
-                  }`}
+                title={`Reset semua data di tabel ${
+                  selectedTable === "order" ? "Order" : "Pickup"
+                }`}
               >
                 Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
               </button>
@@ -1736,7 +1805,10 @@ const handleSearch = async (e) => {
                   <tbody className="divide-y divide-gray-100">
                     {isOrderLoading ? ( // Tampilkan state loading
                       <tr>
-                        <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                        <td
+                          colSpan="7"
+                          className="px-6 py-12 text-center text-gray-500"
+                        >
                           Memuat data peserta...
                         </td>
                       </tr>
@@ -1853,9 +1925,13 @@ const handleSearch = async (e) => {
                 <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
                   <span className="text-sm text-gray-700 mb-2 md:mb-0">
                     Menampilkan{" "}
-                    <span className="font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
+                    <span className="font-semibold">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                    </span>
                     {" - "}
-                    <span className="font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + orderList.length}</span>
+                    <span className="font-semibold">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + orderList.length}
+                    </span>
                     {" dari "}
                     <span className="font-semibold">{totalOrderItems}</span>
                     {" data"}
