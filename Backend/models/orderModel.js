@@ -40,6 +40,5 @@ const Order = db.define(
   }
 );
 
-db.sync().then(() => console.log("Database orders synced"));
 
 export default Order;

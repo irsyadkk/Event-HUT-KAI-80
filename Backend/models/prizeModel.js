@@ -33,6 +33,5 @@ const Prize = db.define(
   }
 );
 
-db.sync().then(() => console.log("Database prizes synced"));
 
 export default Prize;

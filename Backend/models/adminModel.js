@@ -18,6 +18,5 @@ const Admin = db.define(
   }
 );
 
-db.sync().then(() => console.log("Database admins synced"));
 
 export default Admin;

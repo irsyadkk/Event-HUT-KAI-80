@@ -20,6 +20,5 @@ const Winner = db.define(
   }
 );
 
-db.sync().then(() => console.log("Database winner synced"));
 
 export default Winner;
