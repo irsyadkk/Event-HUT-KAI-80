@@ -5,7 +5,8 @@ import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { io } from "socket.io-client";
-import { ADMIN_NIPP, BASE_URL } from "../utils";
+import { BASE_URL } from "../utils";
+import { getUserRole } from "../getUserRole.js";
 
 // =================================================================
 // --- Komponen Notifikasi & Konfirmasi Kustom ---
@@ -116,6 +117,7 @@ const ADMIN_PASS = process.env.REACT_APP_ADMIN_PASSWORD;
 export default function AdminPrizePage() {
   const headers = useAuthHeaders();
   const navigate = useNavigate();
+  const role = getUserRole();
 
   // form tambah hadiah
   const [newId, setNewId] = useState("");
@@ -220,7 +222,7 @@ export default function AdminPrizePage() {
       return;
     }
     try {
-      if (nipp !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
