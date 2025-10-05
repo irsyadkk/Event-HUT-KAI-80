@@ -65,17 +65,24 @@ const AdminDesktopPage = () => {
   const [timerAction, setTimerAction] = useState(""); // "" | "ACTIVATE" | "DEACTIVATE" | "END"
   const [isPendingAction, startTransition] = useTransition();
 
-  //Pagination USER
+  // PAGINATION LIMIT
+  const ITEMS_PER_PAGE = 10;
+
+  // Pagination USER
   const [currentUserPage, setCurrentUserPage] = useState(1);
   const [totalUserPages, setTotalUserPages] = useState(0);
   const [totalUserItems, setTotalUserItems] = useState(0);
 
-  //Pagination ORDER
+  // Pagination PICKUP
+  const [currentPickupPage, setCurrentPickupPage] = useState(1);
+  const [totalPickupPages, setTotalPickupPages] = useState(0);
+  const [totalPickupItems, setTotalPickupItems] = useState(0);
+
+  // Pagination ORDER
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalOrderItems, setTotalOrderItems] = useState(0); // Opsional, untuk info
   const [isOrderLoading, setIsOrderLoading] = useState(false);
-  const ITEMS_PER_PAGE = 10;
 
   // === TIMER: state konfirmasi ===
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -273,18 +280,32 @@ const AdminDesktopPage = () => {
     } catch (err) {
       console.error("Gagal mengambil data order :", err);
     } finally {
-      setIsOrderLoading(false); // Selesai loading
+      setIsOrderLoading(false);
     }
   }, []);
 
-  const getAllPickups = useCallback(async () => {
-    try {
-      const res = await api.get("/pickup");
-      setPickupList(res.data.data || []);
-    } catch (err) {
-      console.error("Gagal mengambil data pickup :", err);
-    }
-  }, []);
+  const getAllPickups = useCallback(
+    async (page = 1) => {
+      try {
+        const res = await api.get(
+          `/pickup?page=${page}&limit=${ITEMS_PER_PAGE}`
+        );
+        const responseData = res.data.data;
+        const responsePagination = res.data.pagination;
+        setPickupList(responseData || []);
+        setTotalPickupPages(responsePagination.totalPages || 0);
+        setCurrentPickupPage(responsePagination.currentPage || 1);
+        setTotalPickupItems(responsePagination.totalItems || 0);
+      } catch (err) {
+        console.error("Gagal mengambil data pickups:", err);
+        setUsersMsg({
+          text: err?.response?.data?.message || "Gagal mengambil data pickups.",
+          type: "error",
+        });
+      }
+    },
+    [ITEMS_PER_PAGE]
+  );
 
   const getQuota = useCallback(async () => {
     try {
@@ -756,8 +777,6 @@ const AdminDesktopPage = () => {
   // initial load
   useEffect(() => {
     if (allowed) {
-      // getAllOrders();
-      getAllPickups();
       getQuota();
     }
   }, [allowed, getAllPickups, getQuota, getAllUsers]);
@@ -765,10 +784,19 @@ const AdminDesktopPage = () => {
   // Buat useEffect baru yang khusus menangani pengambilan data order
   useEffect(() => {
     if (allowed) {
-      getAllOrders(currentPage);
       getAllUsers(currentUserPage);
+      getAllOrders(currentPage);
+      getAllPickups(currentPickupPage);
     }
-  }, [allowed, currentPage, getAllOrders, getAllUsers, currentUserPage]);
+  }, [
+    allowed,
+    currentPage,
+    getAllOrders,
+    getAllUsers,
+    currentUserPage,
+    getAllPickups,
+    currentPickupPage,
+  ]);
 
   // ===================== FUNGSI HANDLER UNTUK PAGINATION =====================
   const handlePageChange = (pageNumber) => {
@@ -780,6 +808,12 @@ const AdminDesktopPage = () => {
   const handlePageUserChange = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalUserPages) {
       setCurrentUserPage(pageNumber);
+    }
+  };
+
+  const handlePagePickupChange = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPickupPages) {
+      setCurrentPickupPage(pageNumber);
     }
   };
 
@@ -983,17 +1017,18 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => openConfirm("DEACTIVATE")}
                 className={`w-full px-4 py-3 rounded-xl shadow-lg transition-all font-medium text-white
-        ${isTimerExpired() || !timerActive
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                  }`}
+        ${
+          isTimerExpired() || !timerActive
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+        }`}
                 disabled={isTimerExpired() || !timerActive || isPendingAction}
                 title={
                   isTimerExpired()
                     ? "Timer sudah habis—tidak dapat dimatikan."
                     : !timerActive
-                      ? "Timer tidak aktif."
-                      : "Matikan Timer"
+                    ? "Timer tidak aktif."
+                    : "Matikan Timer"
                 }
               >
                 Matikan Timer
@@ -1014,10 +1049,11 @@ const AdminDesktopPage = () => {
 
             {timerMsg && (
               <div
-                className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
+                className={`mt-3 p-3 rounded-xl ${
+                  timerMsg.type === "success"
                     ? "bg-green-50 border border-green-200 text-green-700"
                     : "bg-red-50 border border-red-200 text-red-700"
-                  }`}
+                }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
               </div>
@@ -1106,12 +1142,13 @@ const AdminDesktopPage = () => {
                 <button
                   onClick={handleConfirmProceed}
                   className={`flex-1 px-4 py-3 rounded-xl text-white transition-all font-medium
-            ${confirmCfg.action === "END"
-                      ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-                      : confirmCfg.action === "DEACTIVATE"
-                        ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-                    }`}
+            ${
+              confirmCfg.action === "END"
+                ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                : confirmCfg.action === "DEACTIVATE"
+                ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+            }`}
                   disabled={
                     confirmCfg.loading ||
                     (confirmCfg.action === "DEACTIVATE" &&
@@ -1119,7 +1156,7 @@ const AdminDesktopPage = () => {
                   }
                   title={
                     confirmCfg.action === "DEACTIVATE" &&
-                      (isTimerExpired() || !timerActive)
+                    (isTimerExpired() || !timerActive)
                       ? "Tidak dapat mematikan: timer sudah habis atau tidak aktif."
                       : ""
                   }
@@ -1181,8 +1218,8 @@ const AdminDesktopPage = () => {
                 {importTarget === "orders"
                   ? "Data Peserta (orders)"
                   : importTarget === "pickups"
-                    ? "Data Pickup (pickups)"
-                    : "Data Users (users)"}
+                  ? "Data Pickup (pickups)"
+                  : "Data Users (users)"}
               </h2>
 
               <p className="text-sm text-gray-600 mb-4">
@@ -1293,10 +1330,11 @@ const AdminDesktopPage = () => {
           </button>
           {messageTambah && (
             <div
-              className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
+              className={`mt-4 p-4 rounded-xl ${
+                messageTambah.type === "success"
                   ? "bg-green-50 border border-green-200 text-green-700"
                   : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
             </div>
@@ -1331,10 +1369,11 @@ const AdminDesktopPage = () => {
           </form>
           {messageCariPegawai && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
+              className={`mb-4 p-4 rounded-xl ${
+                messageCariPegawai.type === "success"
                   ? "bg-green-50 border border-green-200 text-green-700"
                   : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
             </div>
@@ -1455,10 +1494,11 @@ const AdminDesktopPage = () => {
 
           {usersMsg && (
             <div
-              className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
+              className={`m-4 p-4 rounded-xl ${
+                usersMsg.type === "error"
                   ? "bg-red-50 border border-red-200 text-red-700"
                   : "bg-green-50 border border-green-200 text-green-700"
-                }`}
+              }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
             </div>
@@ -1596,10 +1636,11 @@ const AdminDesktopPage = () => {
           </form>
           {messageCari && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
+              className={`mb-4 p-4 rounded-xl ${
+                messageCari.type === "success"
                   ? "bg-green-50 border border-green-200 text-green-700"
                   : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              }`}
             >
               <p className="font-medium">{messageCari.text}</p>
             </div>
@@ -1730,19 +1771,21 @@ const AdminDesktopPage = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedTable("order")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "order"
                     ? "bg-blue-600 text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                }`}
               >
                 Order
               </button>
               <button
                 onClick={() => setSelectedTable("pickup")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "pickup"
                     ? "bg-blue-600 text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                }`}
               >
                 Pickup
               </button>
@@ -1751,8 +1794,9 @@ const AdminDesktopPage = () => {
               <button
                 onClick={openResetModalForCurrentTable}
                 className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel ${selectedTable === "order" ? "Order" : "Pickup"
-                  }`}
+                title={`Reset semua data di tabel ${
+                  selectedTable === "order" ? "Order" : "Pickup"
+                }`}
               >
                 Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
               </button>
@@ -2095,6 +2139,44 @@ const AdminDesktopPage = () => {
           )}
         </div>
       </div>
+      {totalPickupPages > 0 && (
+        <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
+          <span className="text-sm text-gray-700 mb-2 md:mb-0">
+            Menampilkan{" "}
+            <span className="font-semibold">
+              {(currentPickupPage - 1) * ITEMS_PER_PAGE + 1}
+            </span>
+            {" - "}
+            <span className="font-semibold">
+              {(currentPickupPage - 1) * ITEMS_PER_PAGE + pickupList.length}
+            </span>
+            {" dari "}
+            <span className="font-semibold">{totalPickupItems}</span>
+            {" data"}
+          </span>
+          <div className="inline-flex -space-x-px rounded-md shadow-sm">
+            <button
+              onClick={() => handlePagePickupChange(currentPickupPage - 1)}
+              disabled={currentPickupPage === 1}
+              className="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sebelumnya
+            </button>
+            {/* Logika untuk menampilkan nomor halaman bisa dibuat lebih kompleks,
+                        ini versi sederhana */}
+            <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+              Halaman {currentPickupPage} dari {totalPickupPages}
+            </span>
+            <button
+              onClick={() => handlePagePickupChange(currentPickupPage + 1)}
+              disabled={currentPickupPage === totalPickupPages}
+              className="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Berikutnya
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

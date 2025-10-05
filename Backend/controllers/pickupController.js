@@ -120,7 +120,7 @@ export const getPickup = async (req, res) => {
     const { rows: pickups, count: totalItems } = await Pickups.findAndCountAll({
       limit,
       offset,
-      order: ["timestamp", "ASC"],
+      order: ["timestamp"],
     });
 
     const totalPages = Math.ceil(totalItems / limit);
