@@ -12,14 +12,14 @@ const makeError = (msg, code = 400) => {
 // GET USER
 export const getUser = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // halaman ke-
-    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
     const { rows: users, count: totalItems } = await User.findAndCountAll({
       limit,
       offset,
-      order: [["nipp"]],
+      order: ["nipp"],
     });
 
     const totalPages = Math.ceil(totalItems / limit);
