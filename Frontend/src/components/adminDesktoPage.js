@@ -66,6 +66,13 @@ const AdminDesktopPage = () => {
   const [timerAction, setTimerAction] = useState(""); // "" | "ACTIVATE" | "DEACTIVATE" | "END"
   const [isPendingAction, startTransition] = useTransition();
 
+  //Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalOrderItems, setTotalOrderItems] = useState(0); // Opsional, untuk info
+  const [isOrderLoading, setIsOrderLoading] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+
   // === TIMER: state konfirmasi ===
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmCfg, setConfirmCfg] = useState({
@@ -239,12 +246,20 @@ const AdminDesktopPage = () => {
     saveAs(blob, "DataUsers.xlsx");
   };
 
-  const getAllOrders = useCallback(async () => {
+  const getAllOrders = useCallback(async (page) => {
+    setIsOrderLoading(true);
     try {
-      const res = await api.get("/order");
-      setOrderList(res.data.data || []);
+      const res = await api.get(`/order?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const responseData = res.data.data;
+
+      setOrderList(responseData.orders || []);
+      setTotalPages(responseData.totalPages || 0);
+      setTotalOrderItems(responseData.totalItems || 0);
+      setCurrentPage(responseData.currentPage || 1);
     } catch (err) {
       console.error("Gagal mengambil data order :", err);
+    } finally {
+      setIsOrderLoading(false); // Selesai loading
     }
   }, []);
 
@@ -704,12 +719,27 @@ const AdminDesktopPage = () => {
   // initial load
   useEffect(() => {
     if (allowed) {
-      getAllOrders();
+      // getAllOrders();
       getAllPickups();
       getQuota();
       getAllUsers(); // <-- ambil data users
     }
-  }, [allowed, getAllOrders, getAllPickups, getQuota, getAllUsers]);
+  }, [allowed, getAllPickups, getQuota, getAllUsers]);
+
+  // Buat useEffect baru yang khusus menangani pengambilan data order
+  useEffect(() => {
+    if (allowed) {
+      getAllOrders(currentPage);
+    }
+  }, [allowed, currentPage, getAllOrders]);
+
+
+  // ===================== FUNGSI HANDLER UNTUK PAGINATION =====================
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
   // Download QR
   const downloadQRCode = () => {
@@ -911,18 +941,17 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => openConfirm("DEACTIVATE")}
                 className={`w-full px-4 py-3 rounded-xl shadow-lg transition-all font-medium text-white
-        ${
-          isTimerExpired() || !timerActive
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-        }`}
+        ${isTimerExpired() || !timerActive
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                  }`}
                 disabled={isTimerExpired() || !timerActive || isPendingAction}
                 title={
                   isTimerExpired()
                     ? "Timer sudah habis—tidak dapat dimatikan."
                     : !timerActive
-                    ? "Timer tidak aktif."
-                    : "Matikan Timer"
+                      ? "Timer tidak aktif."
+                      : "Matikan Timer"
                 }
               >
                 Matikan Timer
@@ -943,11 +972,10 @@ const AdminDesktopPage = () => {
 
             {timerMsg && (
               <div
-                className={`mt-3 p-3 rounded-xl ${
-                  timerMsg.type === "success"
-                    ? "bg-green-50 border border-green-200 text-green-700"
-                    : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+                className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+                  }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
               </div>
@@ -1036,13 +1064,12 @@ const AdminDesktopPage = () => {
                 <button
                   onClick={handleConfirmProceed}
                   className={`flex-1 px-4 py-3 rounded-xl text-white transition-all font-medium
-            ${
-              confirmCfg.action === "END"
-                ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-                : confirmCfg.action === "DEACTIVATE"
-                ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-            }`}
+            ${confirmCfg.action === "END"
+                      ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                      : confirmCfg.action === "DEACTIVATE"
+                        ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+                    }`}
                   disabled={
                     confirmCfg.loading ||
                     (confirmCfg.action === "DEACTIVATE" &&
@@ -1050,7 +1077,7 @@ const AdminDesktopPage = () => {
                   }
                   title={
                     confirmCfg.action === "DEACTIVATE" &&
-                    (isTimerExpired() || !timerActive)
+                      (isTimerExpired() || !timerActive)
                       ? "Tidak dapat mematikan: timer sudah habis atau tidak aktif."
                       : ""
                   }
@@ -1112,8 +1139,8 @@ const AdminDesktopPage = () => {
                 {importTarget === "orders"
                   ? "Data Peserta (orders)"
                   : importTarget === "pickups"
-                  ? "Data Pickup (pickups)"
-                  : "Data Users (users)"}
+                    ? "Data Pickup (pickups)"
+                    : "Data Users (users)"}
               </h2>
 
               <p className="text-sm text-gray-600 mb-4">
@@ -1224,11 +1251,10 @@ const AdminDesktopPage = () => {
           </button>
           {messageTambah && (
             <div
-              className={`mt-4 p-4 rounded-xl ${
-                messageTambah.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-              }`}
+              className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
+                }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
             </div>
@@ -1263,11 +1289,10 @@ const AdminDesktopPage = () => {
           </form>
           {messageCariPegawai && (
             <div
-              className={`mb-4 p-4 rounded-xl ${
-                messageCariPegawai.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-              }`}
+              className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
+                }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
             </div>
@@ -1309,11 +1334,10 @@ const AdminDesktopPage = () => {
 
           {usersMsg && (
             <div
-              className={`m-4 p-4 rounded-xl ${
-                usersMsg.type === "error"
-                  ? "bg-red-50 border border-red-200 text-red-700"
-                  : "bg-green-50 border border-green-200 text-green-700"
-              }`}
+              className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
+                ? "bg-red-50 border border-red-200 text-red-700"
+                : "bg-green-50 border border-green-200 text-green-700"
+                }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
             </div>
@@ -1493,11 +1517,10 @@ const AdminDesktopPage = () => {
           </form>
           {messageCari && (
             <div
-              className={`mb-4 p-4 rounded-xl ${
-                messageCari.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-              }`}
+              className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
+                }`}
             >
               <p className="font-medium">{messageCari.text}</p>
             </div>
@@ -1625,21 +1648,19 @@ const AdminDesktopPage = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedTable("order")}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  selectedTable === "order"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
               >
                 Order
               </button>
               <button
                 onClick={() => setSelectedTable("pickup")}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  selectedTable === "pickup"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
               >
                 Pickup
               </button>
@@ -1648,9 +1669,8 @@ const AdminDesktopPage = () => {
               <button
                 onClick={openResetModalForCurrentTable}
                 className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel ${
-                  selectedTable === "order" ? "Order" : "Pickup"
-                }`}
+                title={`Reset semua data di tabel ${selectedTable === "order" ? "Order" : "Pickup"
+                  }`}
               >
                 Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
               </button>
@@ -1658,145 +1678,189 @@ const AdminDesktopPage = () => {
           </div>
 
           {selectedTable === "order" ? (
-            /* ---------- TABEL ORDER ---------- */
-            <div
-              key="order-table"
-              className="overflow-x-auto max-h-[400px] overflow-y-auto"
-            >
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      No
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      NIPP
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Anggota Keluarga
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Jumlah Anggota
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Transportasi
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Keberangkatan
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {orderList.length === 0 ? (
+            <>
+              {/* ---------- TABEL ORDER ---------- */}
+              <div
+                key="order-table"
+                className="overflow-x-auto"
+              >
+                <table className="w-full">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-12 text-center text-gray-500"
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-8 h-8 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
-                              ></path>
-                            </svg>
-                          </div>
-                          <p className="font-medium">
-                            Belum ada data peserta !
-                          </p>
-                        </div>
-                      </td>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        No
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        NIPP
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Anggota Keluarga
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Jumlah Anggota
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Transportasi
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                        Keberangkatan
+                      </th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                        Aksi
+                      </th>
                     </tr>
-                  ) : (
-                    orderList.map((order, index) => (
-                      <tr
-                        key={`order-${order.id ?? order.nipp}`}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {index + 1}
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {isOrderLoading ? ( // Tampilkan state loading
+                      <tr>
+                        <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                          Memuat data peserta...
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                            {order.nipp}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            {order.nama.map((n, nameIndex) => (
-                              <div
-                                key={nameIndex}
-                                className="flex items-center gap-2"
+                      </tr>
+                    ) : orderList.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="4"
+                          className="px-6 py-12 text-center text-gray-500"
+                        >
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-8 h-8 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
-                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                <span className="text-sm text-gray-700">
-                                  {n}
-                                </span>
-                              </div>
-                            ))}
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
+                                ></path>
+                              </svg>
+                            </div>
+                            <p className="font-medium">
+                              Belum ada data peserta !
+                            </p>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {order.nama.length ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {order.transportasi ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {order.keberangkatan ?? "-"}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex justify-center gap-4">
-                            {/* Tombol Detail */}
-                            <button
-                              onClick={() =>
-                                navigate("/detailregister", {
-                                  state: { nipp: order.nipp },
-                                })
-                              }
-                              className="inline-flex items-center px-4 py-2 
+                      </tr>
+                    ) : (
+                      orderList.map((order, index) => (
+                        <tr
+                          key={`order-${order.id ?? order.nipp}`}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {/* PERBAIKI NOMOR URUT SESUAI HALAMAN */}
+                            {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                              {order.nipp}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              {order.nama.map((n, nameIndex) => (
+                                <div
+                                  key={nameIndex}
+                                  className="flex items-center gap-2"
+                                >
+                                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                  <span className="text-sm text-gray-700">
+                                    {n}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {order.nama.length ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {order.transportasi ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {order.keberangkatan ?? "-"}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex justify-center gap-4">
+                              {/* Tombol Detail */}
+                              <button
+                                onClick={() =>
+                                  navigate("/detailregister", {
+                                    state: { nipp: order.nipp },
+                                  })
+                                }
+                                className="inline-flex items-center px-4 py-2 
                  bg-gradient-to-r from-yellow-500 to-yellow-600 
                  hover:from-yellow-600 hover:to-yellow-700 
                  text-white text-sm font-medium rounded-lg shadow 
                  transition-all"
-                            >
-                              Detail
-                            </button>
+                              >
+                                Detail
+                              </button>
 
-                            {/* Tombol Edit */}
-                            <button
-                              onClick={() =>
-                                navigate("/detailregister/edit", {
-                                  state: { nipp: order.nipp },
-                                })
-                              }
-                              className="inline-flex items-center px-4 py-2 
+                              {/* Tombol Edit */}
+                              <button
+                                onClick={() =>
+                                  navigate("/detailregister/edit", {
+                                    state: { nipp: order.nipp },
+                                  })
+                                }
+                                className="inline-flex items-center px-4 py-2 
                  bg-gradient-to-r from-blue-600 to-blue-700 
                  hover:from-blue-700 hover:to-blue-800 
                  text-white text-sm font-medium rounded-lg shadow 
                  transition-all"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {/* ============== KOMPONEN PAGINATION ============== */}
+              {totalPages > 0 && (
+                <div className="p-4 flex flex-col md:flex-row items-center justify-between border-t border-gray-200">
+                  <span className="text-sm text-gray-700 mb-2 md:mb-0">
+                    Menampilkan{" "}
+                    <span className="font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
+                    {" - "}
+                    <span className="font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + orderList.length}</span>
+                    {" dari "}
+                    <span className="font-semibold">{totalOrderItems}</span>
+                    {" data"}
+                  </span>
+                  <div className="inline-flex -space-x-px rounded-md shadow-sm">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sebelumnya
+                    </button>
+                    {/* Logika untuk menampilkan nomor halaman bisa dibuat lebih kompleks,
+                        ini versi sederhana */}
+                    <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Berikutnya
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             /* ---------- TABEL PICKUP ---------- */
             <div
