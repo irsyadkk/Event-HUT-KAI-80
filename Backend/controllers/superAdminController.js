@@ -171,3 +171,32 @@ export const deleteAdmin = async (req, res) => {
     });
   }
 };
+
+// DELETE SUPER ADMIN
+export const deleteSuperAdmin = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const ifSuperAdminExist = await SuperAdmin.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+    });
+    if (!ifSuperAdminExist) {
+      throw makeError("Super Admin Not Found !", 404);
+    }
+
+    await SuperAdmin.destroy({ where: { nipp: nipp }, transaction: t });
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: "Super Admin Deleted",
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};

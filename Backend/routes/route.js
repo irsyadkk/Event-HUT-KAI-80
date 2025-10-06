@@ -12,6 +12,7 @@ import {
   addAdmin,
   addSuperAdmin,
   deleteAdmin,
+  deleteSuperAdmin,
   getSuperAdmin,
   getSuperAdminByNIPP,
 } from "../controllers/superAdminController.js";
@@ -89,6 +90,7 @@ router.get("/superadmin/:nipp", verifySuperAdmin, getSuperAdminByNIPP); // SUPER
 router.post("/superadmin", verifySuperAdmin, addSuperAdmin); // SUPER ADMIN ROLE
 router.post("/admin", verifySuperAdmin, addAdmin); // SUPER ADMIN ROLE
 router.delete("/admin/:nipp", verifySuperAdmin, deleteAdmin); // SUPER ADMIN ROLE
+router.delete("/superadmin/:nipp", verifySuperAdmin, deleteSuperAdmin); // SUPER ADMIN ROLE
 
 // ORDER
 router.post("/order", verifyToken, addOrder); // ALL ROLE
