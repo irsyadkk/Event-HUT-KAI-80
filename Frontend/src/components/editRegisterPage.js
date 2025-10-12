@@ -334,7 +334,7 @@ const EditRegisterPage = () => {
 
   const handleCloseModal = () => {
     if (modalInfo.type === "success") {
-      navigate("/qrresult", { state: { nipp } });
+      navigate("/admindesk", { state: { nipp } });
     }
     setModalInfo({ isOpen: false, title: "", message: "", type: "info" });
   };
