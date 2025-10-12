@@ -55,25 +55,33 @@ export const addEditTimer = async (req, res) => {
 
     let timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
 
+    const timerData = {
+      id: 1,
+      date: inputDate, // <-- PERUBAHAN UTAMA: Gunakan objek Date, bukan string mentah
+      active: status,
+      ended: ended,
+    };
+
     if (!timer) {
       await Timer.create(
-        { id: 1, date: date, active: status, ended: ended },
+        timerData,
         { transaction: t }
       );
     } else {
       await Timer.update(
-        { date: date, active: status, ended: ended },
+        timerData,
         { where: { id: 1 }, transaction: t }
       );
     }
-    timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
+    // Ambil data terbaru setelah update/create
+    const updatedTimer = await Timer.findOne({ where: { id: 1 }, transaction: t });
 
     await t.commit();
 
     res.status(200).json({
       status: "Success",
       message: `Timer set to ${date} with active status ${status} and ended ${ended} !`,
-      data: timer,
+      data: updatedTimer,
     });
   } catch (error) {
     if (!t.finished) {

@@ -10,7 +10,7 @@ const Timer = db.define(
       autoIncrement: true,
     },
     date: {
-      type: "TIMESTAMP WITHOUT TIME ZONE", // Tipe data ini akan menyimpan waktu persis seperti yang diberikan
+      type: Sequelize.DATE, // Tipe data ini akan menyimpan waktu persis seperti yang diberikan
       allowNull: true,
     },
     active: {

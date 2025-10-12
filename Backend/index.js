@@ -21,6 +21,7 @@ import "./models/winnersModel.js";
 
 // Import router utama Anda
 import router from "./routes/route.js";
+import Timer from "./models/timerModel.js";
 
 dotenv.config();
 
@@ -112,13 +113,10 @@ const startServer = async () => {
           const { rows } = await pgClient.query("SELECT * FROM timer LIMIT 1");
           if (rows.length > 0) {
             const timer = rows[0];
-            const utcDate = new Date(timer.date);
-            // Konversi ke WIB, asumsi DB menyimpan dalam UTC
-            const wibDate = new Date(utcDate.getTime() + 7 * 60 * 60 * 1000);
 
             io.emit("TIMER_UPDATE", {
               ...timer,
-              date: wibDate.toISOString().slice(0, 19).replace("T", " "),
+              date: timer.date.toISOString(),
             });
           }
           break;

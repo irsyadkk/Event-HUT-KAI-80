@@ -120,7 +120,21 @@ const AdminDesktopPage = () => {
       try {
         const res = await api.get("/timer");
         const data = res?.data?.data || {};
-        setTimerDate((data.date || "").slice(0, 16)); // yyyy-MM-ddTHH:mm untuk <input datetime-local>
+
+        if (data.date) {
+          const utcDate = new Date(data.date);
+
+          const year = utcDate.getFullYear();
+          const month = String(utcDate.getMonth() + 1).padStart(2, '0');
+          const day = String(utcDate.getDate()).padStart(2, '0');
+          const hours = String(utcDate.getHours()).padStart(2, '0');
+          const minutes = String(utcDate.getMinutes()).padStart(2, '0');
+
+          const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+          setTimerDate(localDateTimeString);
+        } else {
+          setTimerDate("");
+        }
         setTimerActive(!!data.active);
         setTimerEnded(!!data.ended);
       } catch (err) {
@@ -668,8 +682,9 @@ const AdminDesktopPage = () => {
     setTimerSaving(true);
     setTimerMsg(null);
     try {
+      const localDate = new Date(timerDate);
       await api.patch("/timer", {
-        date: timerDate,
+        date: localDate.toISOString(),
         status: true,
         ended: false,
       });
@@ -861,7 +876,7 @@ const AdminDesktopPage = () => {
     link.click();
   };
 
-  if (!allowed) return null;
+  if (!allowed) {navigate("/")}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 px-4 py-6 md:py-8">
@@ -1083,8 +1098,8 @@ const AdminDesktopPage = () => {
             {timerMsg && (
               <div
                 className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
-                    ? "bg-green-50 border border-green-200 text-green-700"
-                    : "bg-red-50 border border-red-200 text-red-700"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
                   }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
@@ -1362,8 +1377,8 @@ const AdminDesktopPage = () => {
           {messageTambah && (
             <div
               className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
@@ -1400,8 +1415,8 @@ const AdminDesktopPage = () => {
           {messageCariPegawai && (
             <div
               className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
@@ -1524,8 +1539,8 @@ const AdminDesktopPage = () => {
           {usersMsg && (
             <div
               className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
-                  ? "bg-red-50 border border-red-200 text-red-700"
-                  : "bg-green-50 border border-green-200 text-green-700"
+                ? "bg-red-50 border border-red-200 text-red-700"
+                : "bg-green-50 border border-green-200 text-green-700"
                 }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
@@ -1665,8 +1680,8 @@ const AdminDesktopPage = () => {
           {messageCari && (
             <div
               className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
                 }`}
             >
               <p className="font-medium">{messageCari.text}</p>
@@ -1799,8 +1814,8 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => setSelectedTable("order")}
                 className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 Order
@@ -1808,8 +1823,8 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => setSelectedTable("pickup")}
                 className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 Pickup
