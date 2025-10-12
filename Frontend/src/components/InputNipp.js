@@ -11,67 +11,75 @@ const InputNipp = () => {
   const [nipp, setNipp] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [allowed, setAllowed] = useState(false);
-  const [targetTime, setTargetTime] = useState(null);
-  const [active, setActive] = useState(false);
-  const [ended, setEnded] = useState(false);
+  // State untuk kontrol akses berdasarkan timer
+  const [isAccessAllowed, setIsAccessAllowed] = useState(false); // State untuk mengizinkan render
+  const [isTimerLoading, setIsTimerLoading] = useState(true);   // State loading untuk timer
+
+  // Fungsi untuk menampilkan pesan error di UI
+  const showMessage = (text, type = "error") => {
+    setMessage({ text, type });
+  };
 
   useEffect(() => {
+    let isMounted = true; // Flag untuk mencegah update pada unmounted component
+
+    const handleTimerUpdate = (timerData) => {
+      if (!isMounted) return;
+
+      const { date, active, ended } = timerData;
+      const target = date ? new Date(date) : null;
+      const now = new Date();
+
+      let allowAccess = false;
+      // Logika baru yang lebih jelas:
+      if (ended) {
+        // Jika event sudah berakhir, selalu blokir.
+        allowAccess = false;
+      } else if (!active) {
+        // Jika timer tidak aktif, selalu izinkan.
+        allowAccess = true;
+      } else { // Timer aktif
+        // Izinkan akses HANYA JIKA waktu timer sudah lewat.
+        allowAccess = now.getTime() >= target.getTime();
+      }
+
+      if (allowAccess) {
+        setIsAccessAllowed(true);
+      } else {
+        // Jika tidak diizinkan, langsung redirect
+        navigate("/");
+      }
+      setIsTimerLoading(false);
+    };
+
     const fetchTimer = async () => {
       try {
         const res = await api.get("/timer");
-        const timer = res.data.data;
-        const timerDate = timer.date;
-        const active = timer.active;
-        const ended = timer.ended;
-        setActive(active);
-        setEnded(ended);
-        if (timerDate) {
-          setTargetTime(new Date(timerDate));
-        }
+        handleTimerUpdate(res.data.data);
       } catch (err) {
-        console.error("Gagal ambil timer:", err);
+        console.error("Gagal mengambil timer:", err);
+        // Jika gagal mengambil timer, anggap saja diizinkan untuk menghindari blokir
+        setIsAccessAllowed(true);
+        setIsTimerLoading(false);
       }
     };
 
-    fetchTimer();
-  }, []);
+    fetchTimer(); // Ambil data saat pertama kali load
 
-  useEffect(() => {
     const socket = io(BASE_URL);
-    socket.on("TIMER_UPDATE", (timer) => {
-      setActive(timer.active);
-      setTargetTime(new Date(timer.date));
-    });
-    return () => socket.disconnect();
-  }, []);
+    socket.on("TIMER_UPDATE", handleTimerUpdate); // Dengarkan update real-time
 
-  useEffect(() => {
-    if (!targetTime) return;
-
-    const now = new Date();
-    if (!active && !ended) {
-      setAllowed(true);
-    } else if (active && now < targetTime) {
-      setAllowed(false);
-      navigate("/");
-    } else if (ended) {
-      setAllowed(false);
-      navigate("/");
-    } else {
-      setAllowed(true);
-    }
-  }, [targetTime, navigate]);
-
-  if (!allowed) {
-    navigate("/");
-  }
+    return () => {
+      isMounted = false;
+      socket.disconnect();
+    };
+  }, [navigate]); // Dependency hanya navigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!nipp) {
+    if (!nipp.trim()) {
       setMessage({ text: "NIPP tidak boleh kosong!", type: "error" });
       setIsLoading(false);
       return;
@@ -94,38 +102,47 @@ const InputNipp = () => {
       // Check if order exists (handle 404 as normal)
       let orderExists = false;
       try {
-        const ifOrderExist = await api.get(`${BASE_URL}/order/${nipp}`);
-        if (ifOrderExist.data) {
-          orderExists = true;
-        }
+        await api.get(`${BASE_URL}/order/${nipp}`);
+        orderExists = true;
+
       } catch (err) {
-        if (err.response?.status === 404) {
+        if (err.response?.status !== 404) {
           // Order not found is okay, just continue
-          orderExists = false;
-        } else {
-          // Other errors should be thrown
           throw err;
         }
       }
 
       if (orderExists) {
         navigate(`/qrresult`, { state: { nipp } });
-        setIsLoading(false);
-        return;
+
+      } else {
+        navigate("/addmembers", { state: { nipp } });
       }
 
       navigate("/addmembers", { state: { nipp } });
     } catch (error) {
       console.error("Login failed:", error);
-      let errorMessage = "Login gagal. Periksa NIPP anda";
-      if (error.response?.data?.msg) {
-        errorMessage = error.response.data.msg;
-      }
-      setMessage({ text: errorMessage, type: "error" });
+      const errorMessage = error.response?.data?.msg || "Login gagal. Periksa kembali NIPP Anda.";
+      showMessage(errorMessage)
+    } finally {
+      setIsLoading(false);
     }
 
-    setIsLoading(false);
   };
+
+  // Tampilkan loading saat timer sedang dicek
+    if (isTimerLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+                Memverifikasi waktu...
+            </div>
+        );
+    }
+    
+    // Hanya render halaman jika akses diizinkan
+    if (!isAccessAllowed) {
+        return null; // Atau komponen "Akses Ditolak"
+    }
 
   return (
     <div
@@ -187,11 +204,10 @@ const InputNipp = () => {
             {/* Message */}
             {message && (
               <div
-                className={`flex items-center space-x-3 p-4 rounded-xl ${
-                  message.type === "success"
-                    ? "bg-green-50 border border-green-200 text-green-800"
-                    : "bg-red-50 border border-red-200 text-red-800"
-                }`}
+                className={`flex items-center space-x-3 p-4 rounded-xl ${message.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : "bg-red-50 border border-red-200 text-red-800"
+                  }`}
               >
                 {message.type === "success" ? (
                   <svg
