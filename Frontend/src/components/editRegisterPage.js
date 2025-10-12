@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { getUserRole } from "../getUserRole";
 
 // ====================================================================
 // KOMPONEN MODAL NOTIFIKASI (SUKSES/ERROR/PERINGATAN/INFO)
@@ -165,9 +164,6 @@ const EditRegisterPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
   const navigate = useNavigate();
-  const role = getUserRole();
-
-  const [allowed, setAllowed] = useState(false);
 
   const [members, setMembers] = useState([]);
   const [userFromUsers, setUserFromUsers] = useState(null);
@@ -195,18 +191,15 @@ const EditRegisterPage = () => {
   // Auth check
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const nipp = localStorage.getItem("nipp");
-    if (!token || !nipp) {
+    if (!token) {
       navigate("/");
       return;
     }
     try {
-      if (!role === "superadmin" || !role === "admin") navigate("/");
-      else {
-        setAllowed(true);
-        setIsDataLoaded(true);
-      }
+      jwtDecode(token);
+      setIsDataLoaded(true);
     } catch {
+      localStorage.removeItem("token");
       navigate("/");
     }
   }, [navigate]);
@@ -341,7 +334,7 @@ const EditRegisterPage = () => {
 
   const handleCloseModal = () => {
     if (modalInfo.type === "success") {
-      navigate("/admindesk");
+      navigate("/qrresult", { state: { nipp } });
     }
     setModalInfo({ isOpen: false, title: "", message: "", type: "info" });
   };
@@ -454,9 +447,6 @@ const EditRegisterPage = () => {
     member.fromUser ? "Nama pegawai" : "Masukkan nama anggota";
 
   // ===== Render =====
-  if (!allowed) {
-    navigate("/");
-  }
   return (
     <>
       <div
@@ -467,28 +457,6 @@ const EditRegisterPage = () => {
         }}
       >
         <div className="max-w-4xl mx-auto w-full space-y-6">
-          {userFromUsers && (
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 md:p-8 text-center border border-white/20">
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex justify-center mb-6">
-                  <img
-                    src={LogoKAI}
-                    alt="Logo HUT KAI 80"
-                    className="h-20 w-auto object-contain"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    Selamat Datang, {userFromUsers.name}!
-                  </h1>
-                  <p className="text-white/90 text-lg">
-                    Lengkapi data anggota keluarga untuk acara HUT KAI ke-80
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Form utama */}
           <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-white/20">
             <div className="mb-8">
@@ -505,8 +473,8 @@ const EditRegisterPage = () => {
                 Data Pendaftaran
               </h2>
               <p className="text-gray-600">
-                Lengkapi informasi keberangkatan dan anggota keluarga yang akan
-                mengikuti acara.
+                Perbarui data keberangkatan & daftar anggota keluarga untuk
+                peserta ini.
               </p>
             </div>
 
@@ -719,7 +687,7 @@ const EditRegisterPage = () => {
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  SIMPAN / DAFTAR
+                  EDIT
                 </button>
               </div>
             )}
