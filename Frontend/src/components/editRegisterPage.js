@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
-import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 
 // ====================================================================
 // KOMPONEN MODAL NOTIFIKASI (SUKSES/ERROR/PERINGATAN/INFO)

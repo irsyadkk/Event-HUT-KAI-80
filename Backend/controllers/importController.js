@@ -8,7 +8,6 @@ import Prize from "../models/prizeModel.js";
 import User from "../models/userModel.js";
 import Admin from "../models/adminModel.js";
 import bcrypt from "bcrypt";
-import { refreshToken } from "./refreshToken.js";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -51,7 +50,7 @@ const parseOrdersRow = (row) => {
 
 // PARSE USER
 const parseUserRow = (row) => ({
-  nipp: (row.nipp ?? row.Nipp ?? row.NIPP).trim(),
+  nipp: String(row.nipp ?? row.Nipp ?? row.NIPP).trim(),
   nama: row.nama ?? row.Nama ?? row.NAMA ?? null,
   penetapan: Number(row.penetapan ?? row.Penetapan ?? row.PENETAPAN ?? null),
   refreshToken: null,
@@ -59,15 +58,16 @@ const parseUserRow = (row) => ({
 
 // PARSE ADMIN
 const parseAdminRow = (row) => ({
-  nipp: (row.nipp ?? row.Nipp ?? row.NIPP).trim(),
-  password:
+  nipp: String(row.nipp ?? row.Nipp ?? row.NIPP).trim(),
+  password: String(
     row.password ??
-    row.Password ??
-    row.PASSWORD ??
-    row.pass ??
-    row.Pass ??
-    row.PASS ??
-    null,
+      row.Password ??
+      row.PASSWORD ??
+      row.pass ??
+      row.Pass ??
+      row.PASS ??
+      null
+  ),
   refreshToken: null,
 });
 

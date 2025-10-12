@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import api from "../api"; // pakai api instance yang sudah ada
+import api from "../api";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const QRResultPage = () => {
