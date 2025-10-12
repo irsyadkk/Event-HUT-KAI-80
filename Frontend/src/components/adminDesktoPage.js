@@ -68,6 +68,11 @@ const AdminDesktopPage = () => {
   // PAGINATION LIMIT
   const ITEMS_PER_PAGE = 10;
 
+  // GET ALL
+  const [allUsers, setAllUsers] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [allPickups, setAllPickups] = useState([]);
+
   // Pagination USER
   const [currentUserPage, setCurrentUserPage] = useState(1);
   const [totalUserPages, setTotalUserPages] = useState(0);
@@ -220,14 +225,14 @@ const AdminDesktopPage = () => {
     }
   };
 
-  // --- function ambil semua users
-  const getAllUsers = useCallback(
+  // --- function ambil users per page
+  const getUsersPagination = useCallback(
     async (page = 1) => {
       setIsLoadingUsers(true);
       setUsersMsg(null);
       try {
         const res = await api.get(
-          `/users?page=${page}&limit=${ITEMS_PER_PAGE}`
+          `/userspagination?page=${page}&limit=${ITEMS_PER_PAGE}`
         );
         const responseData = res.data.data;
         const responsePagination = res.data.pagination;
@@ -250,8 +255,9 @@ const AdminDesktopPage = () => {
 
   // --- export users ke excel (opsional)
   const exportExcelUsers = () => {
-    if (!users || users.length === 0) return;
-    const data = users.map((u, i) => ({
+    getAllUsers();
+    if (!allUsers || allUsers.length === 0) return;
+    const data = allUsers.map((u, i) => ({
       No: i + 1,
       NIPP: u.nipp,
       Nama: u.nama,
@@ -266,11 +272,41 @@ const AdminDesktopPage = () => {
     });
     saveAs(blob, "DataUsers.xlsx");
   };
+  // GET ALL
+  const getAllUsers = async () => {
+    try {
+      const res = await api.get("/users");
+      setAllUsers(res?.data?.data || []);
+    } catch (e) {
+      console.error("Gagal mengambil data users:", e);
+    }
+  };
 
-  const getAllOrders = useCallback(async (page) => {
+  const getAllOrders = async () => {
+    try {
+      const res = await api.get("/order");
+      setAllOrders(res?.data?.data || []);
+    } catch (e) {
+      console.error("Gagal mengambil data orders:", e);
+    }
+  };
+
+  const getAllPickups = async () => {
+    try {
+      const res = await api.get("/pickup");
+      setAllPickups(res?.data?.data || []);
+    } catch (e) {
+      console.error("Gagal mengambil data pickups:", e);
+    }
+  };
+
+  // GET PER PAGE
+  const getOrdersPagination = useCallback(async (page) => {
     setIsOrderLoading(true);
     try {
-      const res = await api.get(`/order?page=${page}&limit=${ITEMS_PER_PAGE}`);
+      const res = await api.get(
+        `/orderpagination?page=${page}&limit=${ITEMS_PER_PAGE}`
+      );
       const responseData = res.data.data;
 
       setOrderList(responseData.orders || []);
@@ -284,11 +320,11 @@ const AdminDesktopPage = () => {
     }
   }, []);
 
-  const getAllPickups = useCallback(
+  const getPickupsPagination = useCallback(
     async (page = 1) => {
       try {
         const res = await api.get(
-          `/pickup?page=${page}&limit=${ITEMS_PER_PAGE}`
+          `/pickuppagination?page=${page}&limit=${ITEMS_PER_PAGE}`
         );
         const responseData = res.data.data;
         const responsePagination = res.data.pagination;
@@ -422,9 +458,10 @@ const AdminDesktopPage = () => {
   };
 
   const exportExcelOrder = () => {
-    if (!orderList || orderList.length === 0) return;
+    getAllOrders();
+    if (!allOrders || allOrders.length === 0) return;
 
-    const data = orderList.map((order, index) => ({
+    const data = allOrders.map((order, index) => ({
       No: index + 1,
       NIPP: order.nipp,
       "Anggota Keluarga": order.nama.join(", "),
@@ -450,9 +487,10 @@ const AdminDesktopPage = () => {
   };
 
   const exportExcelPickup = () => {
-    if (!pickupList || pickupList.length === 0) return;
+    getAllPickups();
+    if (!allPickups || allPickups.length === 0) return;
 
-    const data = pickupList.map((pickup, index) => ({
+    const data = allPickups.map((pickup, index) => ({
       No: index + 1,
       Timestamp: pickup.timestamp,
       NIPP: pickup.nipp,
@@ -504,7 +542,7 @@ const AdminDesktopPage = () => {
       setNippAdd("");
       setNamaAdd("");
       setPenetapanAdd("");
-      getAllOrders();
+      getAllUsers();
     } catch (err) {
       console.error("Gagal menambah user:", err);
       setMessageTambah({
@@ -780,17 +818,17 @@ const AdminDesktopPage = () => {
   // Buat useEffect baru yang khusus menangani pengambilan data order
   useEffect(() => {
     if (allowed) {
-      getAllUsers(currentUserPage);
-      getAllOrders(currentPage);
-      getAllPickups(currentPickupPage);
+      getUsersPagination(currentUserPage);
+      getOrdersPagination(currentPage);
+      getPickupsPagination(currentPickupPage);
     }
   }, [
     allowed,
     currentPage,
-    getAllOrders,
-    getAllUsers,
+    getOrdersPagination,
+    getUsersPagination,
     currentUserPage,
-    getAllPickups,
+    getPickupsPagination,
     currentPickupPage,
   ]);
 

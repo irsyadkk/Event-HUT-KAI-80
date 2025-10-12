@@ -68,8 +68,13 @@ export const addSuperAdmin = async (req, res) => {
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
-    if (ifSuperAdminExist) {
-      throw makeError("Super Admin Already Exist !", 400);
+    const ifAdminExist = await Admin.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (ifSuperAdminExist || ifAdminExist) {
+      throw makeError("Admin atau super admin sudah ada !", 400);
     }
 
     const saltRounds = 10;
@@ -114,8 +119,13 @@ export const addAdmin = async (req, res) => {
       transaction: t,
       lock: t.LOCK.UPDATE,
     });
-    if (ifAdminExist) {
-      throw makeError("Admin Already Exist !", 400);
+    const ifSuperAdminExist = await SuperAdmin.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (ifAdminExist || ifSuperAdminExist) {
+      throw makeError("Admin atau super admin sudah ada !", 400);
     }
 
     const saltRounds = 10;
@@ -191,6 +201,46 @@ export const deleteSuperAdmin = async (req, res) => {
     res.status(200).json({
       status: "Success",
       message: "Super Admin Deleted",
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(error.statusCode || 500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
+// RESET PASS ADMIN
+export const resetPassAdmin = async (req, res) => {
+  const t = await db.transaction();
+  try {
+    const nipp = req.params.nipp;
+    const { newpassword } = req.body;
+    if (!newpassword) {
+      throw makeError("newpassword field cannot be empty !", 400);
+    }
+
+    const ifAdminExist = await Admin.findOne({
+      where: { nipp: nipp },
+      transaction: t,
+    });
+    if (!ifAdminExist) {
+      throw makeError("Admin Not Found !", 404);
+    }
+
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newpassword, saltRounds);
+
+    await Admin.update(
+      { password: hashedNewPassword },
+      { where: { nipp: nipp }, transaction: t }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Admin Password With NIPP ${nipp} Changed`,
     });
   } catch (error) {
     await t.rollback();

@@ -9,8 +9,8 @@ const makeError = (msg, code = 400) => {
   return error;
 };
 
-// GET USER
-export const getUser = async (req, res) => {
+// GET USER PER PAGE
+export const getUserPerPage = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -34,6 +34,24 @@ export const getUser = async (req, res) => {
         currentPage: page,
         perPage: limit,
       },
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// GET USER
+export const getUser = async (req, res) => {
+  try {
+    const users = await User.findAll();
+
+    res.status(200).json({
+      status: "success",
+      message: "Users retrieved successfully",
+      data: users,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({

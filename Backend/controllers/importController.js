@@ -6,6 +6,8 @@ import Order from "../models/orderModel.js";
 import db from "../config/Database.js";
 import Prize from "../models/prizeModel.js";
 import User from "../models/userModel.js";
+import Admin from "../models/adminModel.js";
+import bcrypt from "bcrypt";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -18,6 +20,7 @@ const models = {
   orders: Order,
   users: User,
   prizes: Prize,
+  admins: Admin,
 };
 
 // --- Helpers parsing baris dari CSV/XLSX ---
@@ -33,9 +36,9 @@ const parseOrdersRow = (row) => {
   const nama = Array.isArray(anggotaStr)
     ? anggotaStr
     : String(anggotaStr || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
   return {
     nipp,
@@ -51,6 +54,19 @@ const parseUserRow = (row) => ({
   nama: row.nama ?? row.Nama ?? row.NAMA ?? null,
   penetapan: Number(row.penetapan ?? row.Penetapan ?? row.PENETAPAN ?? null),
   refreshToken: null,
+});
+
+// PARSE ADMIN
+const parseAdminRow = (row) => ({
+  nipp: (row.nipp ?? row.Nipp ?? row.NIPP).trim(),
+  password:
+    row.password ??
+    row.Password ??
+    row.PASSWORD ??
+    row.pass ??
+    row.Pass ??
+    row.PASS ??
+    null,
 });
 
 // PARSE PRIZE
@@ -89,11 +105,13 @@ export const importFile = async (req, res) => {
       rows = await new Promise((resolve, reject) => {
         const results = [];
         fs.createReadStream(file.path)
-          .pipe(csv({
-            bom: true,
-            mapHeaders: ({ header }) => header.trim(),
-            separator: ';',
-          })) // otomatis baca header
+          .pipe(
+            csv({
+              bom: true,
+              mapHeaders: ({ header }) => header.trim(),
+              separator: ";",
+            })
+          ) // otomatis baca header
           .on("data", (row) => results.push(row))
           .on("end", () => resolve(results))
           .on("error", reject);
@@ -112,6 +130,16 @@ export const importFile = async (req, res) => {
       payload = rows.map(parseUserRow).filter((r) => r.nipp);
     } else if (table === "prizes") {
       payload = rows.map(parsePrizeRow).filter((r) => r.prize);
+    } else if (table === "admins") {
+      payload = await Promise.all(
+        payload.map(async (admin) => {
+          if (admin.password) {
+            const salt = await bcrypt.genSalt(10);
+            admin.password = await bcrypt.hash(admin.password, salt);
+          }
+          return admin;
+        })
+      );
     }
 
     // --- Insert dengan transaksi ---
@@ -131,7 +159,7 @@ export const importFile = async (req, res) => {
       // hapus file temp
       try {
         fs.unlinkSync(file.path);
-      } catch (_) { }
+      } catch (_) {}
     }
 
     res.status(200).json({
@@ -143,7 +171,7 @@ export const importFile = async (req, res) => {
     if (file) {
       try {
         fs.unlinkSync(file.path);
-      } catch (_) { }
+      } catch (_) {}
     }
     res
       .status(error.statusCode || 500)

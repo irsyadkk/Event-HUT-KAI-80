@@ -1,6 +1,7 @@
 import { getUserRole } from "../getUserRole.js";
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, UserPlus } from "lucide-react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api.js";
 
@@ -16,12 +17,27 @@ const AdminManagePage = () => {
   const [isLoadingTambahAdmin, setIsLoadingTambahAdmin] = useState(false);
   const [isLoadingTambahSuperAdmin, setIsLoadingTambahSuperAdmin] =
     useState(false);
+  const [isLoadingDeleteAdmin, setIsLoadingDeleteAdmin] = useState(false);
+  const [isLoadingDeleteSuperAdmin, setIsLoadingDeleteSuperAdmin] =
+    useState(false);
+  const [isLoadingResetAdminPass, setIsLoadingResetAdminPass] = useState(false);
   const [nippAddAdmin, setNippAddAdmin] = useState("");
   const [nippAddSuperAdmin, setNippAddSuperAdmin] = useState("");
   const [passwordAddAdmin, setPasswordAddAdmin] = useState("");
   const [passwordAddSuperAdmin, setPasswordAddSuperAdmin] = useState("");
   const [messageTambahAdmin, setMessageTambahAdmin] = useState("");
   const [messageTambahSuperAdmin, setMessageTambahSuperAdmin] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [selectedNippReset, setSelectedNippReset] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [nipp, setNipp] = useState("");
+  const [password, setPassword] = useState("");
+  const [roleInput, setRoleInput] = useState("admin");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [totalAdmin, setTotalAdmin] = useState(null);
+  const [totalSuperAdmin, setTotalSuperAdmin] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -38,11 +54,57 @@ const AdminManagePage = () => {
     }
   }, [navigate]);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage(null);
+
+    if (!nipp || !password) {
+      setMessage({
+        type: "error",
+        text: "NIPP dan Password wajib diisi!",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Tentukan endpoint berdasarkan role
+      const endpoint = roleInput === "admin" ? `/admin` : `/superadmin`;
+
+      await api.post(endpoint, { nipp, password }, { withCredentials: true });
+
+      setMessage({
+        type: "success",
+        text: `Berhasil menambahkan NIPP ${nipp} sebagai ${
+          roleInput === "admin" ? "admin" : "super admin"
+        } !`,
+      });
+
+      setNipp("");
+      setPassword("");
+      roleInput === "admin" ? getAdmin() : getSuperAdmin();
+    } catch (error) {
+      console.error("Error:", error);
+      let errorMessage = `Gagal menambahkan ${nipp} !`;
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      setMessage({
+        type: "error",
+        text: errorMessage,
+      });
+    }
+    setIsLoading(false);
+  };
+
   const getAdmin = useCallback(async () => {
     try {
       setIsAdminLoading(true);
       const res = await api.get("/admin");
-      setAdminList(res.data.data);
+      const data = res.data.data;
+      setAdminList(data);
+      setTotalAdmin(data.length);
     } catch (err) {
       console.error("Gagal mengambil data admin :", err);
     } finally {
@@ -54,13 +116,41 @@ const AdminManagePage = () => {
     try {
       setIsSuperAdminLoading(true);
       const res = await api.get("/superadmin");
-      setSuperAdminList(res.data.data);
+      const data = res.data.data;
+      setSuperAdminList(data);
+      setTotalSuperAdmin(data.length);
     } catch (err) {
       console.error("Gagal mengambil data super admin :", err);
     } finally {
       setIsSuperAdminLoading(false);
     }
   }, []);
+
+  const handleDeleteAdmin = async (nipp) => {
+    if (!nipp) return;
+    setIsLoadingDeleteAdmin(true);
+    try {
+      await api.delete(`/admin/${nipp}`);
+      getAdmin();
+    } catch (e) {
+      console.log("Gagal delete admin:", e);
+    } finally {
+      setIsLoadingDeleteAdmin(false);
+    }
+  };
+
+  const handleDeleteSuperAdmin = async (nipp) => {
+    if (!nipp) return;
+    setIsLoadingDeleteSuperAdmin(true);
+    try {
+      await api.delete(`/superadmin/${nipp}`);
+      getSuperAdmin();
+    } catch (e) {
+      console.log("Gagal delete super admin:", e);
+    } finally {
+      setIsLoadingDeleteSuperAdmin(false);
+    }
+  };
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
@@ -126,6 +216,20 @@ const AdminManagePage = () => {
     setIsLoadingTambahSuperAdmin(false);
   };
 
+  const handleResetPassAdmin = async (nipp, newPassword) => {
+    if (!nipp || !newPassword) return;
+    setIsLoadingResetAdminPass(true);
+    try {
+      await api.patch(`/adminresetpass/${nipp}`, { newpassword: newPassword });
+      alert(`Password admin ${nipp} berhasil direset!`);
+    } catch (e) {
+      console.log("Gagal reset pass admin:", e);
+      alert("Gagal mereset password!");
+    } finally {
+      setIsLoadingResetAdminPass(false);
+    }
+  };
+
   useEffect(() => {
     getAdmin();
     getSuperAdmin();
@@ -154,103 +258,134 @@ const AdminManagePage = () => {
         </div>
 
         {/* Stats */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-blue-100 text-sm font-medium">Total Super Admin</p>
-            <p className="text-3xl font-bold text-white">{totalPrizes}</p>
+            <p className="text-blue-100 text-sm font-medium">Total Admin</p>
+            <p className="text-3xl font-bold text-white">{totalAdmin}</p>
           </div>
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-green-100 text-sm font-medium">Total Admin</p>
-            <p className="text-3xl font-bold text-white">{winnersCount}</p>
+            <p className="text-green-100 text-sm font-medium">
+              Total Super Admin
+            </p>
+            <p className="text-3xl font-bold text-white">{totalSuperAdmin}</p>
           </div>
-        </div> */}
-
-        {/* Tambah Admin */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              Tambah Admin Baru
-            </h2>
-          </div>
-          <form onSubmit={handleAddAdmin} className="p-6">
-            <div className="grid gap-4 md:grid-cols-4 items-end">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  NIPP Admin
-                </label>
-                <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
-                  placeholder="Masukkan NIPP admin..."
-                  value={nippAddAdmin}
-                  onChange={(e) => setNippAddAdmin(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password Admin
-                </label>
-                <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
-                  placeholder="Masukkan password admin..."
-                  value={passwordAddAdmin}
-                  onChange={(e) => setPasswordAddAdmin(e.target.value)}
-                />
-              </div>
-
-              <button
-                disabled={isLoadingTambahAdmin}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg disabled:opacity-50"
-              >
-                {isLoadingTambahAdmin ? "Menyimpan..." : "➕ Tambah Admin"}
-              </button>
-            </div>
-          </form>
         </div>
 
-        {/* Tambah Super Admin */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              Tambah Super Admin Baru
+        {/* Tambah Admin */}
+        <div className="flex justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2 mb-6">
+              <UserPlus
+                className={`${
+                  role === "superadmin" ? "text-blue-700" : "text-green-700"
+                }`}
+              />
+              Tambah Admin / Super Admin
             </h2>
-          </div>
-          <form onSubmit={handleAddSuperAdmin} className="p-6">
-            <div className="grid gap-4 md:grid-cols-4 items-end">
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* NIPP */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  NIPP Super Admin
+                  NIPP / NIPKWT
                 </label>
-                <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
-                  placeholder="Masukkan NIPP super admin..."
-                  value={nippAddSuperAdmin}
-                  onChange={(e) => setNippAddSuperAdmin(e.target.value)}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={nipp}
+                    onChange={(e) => setNipp(e.target.value)}
+                    placeholder="Masukkan NIPP..."
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                    disabled={isLoading}
+                  />
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
+              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password Super Admin
+                  Password
                 </label>
-                <input
-                  className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl"
-                  placeholder="Masukkan password super admin..."
-                  value={passwordAddSuperAdmin}
-                  onChange={(e) => setPasswordAddSuperAdmin(e.target.value)}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Masukkan Password..."
+                    className="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                    disabled={isLoading}
+                  />
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                    <Lock size={18} className="text-gray-400" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
+              {/* Pilihan Role */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Pilih Role
+                </label>
+                <select
+                  value={roleInput}
+                  onChange={(e) => setRoleInput(e.target.value)}
+                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
+                </select>
+              </div>
+
+              {/* Pesan */}
+              {message && (
+                <div
+                  className={`p-3 rounded-xl text-sm font-medium ${
+                    message.type === "success"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
+              {/* Tombol Submit */}
               <button
-                disabled={isLoadingTambahSuperAdmin}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl px-6 py-3 font-semibold shadow-lg disabled:opacity-50"
+                type="submit"
+                disabled={isLoading}
+                className={`w-full text-white rounded-xl py-3 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 ${
+                  role === "superadmin"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                    : "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                }`}
               >
-                {isLoadingTambahSuperAdmin
-                  ? "Menyimpan..."
-                  : "➕ Tambah Super Admin"}
+                {isLoading ? "Menyimpan..." : "Tambah"}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
 
         {/* Search */}
@@ -415,7 +550,11 @@ const AdminManagePage = () => {
                             <div className="flex justify-center gap-4">
                               {/* Tombol Reset Pass */}
                               <button
-                                onClick={() => {}}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedNippReset(admin.nipp);
+                                  setShowResetModal(true);
+                                }}
                                 className="inline-flex items-center px-4 py-2 
                  bg-gradient-to-r from-yellow-500 to-yellow-600 
                  hover:from-yellow-600 hover:to-yellow-700 
@@ -427,7 +566,10 @@ const AdminManagePage = () => {
 
                               {/* Tombol Delete */}
                               <button
-                                onClick={() => {}}
+                                type="button"
+                                onClick={() => {
+                                  handleDeleteAdmin(admin.nipp);
+                                }}
                                 className="inline-flex items-center px-4 py-2 
                  bg-gradient-to-r from-red-600 to-red-700 
                  hover:from-red-700 hover:to-red-800 
@@ -512,7 +654,10 @@ const AdminManagePage = () => {
                           </td>
                           <td className="px-6 py-4 text-center">
                             <button
-                              onClick={() => {}}
+                              type="button"
+                              onClick={() => {
+                                handleDeleteSuperAdmin(superadmin.nipp);
+                              }}
                               className="inline-flex items-center px-4 py-2 
           bg-gradient-to-r from-red-600 to-red-700 
           hover:from-red-700 hover:to-red-800 
@@ -532,6 +677,62 @@ const AdminManagePage = () => {
           )}
         </div>
       </div>
+      {showResetModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-96 p-6 animate-fadeIn">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
+              Reset Password Admin
+            </h2>
+            <p className="text-sm text-gray-600 mb-4 text-center">
+              NIPP: <span className="font-semibold">{selectedNippReset}</span>
+            </p>
+
+            <div className="relative mb-4">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Masukkan password baru..."
+                className="w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 rounded-xl pr-10"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 transition"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setNewPassword("");
+                }}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition"
+              >
+                Batal
+              </button>
+
+              <button
+                disabled={isLoadingResetAdminPass}
+                onClick={async () => {
+                  if (!newPassword.trim())
+                    return alert("Password baru wajib diisi!");
+                  await handleResetPassAdmin(selectedNippReset, newPassword);
+                  setNewPassword("");
+                  setShowResetModal(false);
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 transition"
+              >
+                {isLoadingResetAdminPass ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

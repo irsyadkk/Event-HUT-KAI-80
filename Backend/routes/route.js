@@ -15,10 +15,12 @@ import {
   deleteSuperAdmin,
   getSuperAdmin,
   getSuperAdminByNIPP,
+  resetPassAdmin,
 } from "../controllers/superAdminController.js";
 import { getAdmin, getAdminByNIPP } from "../controllers/adminController.js";
 import {
   getUser,
+  getUserPerPage,
   getUserByNIPP,
   addUser,
   addPenetapanByNIPP,
@@ -32,6 +34,7 @@ import {
   getOrderByNIPP,
   editOrder,
   addOrderByAdmin,
+  getOrderPerPage,
 } from "../controllers/orderController.js";
 import {
   getQuota,
@@ -44,6 +47,7 @@ import {
   getPickupByNIPP,
   deletePickupByNIPP,
   editPickupByNIPP,
+  getPickupPerpage,
 } from "../controllers/pickupController.js";
 import {
   addPrize,
@@ -76,6 +80,7 @@ router.get("/token", refreshToken);
 
 // USERS
 router.get("/users", verifyToken, getUser); // ALL ROLE
+router.get("/userspagination", verifyToken, getUserPerPage); // ALL ROLE
 router.get("/users/:nipp", verifyToken, getUserByNIPP); // ALL ROLE
 router.post("/users", verifyAdmin, addUser); // ADMIN ROLE
 router.patch("/usersadd/:nipp", verifyAdmin, addPenetapanByNIPP); // ADMIN ROLE
@@ -91,11 +96,13 @@ router.post("/superadmin", verifySuperAdmin, addSuperAdmin); // SUPER ADMIN ROLE
 router.post("/admin", verifySuperAdmin, addAdmin); // SUPER ADMIN ROLE
 router.delete("/admin/:nipp", verifySuperAdmin, deleteAdmin); // SUPER ADMIN ROLE
 router.delete("/superadmin/:nipp", verifySuperAdmin, deleteSuperAdmin); // SUPER ADMIN ROLE
+router.patch("/adminresetpass/:nipp", verifySuperAdmin, resetPassAdmin); // SUPER ADMIN ROLE
 
 // ORDER
 router.post("/order", verifyToken, addOrder); // ALL ROLE
 router.post("/orderadmin", verifyAdmin, addOrderByAdmin); // ADMIN ROLE
 router.get("/order", verifyToken, getOrder); // ALL ROLE
+router.get("/orderpagination", verifyToken, getOrderPerPage); // ALL ROLE
 router.get("/order/:nipp", verifyToken, getOrderByNIPP); // ALL ROLE
 router.delete("/order/:nipp", verifyAdmin, deleteOrder); // ADMIN ROLE
 router.put("/order/:nipp", verifyAdmin, editOrder); // ADMIN ROLE
@@ -108,6 +115,7 @@ router.patch("/subquota", verifyAdmin, subQuota); // ADMIN ROLE
 // PICKUP
 router.post("/pickup", verifyToken, addPickup); // ALL ROLE
 router.get("/pickup", verifyToken, getPickup); // ALL ROLE
+router.get("/pickuppagination", verifyToken, getPickupPerpage); // ALL ROLE
 router.get("/pickup/:nipp", verifyToken, getPickupByNIPP); // ALL ROLE
 router.delete("/pickup/:nipp", verifyAdmin, deletePickupByNIPP); // ADMIN ROLE
 router.put("/pickup/:nipp", verifyAdmin, editPickupByNIPP); // ADMIN ROLE

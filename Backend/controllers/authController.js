@@ -15,7 +15,8 @@ export async function login(req, res) {
       const superadmin = await SuperAdmin.findOne({ where: { nipp } });
       if (superadmin) {
         const match = await bcrypt.compare(password, superadmin.password);
-        if (!match) return res.status(401).json({ msg: "Password salah!" });
+        if (!match)
+          return res.status(401).json({ msg: "NIPP atau Password salah !" });
         return issueTokens(res, superadmin, "superadmin");
       }
 
@@ -23,7 +24,8 @@ export async function login(req, res) {
       const admin = await Admin.findOne({ where: { nipp } });
       if (admin) {
         const match = await bcrypt.compare(password, admin.password);
-        if (!match) return res.status(401).json({ msg: "Password salah!" });
+        if (!match)
+          return res.status(401).json({ msg: "NIPP atau Password salah !" });
         return issueTokens(res, admin, "admin");
       }
     }

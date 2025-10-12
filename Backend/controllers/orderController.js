@@ -30,16 +30,16 @@ export const addOrderByAdmin = async (req, res) => {
       const msg = !nipp
         ? "NIPP field cannot be empty !"
         : !nama
-          ? "Nama field cannot be empty !"
-          : !status
-            ? "Status field cannot be empty !"
-            : !transportasi
-              ? "Transportasi field cannot be empty !"
-              : !keberangkatan
-                ? "Keberangkatan field cannot be empty !"
-                : !Array.isArray(nama)
-                  ? "Nama must be an array !"
-                  : "Each Element in Nama Must be String & Cannot be Empty !";
+        ? "Nama field cannot be empty !"
+        : !status
+        ? "Status field cannot be empty !"
+        : !transportasi
+        ? "Transportasi field cannot be empty !"
+        : !keberangkatan
+        ? "Keberangkatan field cannot be empty !"
+        : !Array.isArray(nama)
+        ? "Nama must be an array !"
+        : "Each Element in Nama Must be String & Cannot be Empty !";
       throw makeError(msg, 400);
     }
 
@@ -128,16 +128,16 @@ export const addOrder = async (req, res) => {
       const msg = !nipp
         ? "NIPP field cannot be empty !"
         : !nama
-          ? "Nama field cannot be empty !"
-          : !status
-            ? "Status field cannot be empty !"
-            : !transportasi
-              ? "Transportasi field cannot be empty !"
-              : !keberangkatan
-                ? "Keberangkatan field cannot be empty !"
-                : !Array.isArray(nama)
-                  ? "Nama must be an array !"
-                  : "Each Element in Nama Must be String & Cannot be Empty !";
+        ? "Nama field cannot be empty !"
+        : !status
+        ? "Status field cannot be empty !"
+        : !transportasi
+        ? "Transportasi field cannot be empty !"
+        : !keberangkatan
+        ? "Keberangkatan field cannot be empty !"
+        : !Array.isArray(nama)
+        ? "Nama must be an array !"
+        : "Each Element in Nama Must be String & Cannot be Empty !";
       throw makeError(msg, 400);
     }
 
@@ -249,7 +249,7 @@ export const addOrder = async (req, res) => {
 };
 
 // GET ORDERS (dengan Pagination)
-export const getOrder = async (req, res) => {
+export const getOrderPerPage = async (req, res) => {
   try {
     // 1. Ambil query parameter untuk page dan limit, berikan nilai default
     const page = parseInt(req.query.page) || 1;
@@ -262,8 +262,8 @@ export const getOrder = async (req, res) => {
       offset: offset,
       order: [
         // Opsional: urutkan data, misalnya berdasarkan ID
-        ['id', 'ASC']
-      ]
+        ["id", "ASC"],
+      ],
     });
 
     // 3. Hitung total halaman
@@ -274,11 +274,28 @@ export const getOrder = async (req, res) => {
       status: "Success",
       message: "Orders Retrieved",
       data: {
-        orders: rows,       // Data order untuk halaman saat ini
-        totalItems: count,    // Total semua item di database
+        orders: rows, // Data order untuk halaman saat ini
+        totalItems: count, // Total semua item di database
         totalPages: totalPages, // Total semua halaman yang ada
-        currentPage: page,    // Halaman saat ini
+        currentPage: page, // Halaman saat ini
       },
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// GET ORDERS
+export const getOrder = async (req, res) => {
+  try {
+    const orders = await Order.findAll();
+    res.status(200).json({
+      status: "Success",
+      message: "Orders Retrieved",
+      data: orders,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({

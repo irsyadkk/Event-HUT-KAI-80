@@ -110,8 +110,8 @@ export const addPickup = async (req, res) => {
   }
 };
 
-// GET PICKUP
-export const getPickup = async (req, res) => {
+// GET PICKUP PER PAGE
+export const getPickupPerpage = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -135,6 +135,23 @@ export const getPickup = async (req, res) => {
         currentPage: page,
         perPage: limit,
       },
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      status: "Error...",
+      message: error.message,
+    });
+  }
+};
+
+// GET PICKUP
+export const getPickup = async (req, res) => {
+  try {
+    const pickups = await Pickups.findAll();
+    res.status(200).json({
+      status: "success",
+      message: "Pickups retrieved successfully",
+      data: pickups,
     });
   } catch (error) {
     res.status(error.statusCode || 500).json({
