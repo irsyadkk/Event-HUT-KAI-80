@@ -4,45 +4,49 @@ import Prize from "../models/prizeModel.js";
 import User from "../models/userModel.js";
 import Winner from "../models/winnersModel.js";
 import db from "../config/Database.js";
+import Admin from "../models/adminModel.js";
 
 const allowedTables = {
-    orders: Order,
-    pickups: Pickups,
-    prizes: Prize,
-    users: User,
-    winners: Winner
+  orders: Order,
+  pickups: Pickups,
+  prizes: Prize,
+  users: User,
+  winners: Winner,
+  admins: Admin,
 };
 
 export const resetSingleTable = async (req, res) => {
-    const { tableName } = req.params;
+  const { tableName } = req.params;
 
-    const ModelToTruncate = allowedTables[tableName];
+  const ModelToTruncate = allowedTables[tableName];
 
-    if (!ModelToTruncate) {
-        return res.status(400).json({
-            status: "Error",
-            message: `Tabel '${tableName}' tidak ditemukan atau tidak diizinkan untuk di-reset.`,
-        });
+  if (!ModelToTruncate) {
+    return res.status(400).json({
+      status: "Error",
+      message: `Tabel '${tableName}' tidak ditemukan atau tidak diizinkan untuk di-reset.`,
+    });
+  }
+
+  const t = await db.transaction();
+  try {
+    await db.query(
+      `TRUNCATE TABLE "${ModelToTruncate.tableName}" RESTART IDENTITY CASCADE;`,
+      { transaction: t }
+    );
+
+    await t.commit();
+    res.status(200).json({
+      status: "Success",
+      message: `Semua data dari tabel '${tableName}' berhasil dihapus.`,
+    });
+  } catch (error) {
+    if (!t.finished) {
+      await t.rollback();
     }
-
-    const t = await db.transaction();
-    try {
-        await db.query(`TRUNCATE TABLE "${ModelToTruncate.tableName}" RESTART IDENTITY CASCADE;`, { transaction: t });
-
-
-        await t.commit();
-        res.status(200).json({
-            status: "Success",
-            message: `Semua data dari tabel '${tableName}' berhasil dihapus.`,
-        });
-    } catch (error) {
-        if (!t.finished) {
-            await t.rollback();
-        }
-        res.status(500).json({
-            status: "Error",
-            message: `Gagal me-reset tabel '${tableName}'.`,
-            error: error.message,
-        });
-    }
-}
+    res.status(500).json({
+      status: "Error",
+      message: `Gagal me-reset tabel '${tableName}'.`,
+      error: error.message,
+    });
+  }
+};

@@ -192,7 +192,15 @@ export const deleteSuperAdmin = async (req, res) => {
       transaction: t,
     });
     if (!ifSuperAdminExist) {
-      throw makeError("Super Admin Not Found !", 404);
+      throw makeError("Super admin Not Found !", 404);
+    }
+
+    const totalSuperAdmin = await SuperAdmin.count({ transaction: t });
+    if (totalSuperAdmin <= 1) {
+      throw makeError(
+        `Tidak dapat menghapus! Hanya ada ${totalSuperAdmin} Super Admin yang tersisa !`,
+        400
+      );
     }
 
     await SuperAdmin.destroy({ where: { nipp: nipp }, transaction: t });

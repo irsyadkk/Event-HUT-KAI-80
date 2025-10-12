@@ -430,27 +430,66 @@ const AdminManagePage = () => {
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 Detail Pengguna
               </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-600 font-medium">NIPP</p>
-                    <p className="text-lg font-bold text-gray-800">
-                      {searchResult.nipp}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-600 font-medium">Role</p>
-                    <p
-                      className={`text-lg font-bold ${
-                        searchResult.role === "admin"
-                          ? "text-blue-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {searchResult.role === "admin" ? "Admin" : "Super Admin"}
-                    </p>
-                  </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {searchResult.nipp}
+                  </p>
                 </div>
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <p className="text-sm text-gray-600 font-medium">Role</p>
+                  <p
+                    className={`text-lg font-bold ${
+                      searchResult.role === "admin"
+                        ? "text-blue-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {searchResult.role === "admin" ? "Admin" : "Super Admin"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tombol Aksi */}
+              <div className="flex gap-4 justify-end">
+                {searchResult.role === "admin" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNippReset(searchResult.nipp);
+                        setShowResetModal(true);
+                      }}
+                      className="inline-flex items-center px-4 py-2 
+            bg-gradient-to-r from-yellow-500 to-yellow-600 
+            hover:from-yellow-600 hover:to-yellow-700 
+            text-white text-sm font-medium rounded-lg shadow 
+            transition-all"
+                    >
+                      Reset Password
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (searchResult.role === "admin") {
+                      handleDeleteAdmin(searchResult.nipp);
+                    } else {
+                      handleDeleteSuperAdmin(searchResult.nipp);
+                    }
+                  }}
+                  className="inline-flex items-center px-4 py-2 
+        bg-gradient-to-r from-red-600 to-red-700 
+        hover:from-red-700 hover:to-red-800 
+        text-white text-sm font-medium rounded-lg shadow 
+        transition-all"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           )}
