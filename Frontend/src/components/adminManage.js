@@ -1,43 +1,64 @@
-import { getUserRole } from "../getUserRole.js";
 import { useEffect, useState, useCallback } from "react";
-import { data, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Search, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, UserPlus } from "lucide-react";
+import * as XLSX from "xlsx";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api.js";
+import { getUserRole } from "../getUserRole.js";
 
 const AdminManagePage = () => {
   const role = getUserRole();
   const navigate = useNavigate();
+
+  // akses & data
   const [allowed, setAllowed] = useState(false);
   const [adminList, setAdminList] = useState([]);
   const [SuperAdminList, setSuperAdminList] = useState([]);
+
+  // loading states
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isSuperAdminLoading, setIsSuperAdminLoading] = useState(false);
-  const [selectedTable, setSelectedTable] = useState("admin");
   const [isLoadingDeleteAdmin, setIsLoadingDeleteAdmin] = useState(false);
-  const [isLoadingDeleteSuperAdmin, setIsLoadingDeleteSuperAdmin] =
-    useState(false);
+  const [isLoadingDeleteSuperAdmin, setIsLoadingDeleteSuperAdmin] = useState(false);
   const [isLoadingResetAdminPass, setIsLoadingResetAdminPass] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // UI & form states
+  const [selectedTable, setSelectedTable] = useState("admin");
   const [newPassword, setNewPassword] = useState("");
   const [showResetModal, setShowResetModal] = useState(false);
   const [selectedNippReset, setSelectedNippReset] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const [nipp, setNipp] = useState("");
   const [password, setPassword] = useState("");
   const [roleInput, setRoleInput] = useState("admin");
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [totalAdmin, setTotalAdmin] = useState(null);
-  const [totalSuperAdmin, setTotalSuperAdmin] = useState(null);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [searchMessage, setSearchMessage] = useState(false);
-  const [searchResult, setSearchResult] = useState(null);
-  const [searchNipp, setSearchNipp] = useState(null);
 
+  const [totalAdmin, setTotalAdmin] = useState(0);
+  const [totalSuperAdmin, setTotalSuperAdmin] = useState(0);
+
+  // search
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchMessage, setSearchMessage] = useState(null);
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchNipp, setSearchNipp] = useState("");
+
+  // Import / Reset / Export states
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const [exporting, setExporting] = useState(false);
+
+  // ===== Guard =====
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const nipp = localStorage.getItem("nipp");
-    if (!token || !nipp) {
+    const nippLocal = localStorage.getItem("nipp");
+    if (!token || !nippLocal) {
       navigate("/");
       return;
     }
@@ -47,124 +68,14 @@ const AdminManagePage = () => {
     } catch {
       navigate("/");
     }
-  }, [navigate]);
+  }, [navigate, role]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage(null);
-
-    if (!nipp || !password) {
-      setMessage({
-        type: "error",
-        text: "NIPP dan Password wajib diisi!",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Tentukan endpoint berdasarkan role
-      const endpoint = roleInput === "admin" ? `/admin` : `/superadmin`;
-
-      await api.post(endpoint, { nipp, password });
-
-      setMessage({
-        type: "success",
-        text: `Berhasil menambahkan NIPP ${nipp} sebagai ${
-          roleInput === "admin" ? "admin" : "super admin"
-        } !`,
-      });
-
-      setNipp("");
-      setPassword("");
-      roleInput === "admin" ? getAdmin() : getSuperAdmin();
-    } catch (error) {
-      console.error("Error:", error);
-      let errorMessage = `Gagal menambahkan ${nipp} !`;
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      setMessage({
-        type: "error",
-        text: errorMessage,
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setIsSearchLoading(true);
-    setSearchMessage(null);
-    setSearchResult(null);
-
-    if (!searchNipp.trim()) {
-      setSearchMessage({
-        type: "error",
-        text: "Masukan NIPP yang ingin dicari !",
-      });
-      setIsSearchLoading(false);
-      return;
-    }
-
-    try {
-      const adminRes = await api.get(`/admin/${searchNipp}`).catch(() => null);
-      if (adminRes && adminRes.data.data) {
-        const data = adminRes.data.data;
-        setSearchResult({
-          nipp: data.nipp,
-          role: "admin",
-        });
-        setSearchMessage({
-          type: "success",
-          text: `NIPP ${data.nipp} ditemukan sebagai Admin.`,
-        });
-        setIsSearchLoading(false);
-        return;
-      }
-
-      const superAdminRes = await api
-        .get(`/superadmin/${searchNipp}`)
-        .catch(() => null);
-      if (superAdminRes && superAdminRes.data.data) {
-        const data = superAdminRes.data.data;
-        setSearchResult({
-          nipp: data.nipp,
-          role: "superadmin",
-        });
-        setSearchMessage({
-          type: "success",
-          text: `NIPP ${data.nipp} ditemukan sebagai Super Admin.`,
-        });
-        setIsSearchLoading(false);
-        return;
-      }
-
-      setSearchMessage({
-        type: "error",
-        text: `NIPP ${searchNipp} tidak ditemukan di data Admin maupun Super Admin !`,
-      });
-    } catch (error) {
-      console.error("Error saat mencari data:", error);
-      let errorMessage = `Gagal mengambil data ${searchNipp}!`;
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      setSearchMessage({
-        type: "error",
-        text: errorMessage,
-      });
-    } finally {
-      setIsSearchLoading(false);
-    }
-  };
-
+  // ===== API =====
   const getAdmin = useCallback(async () => {
     try {
       setIsAdminLoading(true);
       const res = await api.get("/admin");
-      const data = res.data.data;
+      const data = res?.data?.data || [];
       setAdminList(data);
       setTotalAdmin(data.length);
     } catch (err) {
@@ -178,7 +89,7 @@ const AdminManagePage = () => {
     try {
       setIsSuperAdminLoading(true);
       const res = await api.get("/superadmin");
-      const data = res.data.data;
+      const data = res?.data?.data || [];
       setSuperAdminList(data);
       setTotalSuperAdmin(data.length);
     } catch (err) {
@@ -188,14 +99,99 @@ const AdminManagePage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    getAdmin();
+    getSuperAdmin();
+  }, [getAdmin, getSuperAdmin]);
+
+  // ===== Create admin/superadmin =====
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage(null);
+
+    if (!nipp || !password) {
+      setMessage({ type: "error", text: "NIPP dan Password wajib diisi!" });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const endpoint = roleInput === "admin" ? `/admin` : `/superadmin`;
+      await api.post(endpoint, { nipp, password });
+      setMessage({
+        type: "success",
+        text: `Berhasil menambahkan NIPP ${nipp} sebagai ${roleInput === "admin" ? "admin" : "super admin"} !`,
+      });
+      setNipp("");
+      setPassword("");
+      roleInput === "admin" ? getAdmin() : getSuperAdmin();
+    } catch (error) {
+      console.error("Error:", error);
+      let errorMessage = `Gagal menambahkan ${nipp} !`;
+      if (error.response?.data?.message) errorMessage = error.response.data.message;
+      setMessage({ type: "error", text: errorMessage });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ===== Search =====
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setIsSearchLoading(true);
+    setSearchMessage(null);
+    setSearchResult(null);
+
+    if (!searchNipp.trim()) {
+      setSearchMessage({ type: "error", text: "Masukan NIPP yang ingin dicari !" });
+      setIsSearchLoading(false);
+      return;
+    }
+
+    try {
+      const adminRes = await api.get(`/admin/${searchNipp}`).catch(() => null);
+      if (adminRes && adminRes.data?.data) {
+        const data = adminRes.data.data;
+        setSearchResult({ nipp: data.nipp, role: "admin" });
+        setSearchMessage({ type: "success", text: `NIPP ${data.nipp} ditemukan sebagai Admin.` });
+        setIsSearchLoading(false);
+        return;
+      }
+
+      const superAdminRes = await api.get(`/superadmin/${searchNipp}`).catch(() => null);
+      if (superAdminRes && superAdminRes.data?.data) {
+        const data = superAdminRes.data.data;
+        setSearchResult({ nipp: data.nipp, role: "superadmin" });
+        setSearchMessage({ type: "success", text: `NIPP ${data.nipp} ditemukan sebagai Super Admin.` });
+        setIsSearchLoading(false);
+        return;
+      }
+
+      setSearchMessage({
+        type: "error",
+        text: `NIPP ${searchNipp} tidak ditemukan di data Admin maupun Super Admin !`,
+      });
+    } catch (error) {
+      console.error("Error saat mencari data:", error);
+      let errorMessage = `Gagal mengambil data ${searchNipp}!`;
+      if (error.response?.data?.message) errorMessage = error.response.data.message;
+      setSearchMessage({ type: "error", text: errorMessage });
+    } finally {
+      setIsSearchLoading(false);
+    }
+  };
+
+  // ===== Delete =====
   const handleDeleteAdmin = async (nipp) => {
     if (!nipp) return;
     setIsLoadingDeleteAdmin(true);
     try {
       await api.delete(`/admin/${nipp}`);
-      getAdmin();
+      await getAdmin();
     } catch (e) {
       console.log("Gagal delete admin:", e);
+      alert(e?.response?.data?.message || e.message || "Gagal menghapus admin.");
     } finally {
       setIsLoadingDeleteAdmin(false);
     }
@@ -206,14 +202,16 @@ const AdminManagePage = () => {
     setIsLoadingDeleteSuperAdmin(true);
     try {
       await api.delete(`/superadmin/${nipp}`);
-      getSuperAdmin();
+      await getSuperAdmin();
     } catch (e) {
       console.log("Gagal delete super admin:", e);
+      alert(e?.response?.data?.message || e.message || "Gagal menghapus super admin.");
     } finally {
       setIsLoadingDeleteSuperAdmin(false);
     }
   };
 
+  // ===== Reset password admin =====
   const handleResetPassAdmin = async (nipp, newPassword) => {
     if (!nipp || !newPassword) return;
     setIsLoadingResetAdminPass(true);
@@ -222,16 +220,76 @@ const AdminManagePage = () => {
       alert(`Password admin ${nipp} berhasil direset!`);
     } catch (e) {
       console.log("Gagal reset pass admin:", e);
-      alert("Gagal mereset password!");
+      alert(e?.response?.data?.message || "Gagal mereset password!");
     } finally {
       setIsLoadingResetAdminPass(false);
     }
   };
 
-  useEffect(() => {
-    getAdmin();
-    getSuperAdmin();
-  }, [getAdmin, getSuperAdmin]);
+  // ===== IMPORT Admins =====
+  const openImportModal = () => {
+    setImportFile(null);
+    setShowImportModal(true);
+  };
+
+  const handleUploadImport = async () => {
+    if (!importFile) return alert("Pilih file .csv atau .xlsx terlebih dahulu.");
+    try {
+      setImporting(true);
+      const form = new FormData();
+      // field name HARUS 'file' agar sesuai multer upload.single("file")
+      form.append("file", importFile);
+
+      await api.post("/import/admins", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setShowImportModal(false);
+      setImportFile(null);
+      await getAdmin();
+      alert("Import admin berhasil.");
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message || "Gagal import.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // ===== RESET Tabel Admins =====
+  const openResetModalForAdmin = () => setShowResetConfirm(true);
+
+  const confirmResetAdminTable = async () => {
+    try {
+      setResetting(true);
+      await api.delete("/reset/admins"); // sesuai route: router.delete("/reset/:tableName", ...)
+      await getAdmin();
+      alert("Tabel admins berhasil di-reset (kosong).");
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message || "Gagal reset tabel admins.");
+    } finally {
+      setShowResetConfirm(false);
+      setResetting(false);
+    }
+  };
+
+  // ===== EXPORT Admins ke XLSX =====
+  const exportExcelAdmin = async () => {
+    try {
+      setExporting(true);
+      const rows = (adminList || []).map((a, i) => ({
+        No: i + 1,
+        NIPP: a.nipp,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Admins");
+      XLSX.writeFile(wb, "data_admins.xlsx");
+    } catch (e) {
+      alert(e?.message || "Gagal export.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (!allowed) return null;
 
@@ -262,9 +320,7 @@ const AdminManagePage = () => {
             <p className="text-3xl font-bold text-white">{totalAdmin}</p>
           </div>
           <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 shadow-2xl border border-white/20">
-            <p className="text-green-100 text-sm font-medium">
-              Total Super Admin
-            </p>
+            <p className="text-green-100 text-sm font-medium">Total Super Admin</p>
             <p className="text-3xl font-bold text-white">{totalSuperAdmin}</p>
           </div>
         </div>
@@ -273,11 +329,7 @@ const AdminManagePage = () => {
         <div className="flex justify-center">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2 mb-6">
-              <UserPlus
-                className={`${
-                  role === "superadmin" ? "text-blue-700" : "text-green-700"
-                }`}
-              />
+              <UserPlus className={`${role === "superadmin" ? "text-blue-700" : "text-green-700"}`} />
               Tambah Admin / Super Admin
             </h2>
 
@@ -392,10 +444,7 @@ const AdminManagePage = () => {
             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
             Pencarian Admin & Super Admin
           </h2>
-          <form
-            onSubmit={handleSearch}
-            className="flex flex-col sm:flex-row gap-4 mb-4"
-          >
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 mb-4">
             <input
               type="text"
               value={searchNipp}
@@ -423,6 +472,7 @@ const AdminManagePage = () => {
               <p className="font-medium">{searchMessage.text}</p>
             </div>
           )}
+
           {/* Search Result */}
           {searchResult && (
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -434,17 +484,13 @@ const AdminManagePage = () => {
               <div className="space-y-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 font-medium">NIPP</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {searchResult.nipp}
-                  </p>
+                  <p className="text-lg font-bold text-gray-800">{searchResult.nipp}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <p className="text-sm text-gray-600 font-medium">Role</p>
                   <p
                     className={`text-lg font-bold ${
-                      searchResult.role === "admin"
-                        ? "text-blue-600"
-                        : "text-green-600"
+                      searchResult.role === "admin" ? "text-blue-600" : "text-green-600"
                     }`}
                   >
                     {searchResult.role === "admin" ? "Admin" : "Super Admin"}
@@ -455,22 +501,16 @@ const AdminManagePage = () => {
               {/* Tombol Aksi */}
               <div className="flex gap-4 justify-end">
                 {searchResult.role === "admin" && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedNippReset(searchResult.nipp);
-                        setShowResetModal(true);
-                      }}
-                      className="inline-flex items-center px-4 py-2 
-            bg-gradient-to-r from-yellow-500 to-yellow-600 
-            hover:from-yellow-600 hover:to-yellow-700 
-            text-white text-sm font-medium rounded-lg shadow 
-            transition-all"
-                    >
-                      Reset Password
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedNippReset(searchResult.nipp);
+                      setShowResetModal(true);
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all"
+                  >
+                    Reset Password
+                  </button>
                 )}
 
                 <button
@@ -482,13 +522,15 @@ const AdminManagePage = () => {
                       handleDeleteSuperAdmin(searchResult.nipp);
                     }
                   }}
-                  className="inline-flex items-center px-4 py-2 
-        bg-gradient-to-r from-red-600 to-red-700 
-        hover:from-red-700 hover:to-red-800 
-        text-white text-sm font-medium rounded-lg shadow 
-        transition-all"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-sm font-medium rounded-lg shadow transition-all"
                 >
-                  Delete
+                  {searchResult.role === "admin"
+                    ? isLoadingDeleteAdmin
+                      ? "Menghapus..."
+                      : "Delete"
+                    : isLoadingDeleteSuperAdmin
+                    ? "Menghapus..."
+                    : "Delete"}
                 </button>
               </div>
             </div>
@@ -503,35 +545,25 @@ const AdminManagePage = () => {
               {selectedTable === "admin" ? "Data Admin" : "Data Super Admin"}
             </h2>
 
-            {/* tombol export */}
-            {/* {selectedTable === "order" && (
-              <button
-                onClick={openImportModalForCurrentTable}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-                title="Import Peserta (.csv/.xlsx)"
-              >
-                Import Peserta (.csv/.xlsx)
-              </button>
-            )}
-
-            {selectedTable === "order" ? (
-              <button
-                onClick={exportExcelOrder}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-              >
-                Export Data Peserta Terdaftar ke Excel (.xlsx)
-              </button>
-            ) : (
-              <button
-                onClick={exportExcelPickup}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
-              >
-                Export Data Pickup ke Excel (.xlsx)
-              </button>
-            )} */}
-
-            {/* tombol switch + reset */}
+            {/* Aksi global */}
             <div className="flex flex-wrap gap-3">
+              <button
+                onClick={openImportModal}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                title="Import Admin (.csv/.xlsx)"
+                disabled={importing}
+              >
+                {importing ? "Mengunggah..." : "Import Admin (.csv/.xlsx)"}
+              </button>
+
+              <button
+                onClick={exportExcelAdmin}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
+                disabled={exporting}
+              >
+                {exporting ? "Mengekspor..." : "Export Data Admin (.xlsx)"}
+              </button>
+
               <button
                 onClick={() => setSelectedTable("admin")}
                 className={`px-4 py-2 rounded-lg font-medium ${
@@ -553,230 +585,167 @@ const AdminManagePage = () => {
                 Super Admin
               </button>
 
-              {/* --- TOMBOL RESET TABEL (current tab) --- */}
-              {/* <button
-                onClick={openResetModalForCurrentTable}
-                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel ${
-                  selectedTable === "order" ? "Order" : "Pickup"
-                }`}
+              <button
+                onClick={openResetModalForAdmin}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow disabled:opacity-50"
+                title="Reset semua data di tabel admins"
+                disabled={resetting}
               >
-                Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
-              </button> */}
+                {resetting ? "Mereset..." : "Reset Tabel"}
+              </button>
             </div>
           </div>
 
           {selectedTable === "admin" ? (
-            <>
-              {/* ---------- TABEL ADMIN ---------- */}
-              <div
-                key="admin-table"
-                className="overflow-x-auto max-h-[500px] overflow-y-auto"
-              >
-                <table className="w-full">
-                  <thead className="bg-gray-50">
+            <div key="admin-table" className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">No</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">NIPP</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {isAdminLoading ? (
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        No
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        NIPP
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Aksi
-                      </th>
+                      <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                        Memuat data admin...
+                      </td>
                     </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-gray-100">
-                    {isAdminLoading ? (
-                      <tr>
-                        <td
-                          colSpan="7"
-                          className="px-6 py-12 text-center text-gray-500"
-                        >
-                          Memuat data admin...
-                        </td>
-                      </tr>
-                    ) : adminList.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan="4"
-                          className="px-6 py-12 text-center text-gray-500"
-                        >
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-8 h-8 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
-                                ></path>
-                              </svg>
-                            </div>
-                            <p className="font-medium">
-                              Belum ada data admin !
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      adminList.map((admin, index) => (
-                        <tr
-                          key={`admin-${index}`}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                              {admin.nipp}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex justify-center gap-4">
-                              {/* Tombol Reset Pass */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedNippReset(admin.nipp);
-                                  setShowResetModal(true);
-                                }}
-                                className="inline-flex items-center px-4 py-2 
-                 bg-gradient-to-r from-yellow-500 to-yellow-600 
-                 hover:from-yellow-600 hover:to-yellow-700 
-                 text-white text-sm font-medium rounded-lg shadow 
-                 transition-all"
-                              >
-                                Reset Password
-                              </button>
-
-                              {/* Tombol Delete */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleDeleteAdmin(admin.nipp);
-                                }}
-                                className="inline-flex items-center px-4 py-2 
-                 bg-gradient-to-r from-red-600 to-red-700 
-                 hover:from-red-700 hover:to-red-800 
-                 text-white text-sm font-medium rounded-lg shadow 
-                 transition-all"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* ---------- TABEL SUPER ADMIN ---------- */}
-              <div
-                key="superadmin-table"
-                className="overflow-x-auto max-h-[500px] overflow-y-auto"
-              >
-                <table className="w-full">
-                  <thead className="bg-gray-50">
+                  ) : adminList.length === 0 ? (
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        No
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                        NIPP
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Aksi
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-gray-100">
-                    {SuperAdminList.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan="11"
-                          className="px-6 py-12 text-center text-gray-500"
-                        >
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-8 h-8 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a2 2 0 100-4 2 2 0 000 4z"
-                                ></path>
-                              </svg>
-                            </div>
-                            <p className="font-medium">
-                              Belum ada data super admin!
-                            </p>
+                      <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a 2 2 0 100-4 2 2 0 000 4z"
+                              ></path>
+                            </svg>
                           </div>
+                          <p className="font-medium">Belum ada data admin !</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    adminList.map((admin, index) => (
+                      <tr key={`admin-${index}`} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-700">{index + 1}</td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            {admin.nipp}
+                          </span>
                         </td>
-                      </tr>
-                    ) : (
-                      SuperAdminList.map((superadmin, index) => (
-                        <tr
-                          key={`superadmin-${index}`}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4 text-sm text-gray-700">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                              {superadmin.nipp}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center gap-4">
                             <button
                               type="button"
                               onClick={() => {
-                                handleDeleteSuperAdmin(superadmin.nipp);
+                                setSelectedNippReset(admin.nipp);
+                                setShowResetModal(true);
                               }}
-                              className="inline-flex items-center px-4 py-2 
-          bg-gradient-to-r from-red-600 to-red-700 
-          hover:from-red-700 hover:to-red-800 
-          text-white text-sm font-medium rounded-lg shadow 
-          transition-all"
+                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white text-sm font-medium rounded-lg shadow transition-all"
                             >
-                              Delete
+                              Reset Password
                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAdmin(admin.nipp)}
+                              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-sm font-medium rounded-lg shadow transition-all"
+                            >
+                              {isLoadingDeleteAdmin ? "Menghapus..." : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div key="superadmin-table" className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">No</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">NIPP</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {isSuperAdminLoading ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                        Memuat data super admin...
+                      </td>
+                    </tr>
+                  ) : SuperAdminList.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-12 text-center text-gray-500">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-6m-5 0h-6m6 0a2 2 0 100-4 2 2 0 000 4zm-6 0a 2 2 0 100-4 2 2 0 000 4z"
+                              ></path>
+                            </svg>
+                          </div>
+                          <p className="font-medium">Belum ada data super admin!</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    SuperAdminList.map((superadmin, index) => (
+                      <tr key={`superadmin-${index}`} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-700">{index + 1}</td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                            {superadmin.nipp}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSuperAdmin(superadmin.nipp)}
+                            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white text-sm font-medium rounded-lg shadow transition-all"
+                          >
+                            {isLoadingDeleteSuperAdmin ? "Menghapus..." : "Delete"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
+
+      {/* MODAL: Reset Password Admin */}
       {showResetModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-96 p-6 animate-fadeIn">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
-              Reset Password Admin
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">Reset Password Admin</h2>
             <p className="text-sm text-gray-600 mb-4 text-center">
               NIPP: <span className="font-semibold">{selectedNippReset}</span>
             </p>
@@ -789,7 +758,6 @@ const AdminManagePage = () => {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
-
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -813,8 +781,7 @@ const AdminManagePage = () => {
               <button
                 disabled={isLoadingResetAdminPass}
                 onClick={async () => {
-                  if (!newPassword.trim())
-                    return alert("Password baru wajib diisi!");
+                  if (!newPassword.trim()) return alert("Password baru wajib diisi!");
                   await handleResetPassAdmin(selectedNippReset, newPassword);
                   setNewPassword("");
                   setShowResetModal(false);
@@ -822,6 +789,72 @@ const AdminManagePage = () => {
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium disabled:opacity-50 transition"
               >
                 {isLoadingResetAdminPass ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Import Admin */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 className="text-xl font-bold mb-4">Import Admin (.csv / .xlsx)</h3>
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="w-full border rounded-lg p-2"
+                disabled={importing}
+              />
+              <p className="text-sm text-gray-500">
+                Kolom minimal: <code>nipp</code> dan <code>password</code>. Jika kolom{" "}
+                <code>password</code> kosong, data tetap terbuat tanpa password (tidak disarankan).
+              </p>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                onClick={() => setShowImportModal(false)}
+                disabled={importing}
+              >
+                Batal
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
+                onClick={handleUploadImport}
+                disabled={importing || !importFile}
+              >
+                {importing ? "Mengunggah..." : "Import"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Konfirmasi Reset Tabel Admins */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h3 className="text-xl font-bold mb-2 text-red-600">Reset Tabel Admins</h3>
+            <p className="text-gray-700">
+              Tindakan ini akan <b>menghapus semua data</b> pada tabel <code>admins</code>. Lanjutkan?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                onClick={() => setShowResetConfirm(false)}
+                disabled={resetting}
+              >
+                Batal
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                onClick={confirmResetAdminTable}
+                disabled={resetting}
+              >
+                {resetting ? "Mereset..." : "Ya, Hapus Semua"}
               </button>
             </div>
           </div>

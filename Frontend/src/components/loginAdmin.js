@@ -83,7 +83,7 @@ const LoginAdmin = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                NIPP / NIPKWT
+                NIPP ADMIN
               </label>
               <div className="relative">
                 <input
