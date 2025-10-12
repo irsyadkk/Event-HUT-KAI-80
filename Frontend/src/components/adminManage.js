@@ -770,15 +770,7 @@ const AdminManagePage = () => {
                           : "Import Admin (.csv/.xlsx)"}
                       </button>
 
-                      <button
-                        onClick={exportExcelAdmin}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-md text-sm md:text-base font-medium"
-                        disabled={exporting}
-                      >
-                        {exporting
-                          ? "Mengekspor..."
-                          : "Export Data Admin (.xlsx)"}
-                      </button>
+                     
 
                       <button
                         onClick={openResetModalForAdmin}
