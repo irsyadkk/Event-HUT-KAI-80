@@ -39,55 +39,54 @@ export const addEditTimer = async (req, res) => {
   try {
     const { date, status, ended } = req.body;
 
-    if (status === undefined) {
-      throw makeError("status field cannot be empty !", 400);
+    // Validasi dasar
+    if (status === undefined || ended === undefined) {
+      throw makeError("Field 'status' dan 'ended' tidak boleh kosong!", 400);
     }
-    if (ended === undefined) {
-      throw makeError("ended field cannot be empty !", 400);
-    }
-
-    const inputDate = new Date(date);
-    const now = new Date();
-
-    if (inputDate <= now) {
-      throw makeError("date must be grater than current date !");
-    }
-
+    
+    // Ambil data timer yang ada
     let timer = await Timer.findOne({ where: { id: 1 }, transaction: t });
+    if (!timer) {
+      // Jika timer belum ada, buat dulu
+      timer = await Timer.create({ id: 1, date: null, active: false, ended: false }, { transaction: t });
+    }
 
-    const timerData = {
-      id: 1,
-      date: inputDate, // <-- PERUBAHAN UTAMA: Gunakan objek Date, bukan string mentah
+    const dataToUpdate = {
       active: status,
       ended: ended,
     };
 
-    if (!timer) {
-      await Timer.create(
-        timerData,
-        { transaction: t }
-      );
-    } else {
-      await Timer.update(
-        timerData,
-        { where: { id: 1 }, transaction: t }
-      );
+    // Hanya proses 'date' jika diberikan di body request
+    if (date) {
+      const inputDate = new Date(date);
+      const now = new Date();
+
+      if (inputDate <= now) {
+        throw makeError("Waktu yang dipilih harus lebih besar dari waktu saat ini!");
+      }
+      // Tambahkan 'date' ke data yang akan di-update
+      dataToUpdate.date = inputDate;
     }
-    // Ambil data terbaru setelah update/create
+    
+    // Lakukan update dengan data yang sudah disiapkan
+    await Timer.update(dataToUpdate, { where: { id: 1 }, transaction: t });
+
+    // Ambil data terbaru setelah update untuk dikirim kembali
     const updatedTimer = await Timer.findOne({ where: { id: 1 }, transaction: t });
 
     await t.commit();
 
     res.status(200).json({
       status: "Success",
-      message: `Timer set to ${date} with active status ${status} and ended ${ended} !`,
+      message: "Timer berhasil di-update.",
       data: updatedTimer,
     });
+
   } catch (error) {
-    if (!t.finished) {
+    if (t && !t.finished) {
       await t.rollback();
     }
-    console.error(error);
+    console.error("Error updating timer:", error);
     res.status(error.statusCode || 500).json({
       status: "Error",
       message: error.message,
