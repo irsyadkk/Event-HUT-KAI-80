@@ -8,6 +8,7 @@ import Prize from "../models/prizeModel.js";
 import User from "../models/userModel.js";
 import Admin from "../models/adminModel.js";
 import bcrypt from "bcrypt";
+import { refreshToken } from "./refreshToken.js";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -67,6 +68,7 @@ const parseAdminRow = (row) => ({
     row.Pass ??
     row.PASS ??
     null,
+  refreshToken: null,
 });
 
 // PARSE PRIZE
@@ -131,6 +133,7 @@ export const importFile = async (req, res) => {
     } else if (table === "prizes") {
       payload = rows.map(parsePrizeRow).filter((r) => r.prize);
     } else if (table === "admins") {
+      payload = rows.map(parseAdminRow).filter((r) => r.nipp);
       payload = await Promise.all(
         payload.map(async (admin) => {
           if (admin.password) {
