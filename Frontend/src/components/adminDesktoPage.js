@@ -125,10 +125,10 @@ const AdminDesktopPage = () => {
           const utcDate = new Date(data.date);
 
           const year = utcDate.getFullYear();
-          const month = String(utcDate.getMonth() + 1).padStart(2, '0');
-          const day = String(utcDate.getDate()).padStart(2, '0');
-          const hours = String(utcDate.getHours()).padStart(2, '0');
-          const minutes = String(utcDate.getMinutes()).padStart(2, '0');
+          const month = String(utcDate.getMonth() + 1).padStart(2, "0");
+          const day = String(utcDate.getDate()).padStart(2, "0");
+          const hours = String(utcDate.getHours()).padStart(2, "0");
+          const minutes = String(utcDate.getMinutes()).padStart(2, "0");
 
           const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
           setTimerDate(localDateTimeString);
@@ -876,7 +876,9 @@ const AdminDesktopPage = () => {
     link.click();
   };
 
-  if (!allowed) {navigate("/")}
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-600 px-4 py-6 md:py-8">
@@ -1066,17 +1068,18 @@ const AdminDesktopPage = () => {
               <button
                 onClick={() => openConfirm("DEACTIVATE")}
                 className={`w-full px-4 py-3 rounded-xl shadow-lg transition-all font-medium text-white
-        ${isTimerExpired() || !timerActive
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                  }`}
+        ${
+          isTimerExpired() || !timerActive
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+        }`}
                 disabled={isTimerExpired() || !timerActive || isPendingAction}
                 title={
                   isTimerExpired()
                     ? "Timer sudah habis—tidak dapat dimatikan."
                     : !timerActive
-                      ? "Timer tidak aktif."
-                      : "Matikan Timer"
+                    ? "Timer tidak aktif."
+                    : "Matikan Timer"
                 }
               >
                 Matikan Timer
@@ -1097,10 +1100,11 @@ const AdminDesktopPage = () => {
 
             {timerMsg && (
               <div
-                className={`mt-3 p-3 rounded-xl ${timerMsg.type === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-                  }`}
+                className={`mt-3 p-3 rounded-xl ${
+                  timerMsg.type === "success"
+                    ? "bg-green-50 border border-green-200 text-green-700"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
               >
                 <p className="text-sm font-medium">{timerMsg.text}</p>
               </div>
@@ -1189,12 +1193,13 @@ const AdminDesktopPage = () => {
                 <button
                   onClick={handleConfirmProceed}
                   className={`flex-1 px-4 py-3 rounded-xl text-white transition-all font-medium
-            ${confirmCfg.action === "END"
-                      ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
-                      : confirmCfg.action === "DEACTIVATE"
-                        ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
-                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
-                    }`}
+            ${
+              confirmCfg.action === "END"
+                ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                : confirmCfg.action === "DEACTIVATE"
+                ? "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800"
+                : "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
+            }`}
                   disabled={
                     confirmCfg.loading ||
                     (confirmCfg.action === "DEACTIVATE" &&
@@ -1202,7 +1207,7 @@ const AdminDesktopPage = () => {
                   }
                   title={
                     confirmCfg.action === "DEACTIVATE" &&
-                      (isTimerExpired() || !timerActive)
+                    (isTimerExpired() || !timerActive)
                       ? "Tidak dapat mematikan: timer sudah habis atau tidak aktif."
                       : ""
                   }
@@ -1264,8 +1269,8 @@ const AdminDesktopPage = () => {
                 {importTarget === "orders"
                   ? "Data Peserta (orders)"
                   : importTarget === "pickups"
-                    ? "Data Pickup (pickups)"
-                    : "Data Users (users)"}
+                  ? "Data Pickup (pickups)"
+                  : "Data Users (users)"}
               </h2>
 
               <p className="text-sm text-gray-600 mb-4">
@@ -1376,10 +1381,11 @@ const AdminDesktopPage = () => {
           </button>
           {messageTambah && (
             <div
-              className={`mt-4 p-4 rounded-xl ${messageTambah.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mt-4 p-4 rounded-xl ${
+                messageTambah.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageTambah.text}</p>
             </div>
@@ -1414,10 +1420,11 @@ const AdminDesktopPage = () => {
           </form>
           {messageCariPegawai && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCariPegawai.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mb-4 p-4 rounded-xl ${
+                messageCariPegawai.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageCariPegawai.text}</p>
             </div>
@@ -1519,29 +1526,29 @@ const AdminDesktopPage = () => {
                 Import Users (.csv/.xlsx)
               </button>
               <button
-                onClick={openResetModalForTableUsers}
-                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel`}
-              >
-                Reset Tabel Users
-              </button>
-
-              <button
                 onClick={exportExcelUsers}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 text-sm md:text-base font-medium"
                 disabled={users.length === 0}
               >
                 Export Data Users (.xlsx)
               </button>
+              <button
+                onClick={openResetModalForTableUsers}
+                className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
+                title={`Reset semua data di tabel`}
+              >
+                Reset Tabel Users
+              </button>
             </div>
           </div>
 
           {usersMsg && (
             <div
-              className={`m-4 p-4 rounded-xl ${usersMsg.type === "error"
-                ? "bg-red-50 border border-red-200 text-red-700"
-                : "bg-green-50 border border-green-200 text-green-700"
-                }`}
+              className={`m-4 p-4 rounded-xl ${
+                usersMsg.type === "error"
+                  ? "bg-red-50 border border-red-200 text-red-700"
+                  : "bg-green-50 border border-green-200 text-green-700"
+              }`}
             >
               <p className="font-medium">{usersMsg.text}</p>
             </div>
@@ -1679,10 +1686,11 @@ const AdminDesktopPage = () => {
           </form>
           {messageCari && (
             <div
-              className={`mb-4 p-4 rounded-xl ${messageCari.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-700"
-                : "bg-red-50 border border-red-200 text-red-700"
-                }`}
+              className={`mb-4 p-4 rounded-xl ${
+                messageCari.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
             >
               <p className="font-medium">{messageCari.text}</p>
             </div>
@@ -1690,11 +1698,15 @@ const AdminDesktopPage = () => {
           {/* Search Result */}
           {searchResult && (
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+              {/* Header */}
               <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 Detail Registrasi
               </h3>
+
+              {/* Grid untuk detail */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Kolom kiri - data detail */}
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium">NIPP</p>
@@ -1702,12 +1714,14 @@ const AdminDesktopPage = () => {
                       {searchResult.nipp}
                     </p>
                   </div>
+
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium">Nama</p>
                     <p className="text-lg font-bold text-gray-800">
                       {searchResult.nama}
                     </p>
                   </div>
+
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium">
                       Penetapan
@@ -1716,6 +1730,7 @@ const AdminDesktopPage = () => {
                       {searchResult.penetapan}
                     </p>
                   </div>
+
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium mb-2">
                       Anggota Terdaftar
@@ -1734,6 +1749,7 @@ const AdminDesktopPage = () => {
                       </p>
                     )}
                   </div>
+
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium">
                       Transportasi
@@ -1742,6 +1758,7 @@ const AdminDesktopPage = () => {
                       {searchResult.transportasi}
                     </p>
                   </div>
+
                   <div className="bg-gray-50 p-4 rounded-xl">
                     <p className="text-sm text-gray-600 font-medium">
                       Keberangkatan
@@ -1752,6 +1769,7 @@ const AdminDesktopPage = () => {
                   </div>
                 </div>
 
+                {/* Kolom kanan - QR Code */}
                 <div className="flex flex-col items-center justify-center">
                   <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-gray-100">
                     <img
@@ -1765,6 +1783,16 @@ const AdminDesktopPage = () => {
                     className="mt-6 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
                   >
                     Download QR Code
+                  </button>
+                  <button
+                    className="mt-6 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+                    onClick={() =>
+                      navigate("/detailregister/edit", {
+                        state: { nipp: searchResult.nipp },
+                      })
+                    }
+                  >
+                    Edit Data
                   </button>
                 </div>
               </div>
@@ -1813,19 +1841,21 @@ const AdminDesktopPage = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setSelectedTable("order")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "order"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "order"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
               >
                 Order
               </button>
               <button
                 onClick={() => setSelectedTable("pickup")}
-                className={`px-4 py-2 rounded-lg font-medium ${selectedTable === "pickup"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  selectedTable === "pickup"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
               >
                 Pickup
               </button>
@@ -1834,8 +1864,9 @@ const AdminDesktopPage = () => {
               <button
                 onClick={openResetModalForCurrentTable}
                 className="px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow"
-                title={`Reset semua data di tabel ${selectedTable === "order" ? "Order" : "Pickup"
-                  }`}
+                title={`Reset semua data di tabel ${
+                  selectedTable === "order" ? "Order" : "Pickup"
+                }`}
               >
                 Reset Tabel {selectedTable === "order" ? "Order" : "Pickup"}
               </button>

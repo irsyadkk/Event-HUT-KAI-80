@@ -436,10 +436,7 @@ export default function WinnerInputPage() {
     );
   });
 
-  if (!allowed) {
-    navigate("/");
-  }
-
+  if (!allowed) return null;
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-green-700 via-green-800 to-green-900"

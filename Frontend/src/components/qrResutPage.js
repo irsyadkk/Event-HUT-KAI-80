@@ -49,9 +49,7 @@ const QRResultPage = () => {
       getOrderByNipp();
     }
   }, [nipp]);
-  if (!allowed) {
-    navigate("/");
-  }
+  if (!allowed) return null;
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8"

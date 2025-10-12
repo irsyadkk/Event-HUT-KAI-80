@@ -167,9 +167,7 @@ const EditPickupPage = () => {
     }
   };
 
-  if (!allowed) {
-    navigate("/");
-  }
+  if (!allowed) return null;
 
   return (
     <div
