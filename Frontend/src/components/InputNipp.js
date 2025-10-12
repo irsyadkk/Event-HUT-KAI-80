@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { BASE_URL, ADMIN_NIPP } from "../utils";
+import { BASE_URL } from "../utils";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api";
 import { io } from "socket.io-client";
@@ -63,7 +63,9 @@ const InputNipp = () => {
     }
   }, [targetTime, navigate]);
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

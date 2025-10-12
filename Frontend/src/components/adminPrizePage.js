@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
@@ -584,7 +584,9 @@ export default function AdminPrizePage() {
     return "bg-gray-300 text-gray-700";
   };
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div

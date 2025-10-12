@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api"; // pakai api instance yang sudah ada
 import { useLocation, useNavigate } from "react-router-dom";
@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 const QRResultPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
-  const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [allowed, setAllowed] = useState(false);
   const navigate = useNavigate();
@@ -50,7 +49,9 @@ const QRResultPage = () => {
       getOrderByNipp();
     }
   }, [nipp]);
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 py-8"

@@ -14,7 +14,6 @@ import WinnerDisplayPage from "./components/winnerDisplayPage";
 import PrizeNamesPage from "./components/prizeNamesPage";
 import EditRegisterPage from "./components/editRegisterPage";
 import EditPickupPage from "./components/editPickupPage";
-import TimerForm from "./components/testTimer";
 import LoginAdmin from "./components/loginAdmin";
 import AdminManagePage from "./components/adminManage";
 
@@ -37,7 +36,6 @@ function App() {
         <Route path="/prizenames" element={<PrizeNamesPage />} />
         <Route path="/detailregister/edit" element={<EditRegisterPage />} />
         <Route path="/pickup/edit" element={<EditPickupPage />} />
-        <Route path="/testtimer" element={<TimerForm />} />
         <Route path="/loginadmin" element={<LoginAdmin />} />
         <Route path="/adminmanage" element={<AdminManagePage />} />
       </Routes>

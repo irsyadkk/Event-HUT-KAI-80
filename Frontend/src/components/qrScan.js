@@ -1,12 +1,13 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master-01.png";
-import { ADMIN_NIPP } from "../utils";
+import { getUserRole } from "../getUserRole";
 
 export default function QRPickupApp() {
   const navigate = useNavigate();
+  const role = getUserRole();
 
   const [step, setStep] = useState("start"); // start | scan | confirm
 
@@ -33,7 +34,7 @@ export default function QRPickupApp() {
       return;
     }
     try {
-      if (nipp !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
@@ -132,7 +133,9 @@ export default function QRPickupApp() {
     setSuccessMsg("");
   };
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
@@ -59,7 +59,9 @@ const DetailRegisterPage = () => {
     }
   }, [navigate, location.state]);
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div

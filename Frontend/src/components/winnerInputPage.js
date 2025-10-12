@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { useNavigate } from "react-router-dom";
-import { ADMIN_NIPP } from "../utils";
 import { io } from "socket.io-client";
 import { BASE_URL } from "../utils";
+import { getUserRole } from "../getUserRole";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -31,7 +31,10 @@ function Popup({ show, onClose, title, message, type = "success" }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
         <div
           className={`px-6 py-4 ${
@@ -82,7 +85,8 @@ function EditWinnerModal({
   if (!show) return null;
 
   const newNipp = String(nipp || "").trim();
-  const canSave = newNipp.length > 0 && newNipp !== String(initialNipp || "").trim();
+  const canSave =
+    newNipp.length > 0 && newNipp !== String(initialNipp || "").trim();
 
   const submit = () => {
     if (!canSave) return;
@@ -91,10 +95,15 @@ function EditWinnerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden border border-white/30">
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4">
-          <h3 className="text-xl font-bold text-white">✏️ Edit NIPP Pemenang</h3>
+          <h3 className="text-xl font-bold text-white">
+            ✏️ Edit NIPP Pemenang
+          </h3>
         </div>
         <div className="p-6 space-y-4">
           <div>
@@ -110,7 +119,8 @@ function EditWinnerModal({
               autoFocus
             />
             <p className="mt-1 text-xs text-gray-500">
-              Sistem akan memeriksa apakah NIPP baru ada di tabel orders dan belum dipakai di winners.
+              Sistem akan memeriksa apakah NIPP baru ada di tabel orders dan
+              belum dipakai di winners.
             </p>
           </div>
 
@@ -136,7 +146,12 @@ function EditWinnerModal({
 }
 
 /** Modal Password Admin */
-function AdminPasswordModal({ show, actionLabel = "Aksi", onClose, onVerified }) {
+function AdminPasswordModal({
+  show,
+  actionLabel = "Aksi",
+  onClose,
+  onVerified,
+}) {
   const [val, setVal] = useState("");
   const [err, setErr] = useState("");
 
@@ -163,10 +178,15 @@ function AdminPasswordModal({ show, actionLabel = "Aksi", onClose, onVerified })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 overflow-hidden border border-white/30">
         <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
-          <h3 className="text-lg font-bold text-white">Konfirmasi Admin ({actionLabel})</h3>
+          <h3 className="text-lg font-bold text-white">
+            Konfirmasi Admin ({actionLabel})
+          </h3>
         </div>
         <div className="p-6 space-y-3">
           <p className="text-sm text-gray-700">
@@ -208,6 +228,7 @@ function AdminPasswordModal({ show, actionLabel = "Aksi", onClose, onVerified })
 export default function WinnerInputPage() {
   const navigate = useNavigate();
   const headers = useAuthHeaders();
+  const role = getUserRole();
 
   const [nipp, setNipp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -232,21 +253,21 @@ export default function WinnerInputPage() {
 
   // modal password admin
   const [adminModal, setAdminModal] = useState({
-    open: false,       // boolean
-    action: null,      // 'edit' | 'delete'
-    payload: null,     // row (edit) atau nipp (delete)
+    open: false, // boolean
+    action: null, // 'edit' | 'delete'
+    payload: null, // row (edit) atau nipp (delete)
   });
 
-  // Auth guard (ADMIN_NIPP)
+  // Auth guard
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const nippLocal = localStorage.getItem("nipp");
-    if (!token || !nippLocal) {
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
       navigate("/");
       return;
     }
     try {
-      if (nippLocal !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
@@ -269,7 +290,7 @@ export default function WinnerInputPage() {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     const socket = io(BASE_URL);
     socket.on("WINNER_UPDATE", (rows) => {
       setList(rows || []);
@@ -334,7 +355,8 @@ export default function WinnerInputPage() {
   const submitEdit = async ({ nipp: newNipp }) => {
     if (!editOriginalNipp) return;
     const trimmed = String(newNipp || "").trim();
-    if (!trimmed) return showPopup("Peringatan", "NIPP baru tidak boleh kosong.", "error");
+    if (!trimmed)
+      return showPopup("Peringatan", "NIPP baru tidak boleh kosong.", "error");
     if (trimmed === String(editOriginalNipp || "").trim()) {
       setShowEdit(false);
       return;
@@ -405,12 +427,18 @@ export default function WinnerInputPage() {
   const filtered = list.filter((w) => {
     const s = q.toLowerCase();
     return (
-      String(w.nipp || w.winner || "").toLowerCase().includes(s) ||
-      String(w.status || "").toLowerCase().includes(s)
+      String(w.nipp || w.winner || "")
+        .toLowerCase()
+        .includes(s) ||
+      String(w.status || "")
+        .toLowerCase()
+        .includes(s)
     );
   });
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div
@@ -523,7 +551,9 @@ export default function WinnerInputPage() {
                                 Edit
                               </button>
                               <button
-                                onClick={() => requireAdmin("delete", String(nippVal))}
+                                onClick={() =>
+                                  requireAdmin("delete", String(nippVal))
+                                }
                                 className="px-3 py-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold shadow-md"
                                 title="Hapus pemenang"
                               >
@@ -572,7 +602,9 @@ export default function WinnerInputPage() {
       {/* Modal Password Admin */}
       <AdminPasswordModal
         show={adminModal.open}
-        actionLabel={adminModal.action === "edit" ? "Edit Pemenang" : "Hapus Pemenang"}
+        actionLabel={
+          adminModal.action === "edit" ? "Edit Pemenang" : "Hapus Pemenang"
+        }
         onClose={closeAdminModal}
         onVerified={onAdminVerified}
       />

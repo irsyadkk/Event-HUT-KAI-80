@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import { BASE_URL } from "../utils";
@@ -125,11 +125,7 @@ export default function WinnerDisplayPage() {
         {/* Header - Minimal */}
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-3">
-            <img
-              src={LogoKAI}
-              alt="Logo HUT KAI 80"
-              className="h-8 w-auto"
-            />
+            <img src={LogoKAI} alt="Logo HUT KAI 80" className="h-8 w-auto" />
             <h1 className="text-xl font-bold text-white">
               Pemenang Terpilih ({filtered.length})
             </h1>
@@ -156,13 +152,16 @@ export default function WinnerDisplayPage() {
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-4 text-sm">
               <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-green-600" /> Diambil ({stats.diambil})
+                <span className="w-3 h-3 rounded-full bg-green-600" /> Diambil (
+                {stats.diambil})
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-amber-500" /> Belum Verifikasi ({stats.belum})
+                <span className="w-3 h-3 rounded-full bg-amber-500" /> Belum
+                Verifikasi ({stats.belum})
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-red-600" /> Gugur ({stats.gugur})
+                <span className="w-3 h-3 rounded-full bg-red-600" /> Gugur (
+                {stats.gugur})
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="w-3 h-3 rounded-full bg-gray-400" /> Lainnya
@@ -177,7 +176,9 @@ export default function WinnerDisplayPage() {
             <div className="h-full flex items-center justify-center">
               <div className="inline-flex flex-col items-center gap-4">
                 <div className="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
-                <p className="text-gray-600 text-lg font-medium">Memuat data…</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  Memuat data…
+                </p>
               </div>
             </div>
           ) : (
@@ -185,12 +186,17 @@ export default function WinnerDisplayPage() {
               {filtered.length ? (
                 <div className="h-full">
                   {/* Grid NIPP */}
-                  <div className="grid gap-1 h-full" style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+                  <div
+                    className="grid gap-1 h-full"
+                    style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}
+                  >
                     {gridData.map((rowData, rowIndex) => (
-                      <div 
+                      <div
                         key={rowIndex}
                         className="grid gap-1"
-                        style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+                        style={{
+                          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                        }}
                       >
                         {rowData.map((item, colIndex) => (
                           <div
@@ -198,12 +204,20 @@ export default function WinnerDisplayPage() {
                             className={`
                               border border-gray-200 rounded p-2 text-center
                               transition-all duration-200 flex items-center justify-center
-                              ${item ? 'hover:shadow-md cursor-pointer' : 'bg-transparent border-transparent'}
+                              ${
+                                item
+                                  ? "hover:shadow-md cursor-pointer"
+                                  : "bg-transparent border-transparent"
+                              }
                             `}
                             title={item?.status || "-"}
                           >
                             {item && (
-                              <span className={`px-3 py-1 rounded-full text-base font-bold shadow ${badgeClass(item.status)}`}>
+                              <span
+                                className={`px-3 py-1 rounded-full text-base font-bold shadow ${badgeClass(
+                                  item.status
+                                )}`}
+                              >
                                 {item.winner || item.nipp}
                               </span>
                             )}
@@ -218,7 +232,9 @@ export default function WinnerDisplayPage() {
                   <div className="flex flex-col items-center gap-3">
                     <div className="text-5xl">🎉</div>
                     <p className="text-gray-500 text-lg font-medium">
-                      {q ? "Tidak ada pemenang ditemukan" : "Belum ada pemenang"}
+                      {q
+                        ? "Tidak ada pemenang ditemukan"
+                        : "Belum ada pemenang"}
                     </p>
                     {q && (
                       <button

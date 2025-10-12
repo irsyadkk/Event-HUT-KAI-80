@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { ADMIN_NIPP, BASE_URL } from "../utils";
+import { BASE_URL } from "../utils";
 import { io } from "socket.io-client";
 import { useNavigate } from "react-router-dom";
+import { getUserRole } from "../getUserRole";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -24,6 +25,7 @@ const statusBadgeClass = (raw) => {
 export default function VerificationPage() {
   const headers = useAuthHeaders();
   const navigate = useNavigate();
+  const role = getUserRole();
 
   const [allowed, setAllowed] = useState(false);
 
@@ -64,7 +66,7 @@ export default function VerificationPage() {
       return;
     }
     try {
-      if (nipp !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
@@ -211,7 +213,9 @@ export default function VerificationPage() {
     return s && !s.includes("diambil") && s !== "gugur";
   }).length;
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div

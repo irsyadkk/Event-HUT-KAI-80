@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api";

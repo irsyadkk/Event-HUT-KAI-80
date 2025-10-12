@@ -1,9 +1,10 @@
 import { io } from "socket.io-client";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../api";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
-import { BASE_URL, ADMIN_NIPP } from "../utils";
+import { BASE_URL } from "../utils";
 import { useNavigate } from "react-router-dom";
+import { getUserRole } from "../getUserRole";
 
 const useAuthHeaders = () =>
   useMemo(() => {
@@ -24,6 +25,8 @@ const badgeClassesByStatus = (statusRaw) => {
 export default function PrizeListPage() {
   const navigate = useNavigate();
   const headers = useAuthHeaders();
+  const role = getUserRole();
+
   const [data, setData] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,7 @@ export default function PrizeListPage() {
       return;
     }
     try {
-      if (nipp !== ADMIN_NIPP) navigate("/");
+      if (!role === "superadmin" || !role === "admin") navigate("/");
       else setAllowed(true);
     } catch {
       navigate("/");
@@ -210,7 +213,9 @@ export default function PrizeListPage() {
     </div>
   );
 
-  if (!allowed) return null;
+  if (!allowed) {
+    navigate("/");
+  }
 
   return (
     <div
