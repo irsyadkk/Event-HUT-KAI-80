@@ -9,6 +9,10 @@ import {
   RefreshCcw,
   Shield,
   Users,
+  CheckCircle2,
+  AlertTriangle,
+  KeyRound,
+  X,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
@@ -72,18 +76,69 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
-const Modal = ({ title, onClose, children, footer }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
-        {title}
-      </h3>
-      {children}
-      <div className="mt-6 flex items-center justify-end gap-3">{footer}</div>
+/* ---------- Modal Fancy ---------- */
+const Modal = ({
+  title,
+  onClose,
+  children,
+  footer,
+  tone = "info", // "info" | "warning" | "danger" | "success"
+  icon = null,
+}) => {
+  const tones = {
+    info: "from-blue-500 to-indigo-600",
+    warning: "from-yellow-500 to-orange-600",
+    danger: "from-rose-600 to-red-700",
+    success: "from-emerald-500 to-green-700",
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-lg">
+        <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden animate-[modalIn_.18s_ease-out]">
+          {/* header */}
+          <div
+            className={`relative h-28 bg-gradient-to-r ${tones[tone]} text-white`}
+          >
+            <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
+            <button
+              onClick={onClose}
+              className="absolute right-3 top-3 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <div className="h-full flex items-center gap-3 px-6">
+              {icon && <div className="bg-white/20 rounded-xl p-2">{icon}</div>}
+              <h3 className="text-xl md:text-2xl font-bold drop-shadow-sm">
+                {title}
+              </h3>
+            </div>
+          </div>
+
+          {/* body */}
+          <div className="p-6">{children}</div>
+
+          {/* footer */}
+          <div className="px-6 pb-6 flex items-center justify-end gap-3">
+            {footer}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modalIn { 
+          from { opacity:.5; transform: translateY(8px) scale(.98) } 
+          to { opacity:1; transform: translateY(0) scale(1) } 
+        }
+      `}</style>
     </div>
-  </div>
-);
+  );
+};
 
 const RowSkeleton = () => (
   <tr className="animate-pulse">
@@ -98,6 +153,44 @@ const RowSkeleton = () => (
     </td>
   </tr>
 );
+
+/* ---------- Toasts ---------- */
+const Toast = ({ id, type = "success", title, desc, onClose }) => {
+  const icons = {
+    success: <CheckCircle2 className="w-5 h-5" />,
+    error: <AlertTriangle className="w-5 h-5" />,
+    info: <KeyRound className="w-5 h-5" />,
+  };
+  const styles = {
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    error: "border-rose-200 bg-rose-50 text-rose-800",
+    info: "border-blue-200 bg-blue-50 text-blue-800",
+  };
+
+  return (
+    <div
+      className={`w-80 rounded-xl border shadow-lg p-4 flex gap-3 ${styles[type]} animate-[toastIn_.18s_ease-out]`}
+    >
+      <div className="mt-0.5">{icons[type]}</div>
+      <div className="flex-1">
+        <p className="font-semibold">{title}</p>
+        {desc && <p className="text-sm opacity-90">{desc}</p>}
+      </div>
+      <button
+        onClick={() => onClose(id)}
+        className="opacity-60 hover:opacity-100"
+      >
+        ×
+      </button>
+      <style>{`
+        @keyframes toastIn {
+          from { opacity:.2; transform: translateY(6px) }
+          to { opacity:1; transform: translateY(0) }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 /* ============== MAIN ============== */
 const AdminManagePage = () => {
@@ -151,6 +244,25 @@ const AdminManagePage = () => {
   const [resetting, setResetting] = useState(false);
 
   const [exporting, setExporting] = useState(false);
+
+  // Modal state tambahan
+  const [confirmDelete, setConfirmDelete] = useState({
+    open: false,
+    nipp: "",
+    role: "",
+  });
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
+  // Toasts
+  const [toasts, setToasts] = useState([]);
+  const pushToast = (payload) => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((t) => [...t, { id, ...payload }]);
+    setTimeout(() => {
+      setToasts((t) => t.filter((x) => x.id !== id));
+    }, 3500);
+  };
+  const closeToast = (id) => setToasts((t) => t.filter((x) => x.id !== id));
 
   // ===== Guard (khusus superadmin sesuai kodenmu) =====
   useEffect(() => {
@@ -224,12 +336,21 @@ const AdminManagePage = () => {
       setNipp("");
       setPassword("");
       roleInput === "admin" ? getAdmin() : getSuperAdmin();
+      pushToast({
+        type: "success",
+        title: "Akun dibuat",
+        desc: `NIPP ${nipp}`,
+      });
     } catch (error) {
       console.error("Error:", error);
-      let errorMessage = `Gagal menambahkan ${nipp} !`;
-      if (error.response?.data?.message)
-        errorMessage = error.response.data.message;
+      let errorMessage =
+        error?.response?.data?.message || `Gagal menambahkan ${nipp} !`;
       setMessage({ type: "error", text: errorMessage });
+      pushToast({
+        type: "error",
+        title: "Gagal membuat akun",
+        desc: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -280,9 +401,8 @@ const AdminManagePage = () => {
       }
     } catch (error) {
       console.error("Error saat mencari data:", error);
-      let errorMessage = `Gagal mengambil data ${searchNipp}!`;
-      if (error.response?.data?.message)
-        errorMessage = error.response.data.message;
+      let errorMessage =
+        error?.response?.data?.message || `Gagal mengambil data ${searchNipp}!`;
       setSearchMessage({ type: "error", text: errorMessage });
     } finally {
       setIsSearchLoading(false);
@@ -296,11 +416,18 @@ const AdminManagePage = () => {
     try {
       await api.delete(`/admin/${targetNipp}`);
       await getAdmin();
+      pushToast({
+        type: "success",
+        title: "Berhasil dihapus",
+        desc: `NIPP ${targetNipp}`,
+      });
     } catch (e) {
       console.log("Gagal delete admin:", e);
-      alert(
-        e?.response?.data?.message || e.message || "Gagal menghapus admin."
-      );
+      pushToast({
+        type: "error",
+        title: "Gagal menghapus",
+        desc: e?.response?.data?.message || e.message,
+      });
     } finally {
       setIsLoadingDeleteAdmin(false);
     }
@@ -312,13 +439,18 @@ const AdminManagePage = () => {
     try {
       await api.delete(`/superadmin/${targetNipp}`);
       await getSuperAdmin();
+      pushToast({
+        type: "success",
+        title: "Berhasil dihapus",
+        desc: `NIPP ${targetNipp}`,
+      });
     } catch (e) {
       console.log("Gagal delete super admin:", e);
-      alert(
-        e?.response?.data?.message ||
-          e.message ||
-          "Gagal menghapus super admin."
-      );
+      pushToast({
+        type: "error",
+        title: "Gagal menghapus",
+        desc: e?.response?.data?.message || e.message,
+      });
     } finally {
       setIsLoadingDeleteSuperAdmin(false);
     }
@@ -332,10 +464,18 @@ const AdminManagePage = () => {
       await api.patch(`/adminresetpass/${targetNipp}`, {
         newpassword: newPass,
       });
-      alert(`Password admin ${targetNipp} berhasil direset!`);
+      pushToast({
+        type: "success",
+        title: "Password direset",
+        desc: `Admin ${targetNipp}`,
+      });
     } catch (e) {
       console.log("Gagal reset pass admin:", e);
-      alert(e?.response?.data?.message || "Gagal mereset password!");
+      pushToast({
+        type: "error",
+        title: "Gagal reset password",
+        desc: e?.response?.data?.message || "Terjadi kesalahan.",
+      });
     } finally {
       setIsLoadingResetAdminPass(false);
     }
@@ -348,8 +488,14 @@ const AdminManagePage = () => {
   };
 
   const handleUploadImport = async () => {
-    if (!importFile)
-      return alert("Pilih file .csv atau .xlsx terlebih dahulu.");
+    if (!importFile) {
+      pushToast({
+        type: "error",
+        title: "File belum dipilih",
+        desc: "Pilih .csv/.xlsx terlebih dahulu.",
+      });
+      return;
+    }
     try {
       setImporting(true);
       const form = new FormData();
@@ -360,9 +506,17 @@ const AdminManagePage = () => {
       setShowImportModal(false);
       setImportFile(null);
       await getAdmin();
-      alert("Import admin berhasil.");
+      pushToast({
+        type: "success",
+        title: "Import berhasil",
+        desc: "Data admin diperbarui.",
+      });
     } catch (e) {
-      alert(e?.response?.data?.message || e.message || "Gagal import.");
+      pushToast({
+        type: "error",
+        title: "Gagal import",
+        desc: e?.response?.data?.message || e.message,
+      });
     } finally {
       setImporting(false);
     }
@@ -375,11 +529,17 @@ const AdminManagePage = () => {
       setResetting(true);
       await api.delete("/reset/admins");
       await getAdmin();
-      alert("Tabel admins berhasil di-reset (kosong).");
+      pushToast({
+        type: "success",
+        title: "Tabel direset",
+        desc: "Semua admin telah dihapus.",
+      });
     } catch (e) {
-      alert(
-        e?.response?.data?.message || e.message || "Gagal reset tabel admins."
-      );
+      pushToast({
+        type: "error",
+        title: "Gagal reset",
+        desc: e?.response?.data?.message || e.message,
+      });
     } finally {
       setShowResetConfirm(false);
       setResetting(false);
@@ -397,20 +557,21 @@ const AdminManagePage = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Admins");
       XLSX.writeFile(wb, "data_admins.xlsx");
+      pushToast({
+        type: "success",
+        title: "Export selesai",
+        desc: "File data_admins.xlsx dibuat.",
+      });
     } catch (e) {
-      alert(e?.message || "Gagal export.");
+      pushToast({
+        type: "error",
+        title: "Gagal export",
+        desc: e?.message || "Terjadi kesalahan.",
+      });
     } finally {
       setExporting(false);
     }
   };
-
-  // Modal state tambahan
-  const [confirmDelete, setConfirmDelete] = useState({
-    open: false,
-    nipp: "",
-    role: "",
-  });
-  const [showResetPassword, setShowResetPassword] = useState(false);
 
   if (!allowed) return null;
 
@@ -460,7 +621,7 @@ const AdminManagePage = () => {
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Kiri */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Pencarian (tetap seperti punyamu) */}
+            {/* Pencarian */}
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -819,7 +980,7 @@ const AdminManagePage = () => {
             </div>
           </div>
 
-          {/* Kanan: Form Tambah (rapi & sticky) */}
+          {/* Kanan: Form Tambah */}
           <div className="lg:col-span-4 space-y-6">
             <Card className="p-6 lg:sticky lg:top-6">
               <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-6">
@@ -934,10 +1095,19 @@ const AdminManagePage = () => {
         </section>
       </div>
 
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-[120] space-y-3">
+        {toasts.map((t) => (
+          <Toast key={t.id} {...t} onClose={closeToast} />
+        ))}
+      </div>
+
       {/* MODAL: Reset Password Admin */}
       {showResetModal && (
         <Modal
           title="Reset Password Admin"
+          tone="warning"
+          icon={<KeyRound className="w-6 h-6 text-white" />}
           onClose={() => {
             setShowResetModal(false);
             setNewPassword("");
@@ -956,11 +1126,15 @@ const AdminManagePage = () => {
                 Batal
               </Button>
               <Button
-                variant="primary"
+                variant="warning"
                 disabled={isLoadingResetAdminPass}
                 onClick={async () => {
                   if (!newPassword.trim()) {
-                    alert("Password baru wajib diisi!");
+                    pushToast({
+                      type: "error",
+                      title: "Password kosong",
+                      desc: "Isi password baru dahulu.",
+                    });
                     return;
                   }
                   await handleResetPassAdmin(selectedNippReset, newPassword);
@@ -974,16 +1148,18 @@ const AdminManagePage = () => {
             </>
           }
         >
-          <p className="text-sm text-gray-600 mb-4 text-center">
-            NIPP: <span className="font-semibold">{selectedNippReset}</span>
-          </p>
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-600">
+              NIPP: <span className="font-semibold">{selectedNippReset}</span>
+            </p>
+          </div>
           <div className="relative">
             <input
               type={showResetPassword ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Masukkan password baru..."
-              className="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+              className="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <Lock size={18} />
@@ -1003,6 +1179,8 @@ const AdminManagePage = () => {
       {showImportModal && (
         <Modal
           title="Import Admin (.csv / .xlsx)"
+          tone="info"
+          icon={<Users className="w-6 h-6 text-white" />}
           onClose={() => setShowImportModal(false)}
           footer={
             <>
@@ -1044,6 +1222,8 @@ const AdminManagePage = () => {
       {showResetConfirm && (
         <Modal
           title="Reset Tabel Admins"
+          tone="danger"
+          icon={<AlertTriangle className="w-6 h-6 text-white" />}
           onClose={() => setShowResetConfirm(false)}
           footer={
             <>
@@ -1064,7 +1244,7 @@ const AdminManagePage = () => {
             </>
           }
         >
-          <p className="text-gray-700">
+          <p className="text-gray-700 text-center">
             Tindakan ini akan <b>menghapus semua data</b> pada tabel{" "}
             <code>admins</code>. Lanjutkan?
           </p>
@@ -1074,7 +1254,9 @@ const AdminManagePage = () => {
       {/* MODAL: Konfirmasi Delete */}
       {confirmDelete.open && (
         <Modal
-          title="Konfirmasi Hapus"
+          title="Hapus Pengguna?"
+          tone="danger"
+          icon={<Trash2 className="w-6 h-6 text-white" />}
           onClose={() => setConfirmDelete({ open: false, nipp: "", role: "" })}
           footer={
             <>
@@ -1090,9 +1272,16 @@ const AdminManagePage = () => {
                 variant="danger"
                 onClick={async () => {
                   const { nipp: target, role: r } = confirmDelete;
-                  if (r === "admin") await handleDeleteAdmin(target);
-                  else await handleDeleteSuperAdmin(target);
-                  setConfirmDelete({ open: false, nipp: "", role: "" });
+                  try {
+                    if (r === "admin") {
+                      await handleDeleteAdmin(target);
+                    } else {
+                      await handleDeleteSuperAdmin(target);
+                    }
+                    // toast sudah dipanggil di masing-masing handler
+                  } finally {
+                    setConfirmDelete({ open: false, nipp: "", role: "" });
+                  }
                 }}
                 disabled={isLoadingDeleteAdmin || isLoadingDeleteSuperAdmin}
               >
@@ -1103,14 +1292,19 @@ const AdminManagePage = () => {
             </>
           }
         >
-          <p className="text-center text-gray-700">
-            Kamu yakin ingin menghapus{" "}
-            <span className="font-semibold">{confirmDelete.nipp}</span> dari{" "}
-            <span className="font-semibold">
-              {confirmDelete.role === "admin" ? "Admin" : "Super Admin"}
-            </span>
-            ?
-          </p>
+          <div className="text-center space-y-2">
+            <p className="text-gray-700">
+              Kamu yakin ingin menghapus{" "}
+              <span className="font-semibold">{confirmDelete.nipp}</span> dari{" "}
+              <span className="font-semibold">
+                {confirmDelete.role === "admin" ? "Admin" : "Super Admin"}
+              </span>
+              ?
+            </p>
+            <p className="text-xs text-rose-500">
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+          </div>
         </Modal>
       )}
     </div>
