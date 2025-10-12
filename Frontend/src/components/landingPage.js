@@ -25,9 +25,12 @@ function LandingPage() {
         setEnded(isEnded);
 
         if (status && timerDate && !isEnded) {
-          setTargetTime(new Date(timerDate));
+          const d = parseAsWIB(timerDate);
+          setTargetTime(d);
+          setDisplayDateTime(formatDateWIB(d));
         } else {
           setTargetTime(null);
+          setDisplayDateTime("");
         }
       } catch (err) {
         console.error("Gagal ambil timer:", err);
@@ -47,9 +50,12 @@ function LandingPage() {
       setEnded(isEnded);
 
       if (isActive && timer.date && !isEnded) {
-        setTargetTime(new Date(timer.date));
+        const d = parseAsWIB(timer.date);
+        setTargetTime(d);
+        setDisplayDateTime(formatDateWIB(d));
       } else {
         setTargetTime(null);
+        setDisplayDateTime("");
       }
     });
     return () => socket.disconnect();
@@ -77,6 +83,34 @@ function LandingPage() {
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [targetTime]);
+
+  // Format tanggal ke WIB (Indonesia)
+  const formatDateWIB = (dateObj) => {
+    if (!dateObj) return "";
+    const s = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Jakarta",
+    }).format(dateObj);
+    return `${s} WIB`;
+  };
+
+  // Normalisasi string "YYYY-MM-DD HH:mm:ss" => Date di WIB (+07:00)
+  const parseAsWIB = (dateStr) => {
+    if (!dateStr) return null;
+    // jadikan ISO
+    let iso = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+    // kalau belum ada zona waktu, pakai +07:00 (WIB)
+    if (!/[zZ]|[+\-]\d\d:\d\d$/.test(iso)) iso += "+07:00";
+    return new Date(iso);
+  };
+
+  const [displayDateTime, setDisplayDateTime] = useState(""); // string untuk ditampilkan
 
   const formatTime = (seconds) => {
     const days = Math.floor(seconds / (24 * 60 * 60));
@@ -228,7 +262,7 @@ function LandingPage() {
                       </div>
                       {/* Tanggal keterangan (opsional/placeholder) */}
                       <p className="text-sm lg:text-base opacity-90">
-                        Tanggal Bulan Tahun - Jam:Menit WIB
+                        {displayDateTime || "-"}
                       </p>
                     </div>
                   </div>
