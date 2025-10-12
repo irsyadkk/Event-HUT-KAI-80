@@ -1,7 +1,7 @@
 import { getUserRole } from "../getUserRole.js";
 import { useEffect, useState, useCallback } from "react";
 import { data, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Lock, Search, UserPlus } from "lucide-react";
 import LogoKAI from "../assets/images/LOGO HUT KAI 80 Master White-01.png";
 import api from "../api.js";
 
@@ -14,19 +14,10 @@ const AdminManagePage = () => {
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [isSuperAdminLoading, setIsSuperAdminLoading] = useState(false);
   const [selectedTable, setSelectedTable] = useState("admin");
-  const [isLoadingTambahAdmin, setIsLoadingTambahAdmin] = useState(false);
-  const [isLoadingTambahSuperAdmin, setIsLoadingTambahSuperAdmin] =
-    useState(false);
   const [isLoadingDeleteAdmin, setIsLoadingDeleteAdmin] = useState(false);
   const [isLoadingDeleteSuperAdmin, setIsLoadingDeleteSuperAdmin] =
     useState(false);
   const [isLoadingResetAdminPass, setIsLoadingResetAdminPass] = useState(false);
-  const [nippAddAdmin, setNippAddAdmin] = useState("");
-  const [nippAddSuperAdmin, setNippAddSuperAdmin] = useState("");
-  const [passwordAddAdmin, setPasswordAddAdmin] = useState("");
-  const [passwordAddSuperAdmin, setPasswordAddSuperAdmin] = useState("");
-  const [messageTambahAdmin, setMessageTambahAdmin] = useState("");
-  const [messageTambahSuperAdmin, setMessageTambahSuperAdmin] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showResetModal, setShowResetModal] = useState(false);
   const [selectedNippReset, setSelectedNippReset] = useState("");
@@ -38,6 +29,10 @@ const AdminManagePage = () => {
   const [message, setMessage] = useState(null);
   const [totalAdmin, setTotalAdmin] = useState(null);
   const [totalSuperAdmin, setTotalSuperAdmin] = useState(null);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchMessage, setSearchMessage] = useState(false);
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchNipp, setSearchNipp] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -72,7 +67,7 @@ const AdminManagePage = () => {
       // Tentukan endpoint berdasarkan role
       const endpoint = roleInput === "admin" ? `/admin` : `/superadmin`;
 
-      await api.post(endpoint, { nipp, password }, { withCredentials: true });
+      await api.post(endpoint, { nipp, password });
 
       setMessage({
         type: "success",
@@ -96,6 +91,73 @@ const AdminManagePage = () => {
       });
     }
     setIsLoading(false);
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setIsSearchLoading(true);
+    setSearchMessage(null);
+    setSearchResult(null);
+
+    if (!searchNipp.trim()) {
+      setSearchMessage({
+        type: "error",
+        text: "Masukan NIPP yang ingin dicari !",
+      });
+      setIsSearchLoading(false);
+      return;
+    }
+
+    try {
+      const adminRes = await api.get(`/admin/${searchNipp}`).catch(() => null);
+      if (adminRes && adminRes.data.data) {
+        const data = adminRes.data.data;
+        setSearchResult({
+          nipp: data.nipp,
+          role: "admin",
+        });
+        setSearchMessage({
+          type: "success",
+          text: `NIPP ${data.nipp} ditemukan sebagai Admin.`,
+        });
+        setIsSearchLoading(false);
+        return;
+      }
+
+      const superAdminRes = await api
+        .get(`/superadmin/${searchNipp}`)
+        .catch(() => null);
+      if (superAdminRes && superAdminRes.data.data) {
+        const data = superAdminRes.data.data;
+        setSearchResult({
+          nipp: data.nipp,
+          role: "superadmin",
+        });
+        setSearchMessage({
+          type: "success",
+          text: `NIPP ${data.nipp} ditemukan sebagai Super Admin.`,
+        });
+        setIsSearchLoading(false);
+        return;
+      }
+
+      setSearchMessage({
+        type: "error",
+        text: `NIPP ${searchNipp} tidak ditemukan di data Admin maupun Super Admin !`,
+      });
+    } catch (error) {
+      console.error("Error saat mencari data:", error);
+      let errorMessage = `Gagal mengambil data ${searchNipp}!`;
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      setSearchMessage({
+        type: "error",
+        text: errorMessage,
+      });
+    } finally {
+      setIsSearchLoading(false);
+    }
   };
 
   const getAdmin = useCallback(async () => {
@@ -150,70 +212,6 @@ const AdminManagePage = () => {
     } finally {
       setIsLoadingDeleteSuperAdmin(false);
     }
-  };
-
-  const handleAddAdmin = async (e) => {
-    e.preventDefault();
-    if (!nippAddAdmin.trim() || !passwordAddAdmin.trim()) {
-      setMessageTambahAdmin({
-        text: "NIPP, dan Password wajib diisi!",
-        type: "error",
-      });
-      return;
-    }
-    setIsLoadingTambahAdmin(true);
-    try {
-      await api.post("/admin", {
-        nipp: nippAddAdmin,
-        password: passwordAddAdmin,
-      });
-      setMessageTambahAdmin({
-        text: `Berhasil menambahkan ${nippAddAdmin} sebagai admin !`,
-        type: "success",
-      });
-      setNippAddAdmin("");
-      setPasswordAddAdmin("");
-      getAdmin();
-    } catch (err) {
-      console.error("Gagal menambah admin:", err);
-      setMessageTambahAdmin({
-        text: `Gagal menambahkan ${nippAddAdmin} sebagai admin !`,
-        type: "error",
-      });
-    }
-    setIsLoadingTambahAdmin(false);
-  };
-
-  const handleAddSuperAdmin = async (e) => {
-    e.preventDefault();
-    if (!nippAddSuperAdmin.trim() || !passwordAddSuperAdmin.trim()) {
-      setMessageTambahSuperAdmin({
-        text: "NIPP, dan Password wajib diisi!",
-        type: "error",
-      });
-      return;
-    }
-    setIsLoadingTambahSuperAdmin(true);
-    try {
-      await api.post("/superadmin", {
-        nipp: nippAddSuperAdmin,
-        password: passwordAddSuperAdmin,
-      });
-      setMessageTambahSuperAdmin({
-        text: `Berhasil menambahkan ${nippAddSuperAdmin} sebagai super admin !`,
-        type: "success",
-      });
-      setNippAddSuperAdmin("");
-      setPasswordAddSuperAdmin("");
-      getSuperAdmin();
-    } catch (err) {
-      console.error("Gagal menambah super admin:", err);
-      setMessageTambahSuperAdmin({
-        text: `Gagal menambahkan ${nippAddSuperAdmin} sebagai super admin !`,
-        type: "error",
-      });
-    }
-    setIsLoadingTambahSuperAdmin(false);
   };
 
   const handleResetPassAdmin = async (nipp, newPassword) => {
@@ -388,18 +386,75 @@ const AdminManagePage = () => {
           </div>
         </div>
 
-        {/* Search */}
-        {/* <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between flex-wrap gap-4">
-            <h2 className="text-xl font-bold text-white">Pencarian & Filter</h2>
+        {/* Search Section */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+            Pencarian Admin & Super Admin
+          </h2>
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col sm:flex-row gap-4 mb-4"
+          >
             <input
-              className="border-2 border-white/30 focus:border-white focus:ring-2 focus:ring-white/50 p-3 rounded-xl bg-white/90 min-w-[300px] text-sm"
-              placeholder="🔍 Cari.."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+              type="text"
+              value={searchNipp}
+              onChange={(e) => setSearchNipp(e.target.value)}
+              placeholder="Masukkan NIPP / NIPKWT"
+              className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              disabled={isSearchLoading}
             />
-          </div>
-        </div> */}
+            <button
+              type="submit"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg transition-all duration-200 hover:shadow-xl transform hover:scale-105 font-medium"
+              disabled={isSearchLoading}
+            >
+              {isSearchLoading ? "Mencari..." : "Cari Data"}
+            </button>
+          </form>
+          {searchMessage && (
+            <div
+              className={`mb-4 p-4 rounded-xl ${
+                searchMessage.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
+            >
+              <p className="font-medium">{searchMessage.text}</p>
+            </div>
+          )}
+          {/* Search Result */}
+          {searchResult && (
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                Detail Pengguna
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">NIPP</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {searchResult.nipp}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <p className="text-sm text-gray-600 font-medium">Role</p>
+                    <p
+                      className={`text-lg font-bold ${
+                        searchResult.role === "admin"
+                          ? "text-blue-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {searchResult.role === "admin" ? "Admin" : "Super Admin"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* TABLE */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100">
