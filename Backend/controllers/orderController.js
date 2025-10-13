@@ -334,18 +334,17 @@ export const editOrder = async (req, res) => {
     const nipp = req.params.nipp;
     const { nama, status, transportasi, keberangkatan } = req.body;
 
-    // --- Validasi dasar ---
+    // ---------- Validasi dasar ----------
     if (
       !Array.isArray(nama) ||
       !status ||
       !transportasi ||
       !keberangkatan ||
       nama.some((n) => typeof n !== "string" || !n.trim())
-    ) {
+    )
       throw makeError("Input tidak valid", 400);
-    }
 
-    // --- Ambil data lama ---
+    // ---------- Ambil data lama ----------
     const order = await Order.findOne({ where: { nipp }, transaction: t });
     if (!order) throw makeError("Order Not Found !", 404);
 
@@ -353,37 +352,37 @@ export const editOrder = async (req, res) => {
     const quota = await Quota.findOne({ where: { id: 1 }, transaction: t });
     if (!user || !quota) throw makeError("User/Quota Not Found !", 404);
 
-    // --- Normalisasi hitung used penetapan lama & baru ---
-    const oldStatus = String(order.status || "").toLowerCase();
-    const newStatus = String(status || "").toLowerCase();
+    // ---------- Helper hitung family berbasis nama pegawai ----------
+    const pegawaiName = String(user.nama || "")
+      .trim()
+      .toLowerCase();
+    const normName = (s) =>
+      String(s || "")
+        .trim()
+        .toLowerCase();
+    const countFamily = (arr) =>
+      (Array.isArray(arr) ? arr : []).filter(
+        (nm) => normName(nm) && normName(nm) !== pegawaiName
+      ).length;
+
     const oldCountAll = Array.isArray(order.nama) ? order.nama.length : 0;
     const newCountAll = Array.isArray(nama) ? nama.length : 0;
 
-    // Keluarga = (total - 1) jika status "hadir", else total
-    const oldFamily = Math.max(
-      0,
-      oldStatus === "hadir" ? oldCountAll - 1 : oldCountAll
-    );
-    const newFamily = Math.max(
-      0,
-      newStatus === "hadir" ? newCountAll - 1 : newCountAll
-    );
+    // Keluarga = semua nama KECUALI nama pegawai (independen dari status)
+    const oldFamily = countFamily(order.nama);
+    const newFamily = countFamily(nama);
 
-    // Penetapan dimakan = 1 (pegawai) + keluarga
+    // Penetapan dipakai = 1 (pegawai) + keluarga
     const oldUsedPenetapan = 1 + oldFamily;
     const newUsedPenetapan = 1 + newFamily;
 
-    // Delta penetapan (positif = butuh tambahan jatah)
-    let deltaPenetapan = newUsedPenetapan - oldUsedPenetapan;
-    // Kebijakan: penetapan tidak pernah dikembalikan lewat edit
-    if (deltaPenetapan < 0) deltaPenetapan = 0;
+    // ---------- Delta penetapan & delta quota ----------
+    // Positif = butuh tambahan; Negatif = refund
+    const deltaPenetapan = newUsedPenetapan - oldUsedPenetapan; // stabil, tak tergantung status
+    const deltaQuota = newCountAll - oldCountAll; // kursi real (boleh negatif = refund)
 
-    // Delta quota global mengikuti jumlah real peserta di array `nama`
-    // Positif = minta kursi tambahan; Negatif = mengembalikan kursi
-    const deltaQuota = newCountAll - oldCountAll;
-
-    // --- Validasi stok ---
-    if (user.penetapan < deltaPenetapan) {
+    // ---------- Validasi stok kalau minta tambahan ----------
+    if (deltaPenetapan > 0 && user.penetapan < deltaPenetapan) {
       throw makeError(
         `Jatah Kamu Tidak Mencukupi. Tersisa ${user.penetapan}`,
         400
@@ -393,16 +392,21 @@ export const editOrder = async (req, res) => {
       throw makeError(`Quota Tidak Mencukupi. Tersisa ${quota.quota}`, 400);
     }
 
-    // --- Hitung nilai update ---
-    const updatedPenetapan = user.penetapan - deltaPenetapan; // tidak pernah naik di sini
-    const updatedQuota = quota.quota - deltaQuota; // bisa naik/turun sesuai delta
+    // ---------- Hitung nilai update ----------
+    let updatedPenetapan = user.penetapan - deltaPenetapan; // delta < 0 => refund
+    let updatedQuota = quota.quota - deltaQuota; // delta < 0 => refund
+
+    if (updatedPenetapan < 0) updatedPenetapan = 0;
+    if (updatedQuota < 0) updatedQuota = 0;
+
     const jumlahKuota = newCountAll;
 
-    // --- Generate QR baru ---
-    const qrData = JSON.stringify({ nipp, nama, status });
+    // ---------- Regenerate QR (opsional) ----------
+    const newStatus = String(status || "").toLowerCase();
+    const qrData = JSON.stringify({ nipp, nama, status: newStatus });
     const qrCode = await QRCode.toDataURL(qrData);
 
-    // --- Commit updates (urut: user, quota, pickups, order) ---
+    // ---------- Commit updates ----------
     await User.update(
       { penetapan: updatedPenetapan },
       { where: { nipp }, transaction: t }
@@ -431,6 +435,8 @@ export const editOrder = async (req, res) => {
         updatedPenetapan,
         updatedQuota,
         jumlahKuota,
+        deltaPenetapan,
+        deltaQuota,
       },
     });
   } catch (error) {
