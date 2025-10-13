@@ -9,7 +9,6 @@ const DetailRegisterPage = () => {
   const role = getUserRole();
   const location = useLocation();
   const nipp = location.state?.nipp;
-  const [namaPegawai, setNamaPegawai] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [allowed, setAllowed] = useState(false);
 
@@ -59,9 +58,7 @@ const DetailRegisterPage = () => {
     }
   }, [navigate, location.state]);
 
-  if (!allowed) {
-    navigate("/");
-  }
+  if (!allowed) return null;
 
   return (
     <div

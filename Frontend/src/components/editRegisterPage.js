@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
+import { getUserRole } from "../getUserRole";
 
 // ====================================================================
 // KOMPONEN MODAL NOTIFIKASI (SUKSES/ERROR/PERINGATAN/INFO)
@@ -163,6 +164,9 @@ const EditRegisterPage = () => {
   const location = useLocation();
   const nipp = location.state?.nipp;
   const navigate = useNavigate();
+  const role = getUserRole();
+
+  const [allowed, setAllowed] = useState(false);
 
   const [members, setMembers] = useState([]);
   const [userFromUsers, setUserFromUsers] = useState(null);
@@ -190,15 +194,18 @@ const EditRegisterPage = () => {
   // Auth check
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
+    const nipp = localStorage.getItem("nipp");
+    if (!token || !nipp) {
       navigate("/");
       return;
     }
     try {
-      jwtDecode(token);
-      setIsDataLoaded(true);
+      if (!role === "superadmin" || !role === "admin") navigate("/");
+      else {
+        setAllowed(true);
+        setIsDataLoaded(true);
+      }
     } catch {
-      localStorage.removeItem("token");
       navigate("/");
     }
   }, [navigate]);
@@ -446,6 +453,7 @@ const EditRegisterPage = () => {
     member.fromUser ? "Nama pegawai" : "Masukkan nama anggota";
 
   // ===== Render =====
+  if (!allowed) return null;
   return (
     <>
       <div

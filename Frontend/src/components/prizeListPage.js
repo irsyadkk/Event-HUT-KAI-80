@@ -213,9 +213,7 @@ export default function PrizeListPage() {
     </div>
   );
 
-  if (!allowed) {
-    navigate("/");
-  }
+  if (!allowed) return null;
 
   return (
     <div

@@ -213,9 +213,7 @@ export default function VerificationPage() {
     return s && !s.includes("diambil") && s !== "gugur";
   }).length;
 
-  if (!allowed) {
-    navigate("/");
-  }
+  if (!allowed) return null;
 
   return (
     <div
