@@ -480,8 +480,10 @@ const AdminDesktopPage = () => {
       NIPP: order.nipp,
       "Anggota Keluarga": order.nama.join(", "),
       "Jumlah Anggota": order.nama.length,
+      Status: order.status,
       Transportasi: order.transportasi,
       Keberangkatan: order.keberangkatan,
+      Qr: order.qr,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);

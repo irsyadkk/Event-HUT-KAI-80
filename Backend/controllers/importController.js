@@ -33,6 +33,7 @@ const parseOrdersRow = (row) => {
   const status = statusExcel ? statusExcel.toLowerCase() : 'hadir';
   // Sumber anggota: "Anggota Keluarga" atau "anggota"/"nama" (string koma)
   const anggotaStr = row["Anggota Keluarga"] ?? row.anggota ?? row.nama ?? "";
+  const qr = row.qr ?? row.Qr ?? null;
 
   const nama = Array.isArray(anggotaStr)
     ? anggotaStr
@@ -45,6 +46,7 @@ const parseOrdersRow = (row) => {
     nipp,
     nama, // asumsi kolom di model Order bertipe ARRAY(TEXT) atau JSONB
     status,
+    qr,
     transportasi,
     keberangkatan,
   };
