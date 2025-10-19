@@ -8,6 +8,7 @@ import Prize from "../models/prizeModel.js";
 import User from "../models/userModel.js";
 import Admin from "../models/adminModel.js";
 import bcrypt from "bcrypt";
+import Quota from "../models/quotaModel.js";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -95,6 +96,8 @@ export const importFile = async (req, res) => {
   const { table } = req.params;
   const file = req.file;
 
+  const t = await db.transaction();
+
   try {
     if (!file) throw makeError("No file uploaded!", 400);
 
@@ -130,8 +133,33 @@ export const importFile = async (req, res) => {
 
     // --- Mapping per tabel ---
     let payload = [];
+    let totalPenguranganQuota = 0;
+
     if (table === "orders") {
       payload = rows.map(parseOrdersRow).filter((r) => r.nipp);
+      totalPenguranganQuota = payload.reduce((sum, order) => {
+        // Jumlah kuota yang dikurangi = jumlah nama di array
+        return sum + (Array.isArray(order.nama) ? order.nama.length : 0);
+      }, 0);
+
+      if (payload.length === 0) {
+        throw makeError("File tidak berisi data order yang valid atau format kolom tidak sesuai.", 400);
+      }
+
+      console.log(`[Import] File valid. Total ${payload.length} order akan diimpor, membutuhkan ${totalPenguranganQuota} kuota.`);
+      // VALIDASI KUOTA 
+      const quota = await Quota.findOne({
+        where: { id: 1 },
+        transaction: t,
+        lock: t.LOCK.UPDATE, // Kunci baris agar tidak ada proses lain yang mengubah kuota
+      });
+
+      if (!quota || quota.quota < totalPenguranganQuota) {
+        throw makeError(
+          `Kuota tidak mencukupi. Dibutuhkan: ${totalPenguranganQuota}, Sisa: ${quota?.quota || 0}`,
+          400
+        );
+      }
     } else if (table === "users") {
       payload = rows.map(parseUserRow).filter((r) => r.nipp);
     } else if (table === "prizes") {
@@ -150,8 +178,15 @@ export const importFile = async (req, res) => {
     }
 
     // --- Insert dengan transaksi ---
-    const t = await db.transaction();
+
     try {
+      if (table === "orders" && totalPenguranganQuota > 0) {
+        await Quota.update(
+          { quota: db.literal(`quota - ${totalPenguranganQuota}`) },
+          { where: { id: 1 }, transaction: t }
+        );
+        console.log(`[Import] Quota berhasil dikurangi sebanyak ${totalPenguranganQuota}.`);
+      }
       // Catatan (Postgres): ignoreDuplicates bekerja kalau ada UNIQUE constraint,
       // misal orders.nipp UNIQUE. Kalau tidak ada constraint, tidak akan ada efek.
       await Model.bulkCreate(payload, {
