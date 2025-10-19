@@ -21,8 +21,12 @@ const Order = db.define(
       type: DataTypes.ARRAY(DataTypes.TEXT),
       allowNull: false,
     },
+    status: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+    },
     qr: {
-      type: Sequelize.BLOB,
+      type: Sequelize.TEXT,
       allowNull: true,
     },
     transportasi: {

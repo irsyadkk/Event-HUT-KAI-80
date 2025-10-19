@@ -29,20 +29,22 @@ const parseOrdersRow = (row) => {
   const nipp = String(row.nipp ?? row.NIPP ?? "").trim();
   const transportasi = row.transportasi ?? row.Transportasi ?? null;
   const keberangkatan = row.keberangkatan ?? row.Keberangkatan ?? null;
-
+  const statusExcel = (row.status ?? row.Status ?? "");
+  const status = statusExcel ? statusExcel.toLowerCase() : 'hadir';
   // Sumber anggota: "Anggota Keluarga" atau "anggota"/"nama" (string koma)
   const anggotaStr = row["Anggota Keluarga"] ?? row.anggota ?? row.nama ?? "";
 
   const nama = Array.isArray(anggotaStr)
     ? anggotaStr
     : String(anggotaStr || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
   return {
     nipp,
     nama, // asumsi kolom di model Order bertipe ARRAY(TEXT) atau JSONB
+    status,
     transportasi,
     keberangkatan,
   };
@@ -61,12 +63,12 @@ const parseAdminRow = (row) => ({
   nipp: String(row.nipp ?? row.Nipp ?? row.NIPP).trim(),
   password: String(
     row.password ??
-      row.Password ??
-      row.PASSWORD ??
-      row.pass ??
-      row.Pass ??
-      row.PASS ??
-      null
+    row.Password ??
+    row.PASSWORD ??
+    row.pass ??
+    row.Pass ??
+    row.PASS ??
+    null
   ),
   refreshToken: null,
 });
@@ -162,7 +164,7 @@ export const importFile = async (req, res) => {
       // hapus file temp
       try {
         fs.unlinkSync(file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     res.status(200).json({
@@ -174,7 +176,7 @@ export const importFile = async (req, res) => {
     if (file) {
       try {
         fs.unlinkSync(file.path);
-      } catch (_) {}
+      } catch (_) { }
     }
     res
       .status(error.statusCode || 500)

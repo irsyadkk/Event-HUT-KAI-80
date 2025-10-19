@@ -5,6 +5,7 @@ import User from "../models/userModel.js";
 import Winner from "../models/winnersModel.js";
 import db from "../config/Database.js";
 import Admin from "../models/adminModel.js";
+import Quota from "../models/quotaModel.js";
 
 const allowedTables = {
   orders: Order,
@@ -33,6 +34,21 @@ export const resetSingleTable = async (req, res) => {
       `TRUNCATE TABLE "${ModelToTruncate.tableName}" RESTART IDENTITY CASCADE;`,
       { transaction: t }
     );
+
+    if (tableName === 'orders') {
+      console.log("Tabel 'orders' di-reset, memulihkan quota...");
+      
+      // Langkah 2: Update tabel quota. Set kolom 'quota' sama dengan nilai dari kolom 'total_quota'
+      await Quota.update(
+        { quota: db.col('total_quota') }, // <-- Ini bagian pentingnya
+        {
+          where: { id: 1 }, // Asumsi data quota selalu ada di id: 1
+          transaction: t
+        }
+      );
+      
+      console.log("Quota berhasil dipulihkan.");
+    }
 
     await t.commit();
     res.status(200).json({
