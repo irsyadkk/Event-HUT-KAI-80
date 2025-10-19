@@ -9,6 +9,7 @@ import User from "../models/userModel.js";
 import Admin from "../models/adminModel.js";
 import bcrypt from "bcrypt";
 import Quota from "../models/quotaModel.js";
+import { Op } from "sequelize";
 
 const makeError = (msg, code = 400) => {
   const err = new Error(msg);
@@ -137,6 +138,37 @@ export const importFile = async (req, res) => {
 
     if (table === "orders") {
       payload = rows.map(parseOrdersRow).filter((r) => r.nipp);
+
+      // VALIDASI NIPP
+      //Kumpulkan semua NIPP unik dari file impor
+      const nippsInFile = [...new Set(payload.map(order => order.nipp))];
+
+      //Cari semua NIPP tersebut di tabel User
+      const foundUsers = await User.findAll({
+        where: {
+          nipp: {
+            [Op.in]: nippsInFile
+          }
+        },
+        attributes: ['nipp'],
+        transaction: t
+      });
+
+      const foundNippSet = new Set(foundUsers.map(user => user.nipp));
+
+      const missingNipps = nippsInFile.filter(nipp => !foundNippSet.has(nipp));
+
+      // jika ada NIPP yang hilang, batalkan proses
+      if (missingNipps.length > 0) {
+        console.error(`[IMPORT GAGAL] NIPP berikut tidak ditemukan di tabel Users: ${missingNipps.join(', ')}`);
+        throw makeError(
+          `Import dibatalkan. NIPP berikut tidak terdaftar di tabel Users: ${missingNipps.join(', ')}`,
+          400
+        );
+      }
+
+      console.log(`[Import] Validasi NIPP berhasil. Semua ${nippsInFile.length} NIPP ditemukan.`);
+
       totalPenguranganQuota = payload.reduce((sum, order) => {
         // Jumlah kuota yang dikurangi = jumlah nama di array
         return sum + (Array.isArray(order.nama) ? order.nama.length : 0);
