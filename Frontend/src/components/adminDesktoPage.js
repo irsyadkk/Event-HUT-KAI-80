@@ -179,9 +179,9 @@ const AdminDesktopPage = () => {
       });
 
       // refresh sesuai target
-      if (importTarget === "orders") await getAllOrders();
-      else if (importTarget === "pickups") await getAllPickups();
-      else if (importTarget === "users") await getAllUsers();
+      if (importTarget === "orders") await getOrdersPagination();
+      else if (importTarget === "pickups") await getPickupsPagination();
+      else if (importTarget === "users") await getUsersPagination();
 
       setImportOpen(false);
       setImportMsg({
@@ -220,8 +220,9 @@ const AdminDesktopPage = () => {
       const qs = resetCascade ? "?cascade=true" : "";
       await api.delete(`/reset/${resetTarget}${qs}`);
 
-      if (resetTarget === "orders") await getAllOrders();
-      if (resetTarget === "pickups") await getAllPickups();
+      if (resetTarget === "orders") await getOrdersPagination();
+      else if (resetTarget === "pickups") await getPickupsPagination();
+      else if (resetTarget === "users") await getUsersPagination();
 
       setResetOpen(false);
       setResetMsg({
