@@ -145,6 +145,12 @@ const AdminDesktopPage = () => {
     fetchTimer();
   }, [allowed]);
 
+  useEffect(() => {
+    const anyModalOpen =
+      isAddOpen || isSubOpen || confirmOpen || resetOpen || importOpen;
+    document.body.style.overflow = anyModalOpen ? "hidden" : "auto";
+  }, [isAddOpen, isSubOpen, confirmOpen, resetOpen, importOpen]);
+
   // ===================== API CALLS =====================
   const openImportModalForTableUsers = () => {
     setImportTarget("users");
@@ -1117,8 +1123,8 @@ const AdminDesktopPage = () => {
 
         {/* Modal Components */}
         {isAddOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+          <div className="modal-container">
+            <div className="modal-content">
               <h2 className="text-2xl font-bold mb-6 text-gray-800">
                 Tambah Kuota
               </h2>
@@ -1148,8 +1154,8 @@ const AdminDesktopPage = () => {
         )}
 
         {isSubOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+          <div className="modal-container">
+            <div className="modal-content">
               <h2 className="text-2xl font-bold mb-6 text-gray-800">
                 Kurangi Kuota
               </h2>
@@ -1178,8 +1184,8 @@ const AdminDesktopPage = () => {
           </div>
         )}
         {confirmOpen && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+          <div className="modal-container">
+            <div className="modal-content">
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 {confirmCfg.title}
               </h3>
@@ -1222,8 +1228,8 @@ const AdminDesktopPage = () => {
           </div>
         )}
         {resetOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+          <div className="modal-container">
+            <div className="modal-content">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">
                 Reset Tabel {resetTarget === "orders" ? "Order" : "Pickup"}
               </h2>
@@ -1245,6 +1251,19 @@ const AdminDesktopPage = () => {
                 </span>
               </label>
 
+              {resetMsg && (
+                <div
+                  className={`rounded-xl p-3 text-sm mb-4 border
+      ${
+        resetMsg.type === "error"
+          ? "bg-red-50 border-red-200 text-red-700"
+          : "bg-emerald-50 border-emerald-200 text-emerald-700"
+      }`}
+                >
+                  {resetMsg.text}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setResetOpen(false)}
@@ -1265,8 +1284,8 @@ const AdminDesktopPage = () => {
           </div>
         )}
         {importOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all">
+          <div className="modal-container">
+            <div className="modal-content">
               <h2 className="text-2xl font-bold mb-2 text-gray-800">
                 Import{" "}
                 {importTarget === "orders"
@@ -1287,6 +1306,19 @@ const AdminDesktopPage = () => {
                 onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 mb-4"
               />
+
+              {importMsg && (
+                <div
+                  className={`rounded-xl p-3 text-sm mb-4 border
+      ${
+        importMsg.type === "error"
+          ? "bg-red-50 border-red-200 text-red-700"
+          : "bg-emerald-50 border-emerald-200 text-emerald-700"
+      }`}
+                >
+                  {importMsg.text}
+                </div>
+              )}
 
               {/* Template info kecil */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-700 mb-4">

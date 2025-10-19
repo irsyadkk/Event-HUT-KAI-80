@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs, { stat } from "fs";
 import path from "path";
 import csv from "csv-parser";
 import XLSX from "xlsx";
@@ -31,8 +31,8 @@ const parseOrdersRow = (row) => {
   const nipp = String(row.nipp ?? row.NIPP ?? "").trim();
   const transportasi = row.transportasi ?? row.Transportasi ?? null;
   const keberangkatan = row.keberangkatan ?? row.Keberangkatan ?? null;
-  const statusExcel = (row.status ?? row.Status ?? "");
-  const status = statusExcel ? statusExcel.toLowerCase() : 'hadir';
+  const statusExcel = row.status ?? row.Status ?? "";
+  const status = statusExcel ? statusExcel.toLowerCase() : "hadir";
   // Sumber anggota: "Anggota Keluarga" atau "anggota"/"nama" (string koma)
   const anggotaStr = row["Anggota Keluarga"] ?? row.anggota ?? row.nama ?? "";
   const qr = row.qr ?? row.Qr ?? null;
@@ -40,9 +40,9 @@ const parseOrdersRow = (row) => {
   const nama = Array.isArray(anggotaStr)
     ? anggotaStr
     : String(anggotaStr || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
   return {
     nipp,
@@ -67,12 +67,12 @@ const parseAdminRow = (row) => ({
   nipp: String(row.nipp ?? row.Nipp ?? row.NIPP).trim(),
   password: String(
     row.password ??
-    row.Password ??
-    row.PASSWORD ??
-    row.pass ??
-    row.Pass ??
-    row.PASS ??
-    null
+      row.Password ??
+      row.PASSWORD ??
+      row.pass ??
+      row.Pass ??
+      row.PASS ??
+      null
   ),
   refreshToken: null,
 });
@@ -141,33 +141,43 @@ export const importFile = async (req, res) => {
 
       // VALIDASI NIPP
       //Kumpulkan semua NIPP unik dari file impor
-      const nippsInFile = [...new Set(payload.map(order => order.nipp))];
+      const nippsInFile = [...new Set(payload.map((order) => order.nipp))];
 
       //Cari semua NIPP tersebut di tabel User
       const foundUsers = await User.findAll({
         where: {
           nipp: {
-            [Op.in]: nippsInFile
-          }
+            [Op.in]: nippsInFile,
+          },
         },
-        attributes: ['nipp'],
-        transaction: t
+        attributes: ["nipp"],
+        transaction: t,
       });
 
-      const foundNippSet = new Set(foundUsers.map(user => user.nipp));
+      const foundNippSet = new Set(foundUsers.map((user) => user.nipp));
 
-      const missingNipps = nippsInFile.filter(nipp => !foundNippSet.has(nipp));
+      const missingNipps = nippsInFile.filter(
+        (nipp) => !foundNippSet.has(nipp)
+      );
 
       // jika ada NIPP yang hilang, batalkan proses
       if (missingNipps.length > 0) {
-        console.error(`[IMPORT GAGAL] NIPP berikut tidak ditemukan di tabel Users: ${missingNipps.join(', ')}`);
+        console.error(
+          `[IMPORT GAGAL] NIPP berikut tidak ditemukan di tabel Users: ${missingNipps.join(
+            ", "
+          )}`
+        );
         throw makeError(
-          `Import dibatalkan. NIPP berikut tidak terdaftar di tabel Users: ${missingNipps.join(', ')}`,
+          `Import dibatalkan. NIPP berikut tidak terdaftar di tabel Users: ${missingNipps.join(
+            ", "
+          )}`,
           400
         );
       }
 
-      console.log(`[Import] Validasi NIPP berhasil. Semua ${nippsInFile.length} NIPP ditemukan.`);
+      console.log(
+        `[Import] Validasi NIPP berhasil. Semua ${nippsInFile.length} NIPP ditemukan.`
+      );
 
       totalPenguranganQuota = payload.reduce((sum, order) => {
         // Jumlah kuota yang dikurangi = jumlah nama di array
@@ -175,11 +185,16 @@ export const importFile = async (req, res) => {
       }, 0);
 
       if (payload.length === 0) {
-        throw makeError("File tidak berisi data order yang valid atau format kolom tidak sesuai.", 400);
+        throw makeError(
+          "File tidak berisi data order yang valid atau format kolom tidak sesuai.",
+          400
+        );
       }
 
-      console.log(`[Import] File valid. Total ${payload.length} order akan diimpor, membutuhkan ${totalPenguranganQuota} kuota.`);
-      // VALIDASI KUOTA 
+      console.log(
+        `[Import] File valid. Total ${payload.length} order akan diimpor, membutuhkan ${totalPenguranganQuota} kuota.`
+      );
+      // VALIDASI KUOTA
       const quota = await Quota.findOne({
         where: { id: 1 },
         transaction: t,
@@ -188,7 +203,9 @@ export const importFile = async (req, res) => {
 
       if (!quota || quota.quota < totalPenguranganQuota) {
         throw makeError(
-          `Kuota tidak mencukupi. Dibutuhkan: ${totalPenguranganQuota}, Sisa: ${quota?.quota || 0}`,
+          `Kuota tidak mencukupi. Dibutuhkan: ${totalPenguranganQuota}, Sisa: ${
+            quota?.quota || 0
+          }`,
           400
         );
       }
@@ -217,7 +234,9 @@ export const importFile = async (req, res) => {
           { quota: db.literal(`quota - ${totalPenguranganQuota}`) },
           { where: { id: 1 }, transaction: t }
         );
-        console.log(`[Import] Quota berhasil dikurangi sebanyak ${totalPenguranganQuota}.`);
+        console.log(
+          `[Import] Quota berhasil dikurangi sebanyak ${totalPenguranganQuota}.`
+        );
       }
       // Catatan (Postgres): ignoreDuplicates bekerja kalau ada UNIQUE constraint,
       // misal orders.nipp UNIQUE. Kalau tidak ada constraint, tidak akan ada efek.
@@ -233,7 +252,7 @@ export const importFile = async (req, res) => {
       // hapus file temp
       try {
         fs.unlinkSync(file.path);
-      } catch (_) { }
+      } catch (_) {}
     }
 
     res.status(200).json({
@@ -245,10 +264,12 @@ export const importFile = async (req, res) => {
     if (file) {
       try {
         fs.unlinkSync(file.path);
-      } catch (_) { }
+      } catch (_) {}
     }
-    res
-      .status(error.statusCode || 500)
-      .json({ status: "error", message: error.message });
+    const status = error.statusCode || 500;
+    res.status(status).json({
+      status: "error",
+      message: error.message || "Terjadi kesalahan saat import.",
+    });
   }
 };

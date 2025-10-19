@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.modal-container {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4;
+}
+
+.modal-content {
+  @apply bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform transition-all max-h-[90vh] overflow-y-auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  border-radius: 1.5rem;
+  clip-path: inset(0 round 1.5rem);
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 12px;
+  margin: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 12px;
+  border: 2px solid #f3f4f6;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+.modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f3f4f6;
+}
